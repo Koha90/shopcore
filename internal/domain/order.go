@@ -84,6 +84,11 @@ func (o *Order) ID() int {
 	return o.id
 }
 
+// UserID returns user id.
+func (o *Order) UserID() int {
+	return o.userID
+}
+
 // Status returns order status.
 func (o *Order) Status() OrderStatus {
 	return o.status

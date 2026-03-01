@@ -14,23 +14,27 @@ const (
 )
 
 var (
-	ErrInvalidRole        error = errors.New("invalid user role")
-	ErrInvalidCredentials error = errors.New("invalid credantials")
+	ErrInvalidRole         error = errors.New("invalid user role")
+	ErrInvalidCredentials  error = errors.New("invalid credentials")
+	ErrInsufficientBalance error = errors.New("insufficient balance")
+	ErrInvalidAmount       error = errors.New("amount must positive")
 )
 
-// User represent an application user.
+// User represents an application user.
 //
 // A user may authenticate either via Telegram or email/password.
 // Admin user require explicit access expiration configuration.
 type User struct {
-	id                   int
-	tgID                 *int64
-	tgName               string
-	email                string
-	passwordHash         string
-	role                 Role
-	balance              int64
-	isEnabled            bool
+	BaseAggregate
+	id           int
+	tgID         *int64
+	tgName       *string
+	email        string
+	passwordHash string
+	role         Role
+	balance      int64
+	isEnabled    bool
+
 	adminAccessExpiresAt *time.Time
 	createdAt            time.Time
 	updatedAt            time.Time
@@ -71,7 +75,7 @@ func NewUser(p NewUserParams) (*User, error) {
 
 	user := &User{
 		tgID:      p.TgID,
-		tgName:    p.TgName,
+		tgName:    &p.TgName,
 		email:     p.Email,
 		role:      p.Role,
 		isEnabled: false,
@@ -80,11 +84,69 @@ func NewUser(p NewUserParams) (*User, error) {
 		updatedAt: now,
 	}
 
+	user.setInitialVersion(1)
+
 	if user.role == RoleAdmin {
 		user.isEnabled = true
 	}
 
 	return user, nil
+}
+
+// ID returns user id.
+func (u *User) ID() int {
+	return u.id
+}
+
+// TgID returns user telegram id.
+func (u *User) TelegramID() (int64, bool) {
+	if u.tgID == nil {
+		return 0, false
+	}
+	return *u.tgID, true
+}
+
+// TgName returns user telegram name.
+func (u *User) TelegramName() (string, bool) {
+	if u.tgName == nil {
+		return "", false
+	}
+	return *u.tgName, true
+}
+
+// AddBalance increase user balance.
+func (u *User) AddBalance(amount int64) error {
+	if amount <= 0 {
+		return ErrInvalidAmount
+	}
+
+	u.balance += amount
+	u.updatedAt = time.Now()
+
+	return nil
+}
+
+// Version returns version of user application.
+func (u *User) Version() int {
+	return u.version
+}
+
+// DeductBalance decrease user balance.
+//
+// Fails if balance is insufficient.
+func (u *User) DeductBalance(amount int64) error {
+	if amount <= 0 {
+		return ErrInvalidAmount
+	}
+
+	if u.balance < amount {
+		return ErrInsufficientBalance
+	}
+
+	u.balance -= amount
+	u.updatedAt = time.Now()
+
+	return nil
 }
 
 // CanUseAdminPanel determines whether the user

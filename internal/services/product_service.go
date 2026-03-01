@@ -9,11 +9,26 @@ import (
 
 type ProductService struct {
 	repo   ProductRepository
+	tx     TxManager
+	bus    EventBus
 	logger *slog.Logger
 }
 
-func NewProductService(r ProductRepository) *ProductService {
-	return &ProductService{repo: r}
+// NewProductService creates a new ProductService instance.
+//
+// lgger must not be nil.
+func NewProductService(
+	r ProductRepository,
+	tx TxManager,
+	bus EventBus,
+	logger *slog.Logger,
+) *ProductService {
+	return &ProductService{
+		repo:   r,
+		tx:     tx,
+		bus:    bus,
+		logger: logger,
+	}
 }
 
 func (s *ProductService) CreateProduct(
@@ -42,30 +57,32 @@ func (s *ProductService) AddVariant(
 	districtID int,
 	price int64,
 ) error {
-	p, err := s.repo.ByID(ctx, productID)
-	if err != nil {
-		s.logger.Error("failed to load product", "id", productID, "err", err)
-		return err
-	}
+	return s.tx.WithinTransaction(ctx, func(ctx context.Context) error {
+		p, err := s.repo.ByID(ctx, productID)
+		if err != nil {
+			s.logger.Error("failed to load product", "id", productID, "err", err)
+			return err
+		}
 
-	if err := p.AddVariant(packSize, districtID, price); err != nil {
-		s.logger.Warn("failed to add variant", "productID", productID, "err", err)
-		return err
-	}
+		if err := p.AddVariant(packSize, districtID, price); err != nil {
+			s.logger.Warn("failed to add variant", "productID", productID, "err", err)
+			return err
+		}
 
-	if err := s.repo.Save(ctx, p); err != nil {
-		s.logger.Error("failed to save product", "id", productID, "err", err)
-		return err
-	}
+		if err := s.repo.Save(ctx, p); err != nil {
+			s.logger.Error("failed to save product", "id", productID, "err", err)
+			return err
+		}
 
-	s.logger.Info(
-		"variant added",
-		"productID",
-		productID,
-		"packSize",
-		packSize,
-		"districtID",
-		districtID,
-	)
-	return nil
+		s.logger.Info(
+			"variant added",
+			"productID",
+			productID,
+			"packSize",
+			packSize,
+			"districtID",
+			districtID,
+		)
+		return nil
+	})
 }
