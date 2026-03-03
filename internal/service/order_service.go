@@ -16,7 +16,6 @@ import (
 type OrderService struct {
 	products productReader
 	orders   orderRepository
-	idGen    IDGenerator
 
 	tx     TxManager
 	bus    EventBus
@@ -26,7 +25,6 @@ type OrderService struct {
 func NewOrderService(
 	products productReader,
 	orders orderRepository,
-	idGen IDGenerator,
 
 	tx TxManager,
 	bus EventBus,
@@ -123,7 +121,7 @@ func (s *OrderService) Cancel(ctx context.Context, id int) error {
 		order, err := s.orders.ByID(ctx, id)
 		if err != nil {
 			s.logger.Error("failed to load order", "error", err)
-			return err
+			return domain.ErrOrderNotFound
 		}
 
 		if err := order.Cancel(); err != nil {
@@ -137,7 +135,10 @@ func (s *OrderService) Cancel(ctx context.Context, id int) error {
 		}
 
 		events := order.PullEvents()
-		s.bus.Publish(ctx, events...)
+		err = s.bus.Publish(ctx, events...)
+		if err != nil {
+			s.logger.Error("failed publish event cancel", "err", err)
+		}
 
 		s.logger.Info("order canceled successfully", "order_id", id)
 
