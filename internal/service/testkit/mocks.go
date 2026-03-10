@@ -32,11 +32,11 @@ type EventBusSpy struct {
 	mu sync.Mutex
 
 	Called    bool
-	Published []domain.DomainEvent
+	Published []domain.Event
 	Err       error
 }
 
-func (b *EventBusSpy) Publish(ctx context.Context, events ...domain.DomainEvent) error {
+func (b *EventBusSpy) Publish(ctx context.Context, events ...domain.Event) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -52,7 +52,7 @@ func (b *EventBusSpy) Publish(ctx context.Context, events ...domain.DomainEvent)
 // Subscribe If yor EventBus interface also has Subscribe, keep it as noop in tests.
 func (b *EventBusSpy) Subscribe(
 	enventName string,
-	handler func(context.Context, domain.DomainEvent) error,
+	handler func(context.Context, domain.Event) error,
 ) {
 	// noop
 }

@@ -109,6 +109,14 @@ func (p *Product) Version() int {
 	return p.version
 }
 
+// Variants returns all variants of prodcut.
+func (p *Product) Variants() []ProductVariant {
+	result := make([]ProductVariant, len(p.variants))
+	copy(result, p.variants)
+
+	return result
+}
+
 // VariantByID returns variant product of product
 // or error if variant was not found.
 func (p *Product) VariantByID(id int) (*ProductVariant, error) {

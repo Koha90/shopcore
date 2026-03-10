@@ -54,7 +54,7 @@ func NewProductVariantService(
 	}
 }
 
-// CreateVariant creates a new product variant
+// Create creates a new product variant
 // and persists it.
 func (s *ProductVariantService) Create(
 	ctx context.Context,

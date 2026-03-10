@@ -121,6 +121,10 @@ func (u *User) TelegramName() (string, bool) {
 	return *u.tgName, true
 }
 
+func (u *User) Balance() int64 {
+	return u.balance
+}
+
 // AddBalance increase user balance.
 func (u *User) AddBalance(amount int64) error {
 	if amount <= 0 {

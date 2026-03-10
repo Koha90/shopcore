@@ -1,4 +1,4 @@
-// Package services contain application use cases.
+// Package service contain application use cases.
 //
 // It coordinates domain logic, repositories and transactions.
 // It does not contain business rules.
@@ -70,7 +70,7 @@ func NewOrderService(
 	}
 }
 
-// Create creates a new order for a selected product variant.
+// CreateForVariant creates a new order for a selected product variant.
 func (s *OrderService) CreateForVariant(
 	ctx context.Context,
 	userID int,

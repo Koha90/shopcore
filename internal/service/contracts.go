@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"botmanager/internal/domain"
 )
@@ -22,7 +21,6 @@ type ProductReader interface {
 type OrderRepository interface {
 	Save(ctx context.Context, order *domain.Order) error
 	ByID(ctx context.Context, id int) (*domain.Order, error)
-	Cancel(now time.Time) error
 }
 
 // UserRepository defines persistence operations
