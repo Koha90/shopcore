@@ -76,3 +76,21 @@ func (r *stubOrderRepository) Save(ctx context.Context, order *domain.Order) err
 	r.savedOrder = order
 	return r.saveErr
 }
+
+type stubProductRepository struct {
+	product      *domain.Product
+	byIDErr      error
+	saveErr      error
+	saveCalls    int
+	savedProduct *domain.Product
+}
+
+func (r *stubProductRepository) ByID(ctx context.Context, id int) (*domain.Product, error) {
+	return r.product, r.byIDErr
+}
+
+func (r *stubProductRepository) Save(ctx context.Context, p *domain.Product) error {
+	r.saveCalls++
+	r.savedProduct = p
+	return r.saveErr
+}

@@ -596,7 +596,7 @@ func TestOrderService_Cancel_SaveError(t *testing.T) {
 
 	err = svc.Cancel(context.Background(), order.ID())
 
-	require.ErrorIs(t, err, domain.ErrOrderUpdate)
+	require.ErrorIs(t, err, domain.ErrOrderSave)
 	require.Equal(t, 1, tx.calls)
 	require.Equal(t, 1, orders.saveCalls)
 	require.Equal(t, 0, bus.calls)
