@@ -296,3 +296,338 @@ func TestOrderService_Cancel_OrderNotFound(t *testing.T) {
 	require.Equal(t, 0, orders.saveCalls)
 	require.Equal(t, 0, bus.calls)
 }
+
+func TestOrderService_ConfirmPayment_SaveError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order:   order,
+		saveErr: errors.New("save failed"),
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.ConfirmPayment(context.Background(), order.ID())
+
+	require.ErrorIs(t, err, domain.ErrOrderUpdate)
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_ConfirmPayment_PublishError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{
+		err: errors.New("publish failed"),
+	}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.ConfirmPayment(context.Background(), order.ID())
+
+	require.EqualError(t, err, "publish events: publish failed")
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 1, bus.calls)
+}
+
+func TestOrderService_PayFromBalance_UserLoadError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{
+		byIDErr: errors.New("user load failed"),
+	}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.PayFromBalance(context.Background(), order.ID())
+
+	require.EqualError(t, err, "load user: user load failed")
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 0, orders.saveCalls)
+	require.Equal(t, 0, users.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_PayFromBalance_SaveUserError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	user, err := domain.NewUser(domain.NewUserParams{
+		Email:        "user@site.dev",
+		PasswordHash: "hash",
+	})
+	require.NoError(t, err)
+
+	err = user.AddBalance(2000)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{
+		user:    user,
+		saveErr: errors.New("save user failed"),
+	}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.PayFromBalance(context.Background(), order.ID())
+
+	require.EqualError(t, err, "save user: save user failed")
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, users.saveCalls)
+	require.Equal(t, 0, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_PayFromBalance_SaveOrderError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	user, err := domain.NewUser(domain.NewUserParams{
+		Email:        "user@site.dev",
+		PasswordHash: "hash",
+	})
+	require.NoError(t, err)
+
+	err = user.AddBalance(2000)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order:   order,
+		saveErr: errors.New("save order failed"),
+	}
+	users := &stubUserRepository{
+		user: user,
+	}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.PayFromBalance(context.Background(), order.ID())
+
+	require.ErrorIs(t, err, domain.ErrOrderUpdate)
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, users.saveCalls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_PayFromBalance_PublishError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	user, err := domain.NewUser(domain.NewUserParams{
+		Email:        "user@site.dev",
+		PasswordHash: "hash",
+	})
+	require.NoError(t, err)
+
+	err = user.AddBalance(2000)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{
+		user: user,
+	}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{
+		err: errors.New("publish failed"),
+	}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.PayFromBalance(context.Background(), order.ID())
+
+	require.EqualError(t, err, "publish events: publish failed")
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, users.saveCalls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 1, bus.calls)
+}
+
+func TestOrderService_Cancel_AlreadyPaid(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	err = order.MarkPaid(time.Now())
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.Cancel(context.Background(), order.ID())
+
+	require.ErrorIs(t, err, domain.ErrOrderAlreadyPaid)
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 0, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_Cancel_AlreadyCancelled(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	err = order.Cancel(time.Now())
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.Cancel(context.Background(), order.ID())
+
+	require.ErrorIs(t, err, domain.ErrOrderAlreadyCancelled)
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 0, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_Cancel_SaveError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order:   order,
+		saveErr: errors.New("save failed"),
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.Cancel(context.Background(), order.ID())
+
+	require.ErrorIs(t, err, domain.ErrOrderUpdate)
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 0, bus.calls)
+}
+
+func TestOrderService_Cancel_PublishError(t *testing.T) {
+	order, err := domain.NewOrder(
+		42,
+		[]domain.OrderItem{
+			domain.NewOrderItem(1, 1, 1, 1500),
+		},
+		time.Now(),
+	)
+	require.NoError(t, err)
+
+	products := &stubProductReader{}
+	orders := &stubOrderRepository{
+		order: order,
+	}
+	users := &stubUserRepository{}
+	tx := &stubTxManager{}
+	bus := &stubEventBus{
+		err: errors.New("publish failed"),
+	}
+
+	svc := NewOrderService(products, orders, users, bus, tx, nil)
+
+	err = svc.Cancel(context.Background(), order.ID())
+
+	require.EqualError(t, err, "publish events: publish failed")
+	require.Equal(t, 1, tx.calls)
+	require.Equal(t, 1, orders.saveCalls)
+	require.Equal(t, 1, bus.calls)
+}

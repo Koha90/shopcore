@@ -132,7 +132,7 @@ func (v *ProductVariant) SetID(id int) {
 
 // ---- GETTERS ----
 
-// ByID returns product variant.
+// ID returns product variant.
 func (v *ProductVariant) ID() int {
 	return v.id
 }

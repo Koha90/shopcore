@@ -22,6 +22,7 @@ var (
 	ErrOrderNotPending       error = errors.New("order is not pending")
 	ErrOrderNotFound         error = errors.New("order not found")
 	ErrOrderUpdate           error = errors.New("failed to update order")
+	ErrOrderSave             error = errors.New("failed to save order")
 	ErrOrderCancel           error = errors.New("failed to cancel order")
 )
 

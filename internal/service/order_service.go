@@ -330,16 +330,16 @@ func (s *OrderService) Cancel(ctx context.Context, orderID int) error {
 				"order_id", orderID,
 				"err", err,
 			)
-			return domain.ErrOrderCancel
+			return err
 		}
 
 		if err := s.orders.Save(ctx, order); err != nil {
 			s.logger.Error(
-				"failed to update order",
+				"failed to save order",
 				"order_id", orderID,
 				"err", err,
 			)
-			return domain.ErrOrderUpdate
+			return domain.ErrOrderSave
 		}
 
 		events := order.PullEvents()
