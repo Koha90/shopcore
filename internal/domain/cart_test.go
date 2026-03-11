@@ -61,12 +61,12 @@ func TestCart_Total(t *testing.T) {
 func TestCart_Checkout(t *testing.T) {
 	c, _ := NewCart(1)
 
-	err := c.Chackout()
+	err := c.Checkout()
 	require.ErrorIs(t, err, ErrCartEmpty)
 
 	_ = c.AddItem(1, 1, 100)
 
-	require.NoError(t, c.Chackout())
+	require.NoError(t, c.Checkout())
 	require.Equal(t, CartStatusCheckedOut, c.Status())
 
 	err = c.AddItem(2, 1, 100)

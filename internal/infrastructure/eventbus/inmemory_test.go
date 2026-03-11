@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"testing"
 
@@ -15,18 +16,68 @@ func TestInMemoryBus_MultipleEvents(t *testing.T) {
 
 	count := 0
 
+	e1 := domain.NewOrderPaid(1)
+	e2 := domain.NewOrderPaid(2)
+
 	bus.Subscribe(
-		domain.NameOrderConfirm,
-		func(ctx context.Context, event domain.DomainEvent) error {
+		e1.Name(),
+		func(ctx context.Context, event domain.Event) error {
 			count++
 			return nil
 		},
 	)
 
-	e1 := domain.NewOrderConfirmed(1)
-	e2 := domain.NewOrderConfirmed(2)
-
-	_ = bus.Publish(context.Background(), e1, e2)
-
+	err := bus.Publish(context.Background(), e1, e2)
+	require.NoError(t, err)
 	require.Equal(t, 2, count)
+}
+
+func TestInMemoryBus_MultipleHandlers(t *testing.T) {
+	bus := New(slog.Default())
+
+	count := 0
+	event := domain.NewOrderPaid(1)
+
+	bus.Subscribe(event.Name(), func(ctx context.Context, event domain.Event) error {
+		count++
+		return nil
+	})
+
+	bus.Subscribe(event.Name(), func(ctx context.Context, event domain.Event) error {
+		count++
+		return nil
+	})
+
+	err := bus.Publish(context.Background(), event)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+}
+
+func TestInMemoryBus_HandlerErrorDoesNotStopDelivery(t *testing.T) {
+	bus := New(slog.Default())
+
+	count := 0
+	event := domain.NewOrderPaid(1)
+
+	bus.Subscribe(event.Name(), func(ctx context.Context, event domain.Event) error {
+		return errors.New("handler failed")
+	})
+
+	bus.Subscribe(event.Name(), func(ctx context.Context, event domain.Event) error {
+		count++
+		return nil
+	})
+
+	err := bus.Publish(context.Background(), event)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+}
+
+func TestInMemoryBus_PublishWithoutSubscribers(t *testing.T) {
+	bus := New(slog.Default())
+
+	event := domain.NewOrderPaid(1)
+
+	err := bus.Publish(context.Background(), event)
+	require.NoError(t, err)
 }

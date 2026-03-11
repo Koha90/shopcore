@@ -15,22 +15,28 @@ func NewOrderRepo() *OrderRepo {
 	return &OrderRepo{}
 }
 
-// ByID implements [service.OrderRepository].
-func (o *OrderRepo) ByID(ctx context.Context, id int) (*domain.Order, error) {
+func (r *OrderRepo) Save(ctx context.Context, order *domain.Order) error {
+	if order.ID() == 0 {
+		return r.Create(ctx, order)
+	}
+	return r.Update(ctx, order)
+}
+
+func (r *OrderRepo) Create(ctx context.Context, order *domain.Order) error {
 	panic("unimplemented")
 }
 
-// Create implements [service.OrderRepository].
-func (o *OrderRepo) Create(ctx context.Context, order *domain.Order) error {
+// ByID implements [service.OrderRepository].
+func (r *OrderRepo) ByID(ctx context.Context, id int) (*domain.Order, error) {
 	panic("unimplemented")
 }
 
 // ListByCustomer implements [service.OrderRepository].
-func (o *OrderRepo) ListByCustomer(ctx context.Context, customerID int) ([]domain.Order, error) {
+func (r *OrderRepo) ListByCustomer(ctx context.Context, customerID int) ([]domain.Order, error) {
 	panic("unimplemented")
 }
 
 // Update implements [service.OrderRepository].
-func (o *OrderRepo) Update(ctx context.Context, order *domain.Order) error {
+func (r *OrderRepo) Update(ctx context.Context, order *domain.Order) error {
 	panic("unimplemented")
 }

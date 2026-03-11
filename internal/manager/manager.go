@@ -123,7 +123,7 @@ func (m *Manager) Stop(id string) error {
 	}
 
 	if entry.status != StatusStarting && entry.status != StatusRunning {
-		m.mu.Lock()
+		m.mu.Unlock()
 		return ErrBotNotRunning
 	}
 

@@ -166,7 +166,7 @@ func (r *ProductRepository) ByID(ctx context.Context, id int) (*domain.Product, 
 
 	product := domain.NewProductFromDB(
 		id,
-		categoryID,
+		&categoryID,
 		name,
 		description,
 		imgPtr,
@@ -217,7 +217,7 @@ func (r *ProductRepository) loadVariants(
 			id, packSize, districtID, price, archivedPtr,
 		)
 
-		variants = append(variants, v)
+		variants = append(variants, *v)
 	}
 
 	if err := rows.Err(); err != nil {

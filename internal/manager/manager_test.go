@@ -2,276 +2,274 @@ package manager
 
 import (
 	"context"
-	"fmt"
-	"sync"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
-type fakeRunner struct {
-	started chan string
-	done    chan string
+type stubRunner struct {
+	runErr error
+	calls  int
+	block  bool
+	done   chan struct{}
 }
 
-func newFakeRunner() *fakeRunner {
-	return &fakeRunner{
-		started: make(chan string, 100),
-		done:    make(chan string, 100),
-	}
-}
+func (r *stubRunner) Run(ctx context.Context, spec BotSpec) error {
+	r.calls++
 
-func (f *fakeRunner) Run(ctx context.Context, token string) error {
-	f.started <- token
-
-	<-ctx.Done()
-
-	f.done <- token
-
-	return nil
-}
-
-type ctxRunner struct {
-	done chan string
-}
-
-func newCtxRunner() *ctxRunner {
-	return &ctxRunner{
-		done: make(chan string, 100),
-	}
-}
-
-func (c *ctxRunner) Run(ctx context.Context, token string) error {
-	<-ctx.Done()
-	c.done <- token
-	return nil
-}
-
-func TestRegisterBot(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	err := manager.Register("bot1", "token123")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	if len(manager.List()) != 1 {
-		t.Fatalf("expected 1 bot, got %d", len(manager.List()))
-	}
-}
-
-func TestRegisterDuplicateToken(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	err := manager.Register("bot1", "token123")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	err = manager.Register("bot2", "token123")
-	if err == nil {
-		t.Fatal("expected error for dublicate token")
-	}
-}
-
-func TestRemoveBot(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	err := manager.Register("bot1", "token123")
-	if err != nil {
-		t.Fatalf("unknown error: %v", err)
-	}
-
-	err = manager.Remove("token123")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if len(manager.List()) != 0 {
-		t.Fatal("expected 0 bots after removal")
-	}
-}
-
-func TestRemoveUnknownBot(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	err := manager.Remove("unknown")
-	if err != ErrNotFound {
-		t.Fatalf("expected ErrNotFound, got %v", err)
-	}
-}
-
-func TestConcurrentRegister(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	done := make(chan struct{})
-
-	for i := 0; i < 100; i++ {
-		go func(i int) {
-			_ = manager.Register(
-				fmt.Sprintf("bot%d", i),
-				fmt.Sprintf("token1%d", i),
-			)
-			done <- struct{}{}
-		}(i)
-	}
-
-	for i := 0; i < 100; i++ {
-		<-done
-	}
-}
-
-func TestStressRegisterRemove(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	var wg sync.WaitGroup
-
-	workers := 1000
-
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			token := fmt.Sprintf("token%d", i)
-
-			switch i % 3 {
-			case 0:
-				_ = manager.Register("bot", token)
-			case 1:
-				_ = manager.Remove(token)
-			case 2:
-				_ = manager.List()
-			}
-		}(i)
-	}
-
-	wg.Wait()
-}
-
-func TestBootLookup(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	_ = manager.Register("bot1", "token123")
-
-	bot, ok := manager.Bot("token123")
-	if !ok {
-		t.Fatal("expected bot to exist")
-	}
-
-	if bot.Name != "bot1" {
-		t.Fatalf("expected bot name bot1, got %s", bot.Name)
-	}
-}
-
-func TestBootLookupUnknown(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	_, ok := manager.Bot("unknown")
-	if ok {
-		t.Fatal("expected bot not to exists")
-	}
-}
-
-func TestRegisterStartBot(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	_ = manager.Register("bot1", "token123")
-
-	time.Sleep(10 * time.Millisecond)
-
-	select {
-	case tok := <-runner.started:
-		if tok != "token123" {
-			t.Fatal("wrong token")
+	if r.block {
+		<-ctx.Done()
+		if r.done != nil {
+			close(r.done)
 		}
-	case <-time.After(time.Second):
-		t.Fatal("runner did not start")
+		return r.runErr
 	}
+
+	return r.runErr
 }
 
-func TestRemoveStopsBot(t *testing.T) {
-	runner := newFakeRunner()
-	manager := NewManager(runner)
-
-	_ = manager.Register("bot1", "token123")
-	_ = manager.Remove("token123")
-
-	select {
-	case tok := <-runner.done:
-		if tok != "token123" {
-			t.Fatalf("unexpected token %s", tok)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("runner did not stopped")
-	}
+func TestNew_PanicOnNilRunner(t *testing.T) {
+	require.Panics(t, func() { New(nil) })
 }
 
-func TestStopAll(t *testing.T) {
-	r := newFakeRunner()
-	m := NewManager(r)
+func TestRegister(t *testing.T) {
+	m := New(&stubRunner{})
 
-	for i := 0; i < 10; i++ {
-		_ = m.Register(
-			fmt.Sprintf("bot%d", i),
-			fmt.Sprintf("token%d", i),
-		)
-	}
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
 
-	m.StopAll()
-
-	for i := 0; i < 10; i++ {
-		select {
-		case <-r.done:
-		case <-time.After(time.Second):
-			t.Fatal("runner was not stopped")
-		}
-	}
+	status, err := m.Status("bot-1")
+	require.NoError(t, err)
+	require.Equal(t, StatusStopped, status)
 }
 
-func TestRemoveCancelContextRunner(t *testing.T) {
-	r := newCtxRunner()
-	m := NewManager(r)
+func TestRegister_DuplicateID(t *testing.T) {
+	m := New(&stubRunner{})
 
-	_ = m.Register("bot", "token123")
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
 
-	if err := m.Remove("token123"); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	select {
-	case token := <-r.done:
-		if token != "token123" {
-			t.Fatalf("unexpected token %s", token)
-		}
-	default:
-		t.Fatal("context runner was not canceled")
-	}
+	err = m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "duplicate",
+		Token: "another-token",
+	})
+	require.ErrorIs(t, err, ErrDuplicateBotID)
 }
 
-func TestStopAllCancelsAllContextRunners(t *testing.T) {
-	r := newCtxRunner()
-	m := NewManager(r)
+func TestStart(t *testing.T) {
+	runner := &stubRunner{}
+	m := New(runner)
 
-	for i := 0; i < 5; i++ {
-		_ = m.Register("bot", fmt.Sprintf("token%d", i))
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	err = m.Start(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		status, err := m.Status("bot-1")
+		return err == nil && status == StatusStopped
+	}, time.Second, 10*time.Millisecond)
+
+	require.Equal(t, 1, runner.calls)
+}
+
+func TestStart_UnknownBot(t *testing.T) {
+	m := New(&stubRunner{})
+
+	err := m.Start(context.Background(), "missing")
+	require.ErrorIs(t, err, ErrBotNotFound)
+}
+
+func TestStart_AlreadyRunning(t *testing.T) {
+	runner := &stubRunner{
+		block: true,
 	}
+	m := New(runner)
 
-	m.StopAll()
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
 
-	for i := 0; i < 5; i++ {
-		select {
-		case <-r.done:
-		default:
-			t.Fatal("not all runners were canceled")
-		}
+	err = m.Start(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		status, err := m.Status("bot-1")
+		return err == nil && (status == StatusStarting || status == StatusRunning)
+	}, time.Second, 10*time.Millisecond)
+
+	err = m.Start(context.Background(), "bot-1")
+	require.ErrorIs(t, err, ErrBotAlreadyRunning)
+
+	err = m.Stop("bot-1")
+	require.NoError(t, err)
+}
+
+func TestStart_RunErrorSetsFailedStatus(t *testing.T) {
+	runner := &stubRunner{
+		runErr: errors.New("boom"),
 	}
+	m := New(runner)
+
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	err = m.Start(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		info, err := m.Info("bot-1")
+		return err == nil && info.Status == StatusFailed && info.LastError == "boom"
+	}, time.Second, 10*time.Millisecond)
+}
+
+func TestStop(t *testing.T) {
+	runner := &stubRunner{
+		block: true,
+	}
+	m := New(runner)
+
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	err = m.Start(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		status, err := m.Status("bot-1")
+		return err == nil && (status == StatusStarting || status == StatusRunning)
+	}, time.Second, 10*time.Millisecond)
+
+	err = m.Stop("bot-1")
+	require.NoError(t, err)
+
+	status, err := m.Status("bot-1")
+	require.NoError(t, err)
+	require.Equal(t, StatusStopped, status)
+}
+
+func TestStop_UnknownBot(t *testing.T) {
+	m := New(&stubRunner{})
+
+	err := m.Stop("missing")
+	require.ErrorIs(t, err, ErrBotNotFound)
+}
+
+func TestStop_NotRunning(t *testing.T) {
+	m := New(&stubRunner{})
+
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	err = m.Stop("bot-1")
+	require.ErrorIs(t, err, ErrBotNotRunning)
+}
+
+func TestRestart(t *testing.T) {
+	runner := &stubRunner{
+		block: true,
+	}
+	m := New(runner)
+
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	err = m.Start(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		status, err := m.Status("bot-1")
+		return err == nil && (status == StatusStarting || status == StatusRunning)
+	}, time.Second, 10*time.Millisecond)
+
+	err = m.Restart(context.Background(), "bot-1")
+	require.NoError(t, err)
+
+	err = m.Stop("bot-1")
+	require.NoError(t, err)
+
+	require.GreaterOrEqual(t, runner.calls, 2)
+}
+
+func TestStatus_UnknownBot(t *testing.T) {
+	m := New(&stubRunner{})
+
+	_, err := m.Status("missing")
+	require.ErrorIs(t, err, ErrBotNotFound)
+}
+
+func TestInfo(t *testing.T) {
+	m := New(&stubRunner{})
+
+	err := m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "main",
+		Token: "token",
+	})
+	require.NoError(t, err)
+
+	info, err := m.Info("bot-1")
+	require.NoError(t, err)
+	require.Equal(t, "bot-1", info.ID)
+	require.Equal(t, "main", info.Name)
+	require.Equal(t, StatusStopped, info.Status)
+	require.Empty(t, info.LastError)
+}
+
+func TestList(t *testing.T) {
+	m := New(&stubRunner{})
+
+	err := m.Register(BotSpec{
+		ID:    "bot-2",
+		Name:  "second",
+		Token: "token-2",
+	})
+	require.NoError(t, err)
+
+	err = m.Register(BotSpec{
+		ID:    "bot-1",
+		Name:  "first",
+		Token: "token-1",
+	})
+	require.NoError(t, err)
+
+	list := m.List()
+	require.Len(t, list, 2)
+	require.Equal(t, "bot-1", list[0].ID)
+	require.Equal(t, "bot-2", list[1].ID)
 }

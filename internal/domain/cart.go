@@ -164,10 +164,10 @@ func (c *Cart) Total() int64 {
 	return total
 }
 
-// CheckOut closes cart.
+// Checkout closes cart.
 //
 // Fails if cart is empty or already checked out.
-func (c *Cart) Chackout() error {
+func (c *Cart) Checkout() error {
 	if c.status != CartStatusActive {
 		return ErrCartNotActive
 	}
