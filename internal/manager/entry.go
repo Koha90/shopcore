@@ -2,14 +2,22 @@ package manager
 
 import "context"
 
-type Bot struct {
+// BotSpec describes a single managed bot instance.
+//
+// ID must be unique inside manager.
+// Token is runtime configuration and must not be treated
+// as bot identity.
+type BotSpec struct {
+	ID    string
 	Name  string
 	Token string
 }
 
-type botEntry struct {
-	bot    Bot
-	cancel context.CancelFunc
-	done   chan struct{}
-	status BotStatus
+// Entry stores bot runtime state managed by Manager.
+type Entry struct {
+	spec      BotSpec
+	cancel    context.CancelFunc
+	done      chan struct{}
+	status    Status
+	lastError error
 }

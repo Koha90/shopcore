@@ -1,107 +1,217 @@
-// Package manager provide methods for monupulate bots
 package manager
 
 import (
 	"context"
+	"sort"
 	"sync"
 )
 
+// Manager coordinates lifecycle of registered bots.
+//
+// Manager is safe for concurrent use.
 type Manager struct {
-	mu     sync.RWMutex
-	bots   map[string]*botEntry
-	runner Runner
+	runner  Runner
+	mu      sync.RWMutex
+	entries map[string]*Entry
 }
 
-func NewManager(r Runner) *Manager {
+// New creates a new Manager instance.
+//
+// runner mos not be nil.
+func New(runner Runner) *Manager {
+	if runner == nil {
+		panic("manager: Runner is nil")
+	}
+
 	return &Manager{
-		bots:   make(map[string]*botEntry),
-		runner: r,
+		runner:  runner,
+		entries: make(map[string]*Entry),
 	}
 }
 
-func (m *Manager) Register(name, token string) error {
+// Register adds a new bot to manager in stopped state.
+//
+// It does not start bot runtime.
+func (m *Manager) Register(spec BotSpec) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, exists := m.bots[token]; exists {
-		return ErrDuplicationToken
+	if _, exists := m.entries[spec.ID]; exists {
+		return ErrDuplicateBotID
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	m.entries[spec.ID] = &Entry{
+		spec:   spec,
+		status: StatusStopped,
+	}
+
+	return nil
+}
+
+// Start launches bot runtime in a separate goroutine.
+//
+// Bot must be registered and not already be starting or running.
+func (m *Manager) Start(ctx context.Context, id string) error {
+	m.mu.Lock()
+
+	entry, ok := m.entries[id]
+	if !ok {
+		m.mu.Unlock()
+		return ErrBotNotFound
+	}
+
+	if entry.status == StatusStarting || entry.status == StatusRunning {
+		m.mu.Unlock()
+		return ErrBotAlreadyRunning
+	}
+
+	runCtx, cancel := context.WithCancel(ctx)
 	done := make(chan struct{})
 
-	entry := &botEntry{
-		bot: Bot{
-			Name:  name,
-			Token: token,
-		},
-		cancel: cancel,
-		done:   done,
-	}
+	entry.cancel = cancel
+	entry.done = done
+	entry.status = StatusStarting
+	entry.lastError = nil
 
-	m.bots[token] = entry
+	spec := entry.spec
+	m.mu.Unlock()
 
 	go func() {
+		m.mu.Lock()
+		if current, ok := m.entries[id]; ok {
+			current.status = StatusRunning
+		}
+		m.mu.Unlock()
+
+		err := m.runner.Run(runCtx, spec)
+
+		m.mu.Lock()
+		defer m.mu.Unlock()
 		defer close(done)
-		_ = m.runner.Run(ctx, token)
+
+		current, ok := m.entries[id]
+		if !ok {
+			return
+		}
+
+		current.cancel = nil
+		current.done = nil
+
+		if err != nil {
+			current.status = StatusFailed
+			current.lastError = err
+			return
+		}
+
+		current.status = StatusStopped
+		current.lastError = nil
 	}()
 
 	return nil
 }
 
-func (m *Manager) Remove(token string) error {
+// Stop requests bot runtime shutdown.
+//
+// Bot must be registered and currently starting or running.
+func (m *Manager) Stop(id string) error {
 	m.mu.Lock()
 
-	entry, ok := m.bots[token]
+	entry, ok := m.entries[id]
 	if !ok {
 		m.mu.Unlock()
-		return ErrNotFound
+		return ErrBotNotFound
 	}
-	delete(m.bots, token)
+
+	if entry.status != StatusStarting && entry.status != StatusRunning {
+		m.mu.Lock()
+		return ErrBotNotRunning
+	}
+
+	cancel := entry.cancel
+	done := entry.done
+	entry.status = StatusStopping
 	m.mu.Unlock()
 
-	entry.cancel()
-	<-entry.done
+	if cancel != nil {
+		cancel()
+	}
+
+	if done != nil {
+		<-done
+	}
 
 	return nil
 }
 
-func (m *Manager) Bot(token string) (Bot, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	entry, ok := m.bots[token]
-	if !ok {
-		return Bot{}, false
+// Restart stops bot if it is running and then starts it again.
+func (m *Manager) Restart(ctx context.Context, id string) error {
+	status, err := m.Status(id)
+	if err != nil {
+		return err
 	}
-	return entry.bot, ok
+
+	if status == StatusStarting || status == StatusRunning {
+		if err := m.Stop(id); err != nil {
+			return err
+		}
+	}
+
+	return m.Start(ctx, id)
 }
 
-func (m *Manager) List() []Bot {
+// Status returns current runtime status for bot by ID.
+func (m *Manager) Status(id string) (Status, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	result := make([]Bot, 0, len(m.bots))
-	for _, entry := range m.bots {
-		result = append(result, entry.bot)
+	entry, ok := m.entries[id]
+	if !ok {
+		return "", ErrBotNotFound
 	}
+
+	return entry.status, nil
+}
+
+// Info returns current read model for a single bot.
+func (m *Manager) Info(id string) (Info, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	entry, ok := m.entries[id]
+	if !ok {
+		return Info{}, ErrBotNotFound
+	}
+
+	return infoFromEntry(entry), nil
+}
+
+// List returns all registered bots as sorted read models.
+func (m *Manager) List() []Info {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]Info, 0, len(m.entries))
+	for _, entry := range m.entries {
+		result = append(result, infoFromEntry(entry))
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].ID < result[j].ID
+	})
+
 	return result
 }
 
-func (m *Manager) StopAll() {
-	m.mu.Lock()
-	entries := make([]*botEntry, 0, len(m.bots))
-	for _, entry := range m.bots {
-		entries = append(entries, entry)
-	}
-	m.bots = make(map[string]*botEntry)
-	m.mu.Unlock()
-
-	for _, entry := range entries {
-		entry.cancel()
+func infoFromEntry(entry *Entry) Info {
+	lastError := ""
+	if entry.lastError != nil {
+		lastError = entry.lastError.Error()
 	}
 
-	for _, entry := range entries {
-		<-entry.done
+	return Info{
+		ID:        entry.spec.ID,
+		Name:      entry.spec.Name,
+		Status:    entry.status,
+		LastError: lastError,
 	}
 }
