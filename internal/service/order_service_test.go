@@ -631,3 +631,46 @@ func TestOrderService_Cancel_PublishError(t *testing.T) {
 	require.Equal(t, 1, orders.saveCalls)
 	require.Equal(t, 1, bus.calls)
 }
+
+func TestNewOrderService_PanicsOnNilProducts(t *testing.T) {
+	require.Panics(t, func() {
+		NewOrderService(nil, &stubOrderRepository{}, &stubUserRepository{}, &stubEventBus{}, &stubTxManager{}, nil)
+	})
+}
+
+func TestNewOrderService_PanicsOnNilOrders(t *testing.T) {
+	require.Panics(t, func() {
+		NewOrderService(&stubProductReader{}, nil, &stubUserRepository{}, &stubEventBus{}, &stubTxManager{}, nil)
+	})
+}
+
+func TestNewOrderService_PanicsOnNilUsers(t *testing.T) {
+	require.Panics(t, func() {
+		NewOrderService(&stubProductReader{}, &stubOrderRepository{}, nil, &stubEventBus{}, &stubTxManager{}, nil)
+	})
+}
+
+func TestNewOrderService_PanicsOnNilBus(t *testing.T) {
+	require.Panics(t, func() {
+		NewOrderService(&stubProductReader{}, &stubOrderRepository{}, &stubUserRepository{}, nil, &stubTxManager{}, nil)
+	})
+}
+
+func TestNewOrderService_PanicsOnNilTx(t *testing.T) {
+	require.Panics(t, func() {
+		NewOrderService(&stubProductReader{}, &stubOrderRepository{}, &stubUserRepository{}, &stubEventBus{}, nil, nil)
+	})
+}
+
+func TestNewOrderService_UsesDefaultLogger(t *testing.T) {
+	svc := NewOrderService(
+		&stubProductReader{},
+		&stubOrderRepository{},
+		&stubUserRepository{},
+		&stubEventBus{},
+		&stubTxManager{},
+		nil,
+	)
+	require.NotNil(t, svc)
+	require.NotNil(t, svc.logger)
+}

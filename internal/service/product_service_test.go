@@ -201,3 +201,27 @@ func TestProductService_AddVariant_SaveError(t *testing.T) {
 	require.Equal(t, 1, repo.saveCalls)
 	require.NotNil(t, repo.savedProduct)
 }
+
+func TestNewProductService_PanicsOnNilRepo(t *testing.T) {
+	require.Panics(t, func() {
+		NewProductService(nil, &stubTxManager{}, &stubEventBus{}, nil)
+	})
+}
+
+func TestNewProductService_PanicsOnNilTx(t *testing.T) {
+	require.Panics(t, func() {
+		NewProductService(&stubProductRepository{}, nil, &stubEventBus{}, nil)
+	})
+}
+
+func TestNewProductService_PanicsOnNilBus(t *testing.T) {
+	require.Panics(t, func() {
+		NewProductService(&stubProductRepository{}, &stubTxManager{}, nil, nil)
+	})
+}
+
+func TestNewProductService_UsesDefaultLogger(t *testing.T) {
+	svc := NewProductService(&stubProductRepository{}, &stubTxManager{}, &stubEventBus{}, nil)
+	require.NotNil(t, svc)
+	require.NotNil(t, svc.logger)
+}

@@ -97,3 +97,27 @@ func TestUserService_Create_TransactionError(t *testing.T) {
 	require.Equal(t, 0, repo.saveCalls)
 	require.Nil(t, repo.savedUser)
 }
+
+func TestNewUserService_PanicsOnNilRepo(t *testing.T) {
+	require.Panics(t, func() {
+		NewUserService(nil, &stubTxManager{}, &stubEventBus{}, nil)
+	})
+}
+
+func TestNewUserService_PanicsOnNilTx(t *testing.T) {
+	require.Panics(t, func() {
+		NewUserService(&stubUserRepository{}, nil, &stubEventBus{}, nil)
+	})
+}
+
+func TestNewUserService_PanicsOnNilBus(t *testing.T) {
+	require.Panics(t, func() {
+		NewUserService(&stubUserRepository{}, &stubTxManager{}, nil, nil)
+	})
+}
+
+func TestNewUserService_UsesDefaultLogger(t *testing.T) {
+	svc := NewUserService(&stubUserRepository{}, &stubTxManager{}, &stubEventBus{}, nil)
+	require.NotNil(t, svc)
+	require.NotNil(t, svc.logger)
+}
