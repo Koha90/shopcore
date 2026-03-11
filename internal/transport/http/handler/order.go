@@ -18,43 +18,30 @@ import (
 )
 
 // OrderHandler handles HTTP requests related to orders.
-//
-// It does not contain business logic.
-// It only coordinates requests parsing and response formatting.
 type OrderHandler struct {
 	service *service.OrderService
 }
 
-// NewOrderHandler ...
+// NewOrderHandler creates new OrderHandler instance.
 func NewOrderHandler(s *service.OrderService) *OrderHandler {
 	return &OrderHandler{service: s}
 }
 
-type createRequest struct {
-	CustomerID int `json:"customer_id"`
-	ProductID  int `json:"product_id"`
-	VariantID  int `json:"variant_id"`
-}
-
-// Create handles order creation request.
-//
-// Expects JSON body:
-//
-//	{
-//	  "customer_id": int,
-//		"product_id": int
-//	}
-//
-// Returns created order as JSON.
+// Create creates a new order for selected product variant.
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req createRequest
+	var req dto.CreateOrderRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	order, err := h.service.Create(r.Context(), req.CustomerID, req.ProductID, req.VariantID)
+	order, err := h.service.CreateForVariant(
+		r.Context(),
+		req.CustomerID,
+		req.ProductID,
+		req.VariantID,
+	)
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
@@ -66,33 +53,36 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.OrderReponse{
-		ID:         order.ID(),
-		CustomerID: order.CustomerID(),
-		ProductID:  order.ProductID(),
-		Price:      order.Price(),
+		ID:     order.ID(),
+		UserID: order.UserID(),
+		Status: string(order.Status()),
+		Total:  order.Total(),
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
 
-// Confirm handles order confirmation.
-//
-// Path param:
-//
-//	id - order indentifier
-//
-// Returns 204 No Content on success.
-func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
+// ConfirmPayment confirms external payment for an existing order.
+func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
+	orderID, err := parseOrderID(r)
 	if err != nil {
 		http.Error(w, "invalid order id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.Confirm(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	err = h.service.ConfirmPayment(r.Context(), orderID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrOrderNotFound):
+			http.Error(w, err.Error(), http.StatusNotFound)
+		case errors.Is(err, domain.ErrOrderAlreadyPaid),
+			errors.Is(err, domain.ErrOrderAlreadyCancelled),
+			errors.Is(err, domain.ErrOrderNotPending):
+			http.Error(w, err.Error(), http.StatusConflict)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -100,12 +90,6 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 }
 
 // Cancel handles order cancellation.
-//
-// Path param:
-//
-//	id - order indentifier
-//
-// Returns 204 No Content on success.
 func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, _ := strconv.Atoi(idStr)
@@ -116,4 +100,14 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func parseOrderID(r *http.Request) (int, error) {
+	orderIDStr := chi.URLParam(r, "id")
+	orderID, err := strconv.Atoi(orderIDStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return orderID, err
 }
