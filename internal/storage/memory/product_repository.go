@@ -7,12 +7,16 @@ import (
 	"botmanager/internal/domain"
 )
 
+// ProductRepository stores products in process memory.
+//
+// It is intended of local development and tests.
 type ProductRepository struct {
 	mu       *sync.Mutex
 	products map[int]*domain.Product
 	nextID   int
 }
 
+// NewProductRepository creates a new in-memory product repository.
 func NewProductRepository(mu *sync.Mutex) *ProductRepository {
 	return &ProductRepository{
 		mu:       mu,
@@ -21,23 +25,25 @@ func NewProductRepository(mu *sync.Mutex) *ProductRepository {
 	}
 }
 
-func (r *ProductRepository) Create(
-	ctx context.Context,
-	product *domain.Product,
-) error {
+// Save stores product in memory.
+//
+// If product does not yet have an ID, repository assings a new one.
+func (r *ProductRepository) Save(ctx context.Context, product *domain.Product) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.products[r.nextID] = product
-	r.nextID++
+	if product.ID() == 0 {
+		product.SetID(r.nextID)
+		r.nextID++
+	}
+
+	r.products[product.ID()] = product
 
 	return nil
 }
 
-func (r *ProductRepository) ByID(
-	ctx context.Context,
-	id int,
-) (*domain.Product, error) {
+// ByID returns product by its identifier.
+func (r *ProductRepository) ByID(ctx context.Context, id int) (*domain.Product, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -47,23 +53,4 @@ func (r *ProductRepository) ByID(
 	}
 
 	return product, nil
-}
-
-func (r *ProductRepository) Update(ctx context.Context, product *domain.Product) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.products[product.ID()] = product
-	return nil
-}
-
-func (r *ProductRepository) Delete(
-	ctx context.Context,
-	id int,
-) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	delete(r.products, id)
-	return nil
 }

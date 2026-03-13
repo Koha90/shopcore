@@ -26,6 +26,9 @@ func NewProductRepository(db *sql.DB, logger *slog.Logger) *ProductRepository {
 }
 
 // Save creates or updates product and all his variants in transaction.
+// NOTE:
+// New variant IDs are assigned by database.
+// Current implementation does not write generated IDs back into aggregate.
 func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -38,7 +41,6 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 		}
 	}()
 
-	// Insert product if new
 	var productID int
 	if p.ID() == 0 {
 		err := tx.QueryRowContext(ctx,
@@ -59,13 +61,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 			`UPDATE products
 		 	 SET category_id=$1, name=$2, description=$3, image_path=$4, version=$5
 		   WHERE id=$6 AND version=$7`,
-			p.CategoryID(),
-			p.Name(),
-			p.Description(),
-			p.ImagePath(),
-			p.Version(),
-			p.ID(),
-			p.Version(),
+			p.CategoryID(), p.Name(), p.Description(), p.ImagePath(), p.Version(), p.ID(), p.Version(),
 		)
 		if err != nil {
 			tx.Rollback()
@@ -76,31 +72,26 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 		r.logger.Info("product updated", "id", productID)
 	}
 
-	// Insert/update variants
-	for _, v := range p.VariantForUpdate() {
+	for _, v := range p.Variants() {
 		if !v.IsActive() {
 			continue
 		}
 
 		if v.ID() == 0 {
-			// new variant
 			var variantID int
 			err := tx.QueryRowContext(ctx, `
-				INSERT INTO product_variants
-				(product_id, pack_size, district_id, price)
+				INSERT INTO product_variants (product_id, pack_size, district_id, price)
 				VALUES ($1, $2, $3, $4)
 				RETURNING id
-			`, productID, v.PackSize(), v.DistrictID(), v.Price(),
-			).Scan(&variantID)
+			`, productID, v.PackSize(), v.DistrictID(), v.Price()).Scan(&variantID)
 			if err != nil {
 				tx.Rollback()
 				r.logger.Error("failed to insert variant", "productID", productID, "err", err)
 				return err
 			}
-			v.SetID(variantID)
 			r.logger.Info("variant created", "id", variantID)
+			continue
 		} else {
-			// update existing
 			_, err := tx.ExecContext(ctx, `
 			  UPDATE product_variants
 				SET pack_size=$1, district_id=$2, price=$3

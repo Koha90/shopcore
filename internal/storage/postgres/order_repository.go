@@ -9,12 +9,16 @@ import (
 
 var _ service.OrderRepository = (*OrderRepo)(nil)
 
+// OrderRepo stores orders in PostgreSQL.
 type OrderRepo struct{}
 
 func NewOrderRepo() *OrderRepo {
 	return &OrderRepo{}
 }
 
+// Save persists order state.
+//
+// New order are inserted, existing orders are updated.
 func (r *OrderRepo) Save(ctx context.Context, order *domain.Order) error {
 	if order.ID() == 0 {
 		return r.Create(ctx, order)
