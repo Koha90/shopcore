@@ -11,33 +11,34 @@ import (
 	"botmanager/internal/storage/memory"
 )
 
-func buildOrderService(logger *slog.Logger) *service.OrderService {
+// BuildOrderService creates in-memory dependencies for local development
+// and returns configured order service instance.
+func BuildOrderService(ctx context.Context, logger *slog.Logger) (*service.OrderService, error) {
 	mu := &sync.Mutex{}
 	// repositories
 	orderRepo := memory.NewOrderRepository()
 	productRepo := memory.NewProductRepository(mu)
-
-	// Seed data
-	{
-		p, err := domain.NewProduct(1, "test name", 1, "test distriction", "")
-		if err != nil {
-			panic(err)
-		}
-		_ = productRepo.Create(context.Background(), p)
-	}
-
-	// event bus
+	userRepo := memory.NewUserRepository()
+	txManager := memory.NewTxManager(mu)
 	bus := eventbus.New(logger)
 
-	// transaction manager
-	txManager := memory.NewTxManager(mu)
+	product, err := domain.NewProduct("Amnesia", 1, "good stuff", "/tmp/img.png")
+	if err != nil {
+		return nil, err
+	}
 
-	return service.NewOrderService(
+	if err := productRepo.Save(ctx, product); err != nil {
+		return nil, err
+	}
+
+	orderService := service.NewOrderService(
 		productRepo,
 		orderRepo,
-		orderRepo,
-		txManager,
+		userRepo,
 		bus,
+		txManager,
 		logger,
 	)
+
+	return orderService, nil
 }

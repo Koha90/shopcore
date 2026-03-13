@@ -1,11 +1,11 @@
-// Package app composes and write all application dependecies.
+// Package app composes and wires application dependecies.
 //
-// It initializes ifrastructure, services, transport layer
-// and start the application serer.
+// It initializes infrastructure, services and transport layer
+// and builds application runtime container.
 package app
 
 import (
-	"log/slog"
+	"context"
 	"net/http"
 
 	"botmanager/internal/config"
@@ -18,28 +18,32 @@ type App struct {
 	server *http.Server
 }
 
-func NewApp(cfg *config.Config) *App {
-	logger, err := logger.Setup(cfg.Env)
+// New creates application container with configured dependecies.
+//
+// It returns an error if dependecy wiring fails.
+func New(cfg *config.Config) (*App, error) {
+	logg, err := logger.Setup(cfg.Env)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	defer logger.Close()
 
-	slog.Info("application started")
+	orderService, err := BuildOrderService(context.Background(), logg.Logger)
+	if err != nil {
+		return nil, err
+	}
 
-	orderService := buildOrderService(logger.Logger)
-
-	handler := handler.NewOrderHandler(orderService)
-	router := transporthttp.NewRouter(handler)
+	orderHandler := handler.NewOrderHandler(orderService)
+	router := transporthttp.NewRouter(orderHandler)
 
 	server := &http.Server{
 		Addr:    ":" + cfg.HTTP.Port,
 		Handler: router,
 	}
 
-	return &App{server: server}
+	return &App{server: server}, nil
 }
 
+// Run starts HTTP server.
 func (a *App) Run() error {
 	return a.server.ListenAndServe()
 }

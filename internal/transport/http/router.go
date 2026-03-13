@@ -35,7 +35,7 @@ func NewRouter(orderHandler *handler.OrderHandler) http.Handler {
 				// POST /api/v1/orders
 				r.Post("/", orderHandler.Create)
 				// POST /api/v1/orders/{id}/confirm
-				r.Post("/{id}/confirm", orderHandler.Confirm)
+				r.Post("/{id}/confirm", orderHandler.ConfirmPayment)
 				// POST /api/v1/orders/{id}/cancel
 				r.Post("/{id}/cancel", orderHandler.Cancel)
 			})

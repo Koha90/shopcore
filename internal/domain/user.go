@@ -18,6 +18,7 @@ var (
 	ErrInvalidCredentials  error = errors.New("invalid credentials")
 	ErrInsufficientBalance error = errors.New("insufficient balance")
 	ErrInvalidAmount       error = errors.New("amount must be positive")
+	ErrUserNotFound        error = errors.New("user not found")
 )
 
 // User represents an application user.
@@ -206,4 +207,11 @@ func (u *User) GrantAdminAccess(until time.Time) {
 	}
 	u.adminAccessExpiresAt = &until
 	u.updatedAt = time.Now()
+}
+
+// ---- SETTERS ----
+
+// SetID is intended for repository layer only.
+func (u *User) SetID(id int) {
+	u.id = id
 }

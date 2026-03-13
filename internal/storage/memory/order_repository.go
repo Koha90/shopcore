@@ -9,8 +9,8 @@ import (
 
 // OrderRepository stores orders in process memory.
 //
-// It is intead for local development, tests and simple runtime scenarios.
-// Repository assings incremental IDs to new orders on first time save.
+// It is intended for local development, tests and simple runtime scenarios.
+// Repository assigns incremental IDs to new orders on first save.
 type OrderRepository struct {
 	mu     sync.Mutex
 	orders map[int]*domain.Order
@@ -27,7 +27,7 @@ func NewOrderRepository() *OrderRepository {
 
 // Save stores order in memory.
 //
-// If order does not yet have an ID, repository assings a new one.
+// If order does not yet have an ID, repository assigns a new one.
 func (r *OrderRepository) Save(ctx context.Context, order *domain.Order) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
