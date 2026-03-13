@@ -210,14 +210,26 @@ func (m Model) selectedInfo() *manager.Info {
 }
 
 func (m *Model) moveUp() {
-	if m.cursor > 0 {
+	if len(m.filteredBots) == 0 {
+		return
+	}
+
+	if m.cursor == 0 {
+		m.cursor = len(m.filteredBots) - 1
+	} else {
 		m.cursor--
 	}
 	m.ensureCursorVisible()
 }
 
 func (m *Model) moveDown() {
-	if m.cursor < len(m.filteredBots)-1 {
+	if len(m.filteredBots) == 0 {
+		return
+	}
+
+	if m.cursor >= len(m.filteredBots)-1 {
+		m.cursor = 0
+	} else {
 		m.cursor++
 	}
 	m.ensureCursorVisible()
@@ -302,12 +314,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "backspace":
 				if len(m.filter) > 0 {
 					m.filter = m.filter[:len(m.filter)-1]
+					m.resetListPosition()
 					m.refresh()
 				}
 				return m, nil
 			default:
 				if msg.Text != "" {
 					m.filter += msg.Text
+					m.resetListPosition()
 					m.refresh()
 				}
 				return m, nil
@@ -318,15 +332,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "k", "л":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+			m.moveUp()
 			return m, nil
 
 		case "down", "j", "о":
-			if m.cursor < len(m.filteredBots)-1 {
-				m.cursor++
-			}
+			m.moveDown()
 			return m, nil
 
 		case "/":
@@ -334,6 +344,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filter = ""
 			m.lastErr = nil
 			m.message = "filter mode"
+			m.resetListPosition()
+			m.refresh()
 			return m, nil
 
 		case "s", "ы":
