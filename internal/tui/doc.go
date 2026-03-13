@@ -4,6 +4,6 @@
 // their status and latest runtime errors, and allows operator actions
 // such as start, stop and restart.
 //
-// Package is designed to work with switchable visual themes.
-// Default theme is Gruvbox.
+// Package supports visual themes, list filtering, mouse interaction
+// and periodic runtime refresh. Default theme is gruvbox.
 package tui

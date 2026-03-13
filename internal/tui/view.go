@@ -13,6 +13,8 @@ import (
 // View renders full TUI screen.
 func (m Model) View() tea.View {
 	title := m.theme.Title.Render("botmanager · runtime panel")
+	summary := m.renderSummary()
+	filterBar := m.renderFilterBar()
 
 	left := m.renderList()
 	right := m.renderDetails()
@@ -24,12 +26,14 @@ func (m Model) View() tea.View {
 	)
 
 	status := m.renderStatusBar()
-	help := m.theme.Help.Render("↑/↓ or j/k move • s start • x stop • r restart • q quit")
+	help := m.theme.Help.Render("↑/↓ or j/k move • / filter • mouse click select • wheel scroll • s start • x stop • r restart • q quit")
 
 	v := tea.NewView(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
+			summary,
+			filterBar,
 			"",
 			content,
 			"",
@@ -38,20 +42,58 @@ func (m Model) View() tea.View {
 		),
 	)
 	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
 	return v
+}
+
+func (m Model) renderSummary() string {
+	parts := []string{
+		m.theme.Muted.Render(fmt.Sprintf("total: %d", m.summary.Total)),
+		m.theme.Running.Render(fmt.Sprintf("running: %d", m.summary.Running)),
+		m.theme.Stopped.Render(fmt.Sprintf("stopped: %d", m.summary.Stopped)),
+		m.theme.Failed.Render(fmt.Sprintf("failed: %d", m.summary.Failed)),
+	}
+
+	if m.summary.Starting > 0 {
+		parts = append(parts, m.theme.Starting.Render(fmt.Sprintf("starting: %d", m.summary.Starting)))
+	}
+	if m.summary.Stopping > 0 {
+		parts = append(parts, m.theme.Stopping.Render(fmt.Sprintf("stopping: %d", m.summary.Stopping)))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(0, 1)
+
+	return box.Render(strings.Join(parts, "  •  "))
+}
+
+func (m Model) renderFilterBar() string {
+	if m.filtering {
+		return m.theme.StatusBar.Render("filter: " + m.filter)
+	}
+	if m.filter != "" {
+		return m.theme.Help.Render("filter active: " + m.filter)
+	}
+	return m.theme.Help.Render("filter: off")
 }
 
 func (m Model) renderList() string {
 	var lines []string
 
-	lines = append(lines, m.theme.ListHeader.Render("Bots"))
+	header := fmt.Sprintf("Bots (%d/%d)", len(m.filteredBots), len(m.bots))
+	lines = append(lines, m.theme.ListHeader.Render(header))
 
-	if len(m.bots) == 0 {
-		lines = append(lines, m.theme.Muted.Render("no bots registered"))
+	visible := m.visibleBots()
+
+	if len(visible) == 0 {
+		lines = append(lines, m.theme.Muted.Render("no bots match filter"))
 	} else {
-		for i, bot := range m.bots {
+		for i, bot := range visible {
+			absoluteIndex := m.offset + i
 			line := fmt.Sprintf("%s  %s", bot.Name, m.renderStatus(bot.Status))
-			if i == m.cursor {
+			if absoluteIndex == m.cursor {
 				lines = append(lines, m.theme.ListSelected.Render(line))
 				continue
 			}
@@ -59,11 +101,18 @@ func (m Model) renderList() string {
 		}
 	}
 
+	if len(m.filteredBots) > m.pageSize {
+		lines = append(lines, "")
+		lines = append(lines, m.theme.Muted.Render(
+			fmt.Sprintf("showing %d-%d of %d", m.offset+1, min(m.offset+m.pageSize, len(m.filteredBots)), len(m.filteredBots)),
+		))
+	}
+
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.theme.Border.GetBackground()).
+		BorderForeground(m.theme.Border.GetForeground()).
 		Padding(1, 2).
-		Width(36)
+		Width(42)
 
 	return box.Render(strings.Join(lines, "\n"))
 }
