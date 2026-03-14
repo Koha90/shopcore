@@ -8,15 +8,21 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT,
 
   role TEXT NOT NULL CHECK (role IN ('customer', 'admin')),
-  balance BIGINT NOT NULL DEFAULT 0,
+  balance BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0),
 
-  is_enable BOOLEAN NOT NULL DEFAULT TRUE,
+  is_enabled BOOLEAN NOT NULL DEFAULT FALSE,
 
-  admin_access_expires_at TIMESTAMP NULL,
+  admin_access_expires_at TIMESTAMPTZ NULL,
 
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CHECK (
+    tg_id IS NOT NULL
+    OR (email IS NOT NULL AND password_hash IS NOT NULL)
+  )
 );
 
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_is_enable ON users(is_enable);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_is_enable ON users(is_enable);
+CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users(tg_id);
