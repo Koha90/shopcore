@@ -101,6 +101,8 @@ func NewUser(p NewUserParams) (*User, error) {
 	return user, nil
 }
 
+// ---- GETTERS ----
+
 // ID returns user id.
 func (u *User) ID() int {
 	return u.id
@@ -126,6 +128,36 @@ func (u *User) Balance() int64 {
 	return u.balance
 }
 
+// Version returns version of user application.
+func (u *User) Version() int {
+	return u.version
+}
+
+// Email returns email of user.
+func (u *User) Email() string {
+	return u.email
+}
+
+// PasswordHash returns password hash of user.
+func (u *User) PasswordHash() string {
+	return u.passwordHash
+}
+
+// Role returns role of user.
+func (u *User) Role() Role {
+	return u.role
+}
+
+// IsEnabled returns ....
+func (u *User) IsEnabled() bool {
+	return u.isEnabled
+}
+
+// AdminAccessExpiresAt return time where admin access is expired.
+func (u *User) AdminAccessExpiresAt() *time.Time {
+	return u.adminAccessExpiresAt
+}
+
 // AddBalance increase user balance.
 func (u *User) AddBalance(amount int64) error {
 	if amount <= 0 {
@@ -136,11 +168,6 @@ func (u *User) AddBalance(amount int64) error {
 	u.updatedAt = time.Now()
 
 	return nil
-}
-
-// Version returns version of user application.
-func (u *User) Version() int {
-	return u.version
 }
 
 // DeductBalance decrease user balance.
