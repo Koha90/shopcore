@@ -75,6 +75,45 @@ func NewOrder(userID int, items []OrderItem, createdAt time.Time) (*Order, error
 	return o, nil
 }
 
+// NewOrderFromDB reconstructs order from persistent storage.
+//
+// It is intended for repository layer only.
+func NewOrderFromDB(
+	id int,
+	userID int,
+	items []OrderItem,
+	total int64,
+	status OrderStatus,
+	varsion int,
+	createdAt time.Time,
+	paidAt *time.Time,
+	cancelledAt *time.Time,
+) (*Order, error) {
+	if id <= 0 {
+		return nil, ErrOrderNotFound
+	}
+	if userID <= 0 {
+		return nil, ErrInvalidOrderUserID
+	}
+	if len(items) == 0 {
+		return nil, ErrOrderEmpty
+	}
+
+	o := &Order{
+		id:          id,
+		userID:      userID,
+		items:       items,
+		total:       total,
+		status:      status,
+		createdAt:   createdAt,
+		paidAt:      paidAt,
+		cancelledAt: cancelledAt,
+	}
+	o.setInitialVersion(varsion)
+
+	return o, nil
+}
+
 // ---- GETTERS ----
 
 // ID returns order id.
@@ -107,6 +146,21 @@ func (o *Order) Items() []OrderItem {
 // Version returns aggregate version.
 func (o *Order) Version() int {
 	return o.version
+}
+
+// CreatedAt returns order creation time.
+func (o *Order) CreatedAt() time.Time {
+	return o.createdAt
+}
+
+// PaidAt returns payment time if present.
+func (o *Order) PaidAt() *time.Time {
+	return o.paidAt
+}
+
+// CancelledAt returns cancellation time if present.
+func (o *Order) CancelledAt() *time.Time {
+	return o.cancelledAt
 }
 
 // MarkPaid marks order as paid.
