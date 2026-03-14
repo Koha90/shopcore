@@ -8,15 +8,22 @@ import (
 )
 
 // UserRepository stores users in process memory.
+//
+// It is intended for local development, tests and simple runtime scenarios.
+// Reposutory assigns incremental IDs to new users on first save.
 type UserRepository struct {
-	mu     sync.Mutex
+	mu     *sync.Mutex
 	users  map[int]*domain.User
 	nextID int
 }
 
 // NewUserRepository creates a new in-memory user repository.
-func NewUserRepository() *UserRepository {
+//
+// mu must point to shared storage mutes used by all repositories
+// participating in the same logical transaction.
+func NewUserRepository(mu *sync.Mutex) *UserRepository {
 	return &UserRepository{
+		mu:     mu,
 		users:  make(map[int]*domain.User),
 		nextID: 1,
 	}

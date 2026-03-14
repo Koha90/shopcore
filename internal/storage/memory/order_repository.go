@@ -9,17 +9,18 @@ import (
 
 // OrderRepository stores orders in process memory.
 //
-// It is intended for local development, tests and simple runtime scenarios.
+// It is intended for local development and tests.
 // Repository assigns incremental IDs to new orders on first save.
 type OrderRepository struct {
-	mu     sync.Mutex
+	mu     *sync.Mutex
 	orders map[int]*domain.Order
 	nextID int
 }
 
 // NewOrderRepository creates a new in-memory order repository.
-func NewOrderRepository() *OrderRepository {
+func NewOrderRepository(mu *sync.Mutex) *OrderRepository {
 	return &OrderRepository{
+		mu:     mu,
 		orders: make(map[int]*domain.Order),
 		nextID: 1,
 	}

@@ -1,4 +1,3 @@
-// Package postgres provide methods for monipulate data postgresql.
 package postgres
 
 import (

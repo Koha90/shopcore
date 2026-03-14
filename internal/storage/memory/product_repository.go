@@ -10,6 +10,7 @@ import (
 // ProductRepository stores products in process memory.
 //
 // It is intended of local development and tests.
+// Repository assings incremental IDs to new products on first save.
 type ProductRepository struct {
 	mu       *sync.Mutex
 	products map[int]*domain.Product
@@ -27,7 +28,7 @@ func NewProductRepository(mu *sync.Mutex) *ProductRepository {
 
 // Save stores product in memory.
 //
-// If product does not yet have an ID, repository assings a new one.
+// If product does not yet have an ID, repository assigns a new one.
 func (r *ProductRepository) Save(ctx context.Context, product *domain.Product) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

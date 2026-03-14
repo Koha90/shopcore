@@ -1,4 +1,4 @@
-// Package memory ...
+// Package memory provides in-memory storage adapters.
 package memory
 
 import (
@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// TxManager implements service.TxManager for in-memory storage.
+// TxManager implements transactional execution for in-memory storage.
 //
 // It simulates a transaction by locking shared storage state
 // during execution of a function.
@@ -15,12 +15,14 @@ type TxManager struct {
 }
 
 // NewTxManager creates a new in-memory transaction manager.
+//
+// mu must point to shared storage mutex used by all repositoies
+// participating in the same logical transaction.
 func NewTxManager(mu *sync.Mutex) *TxManager {
 	return &TxManager{mu: mu}
 }
 
 // WithinTransaction executes fn inside a critical section.
-// It gurantees exclusive access to shared in-memory state.
 func (t *TxManager) WithinTransaction(
 	ctx context.Context,
 	fn func(ctx context.Context) error,

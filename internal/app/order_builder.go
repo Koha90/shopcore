@@ -16,9 +16,9 @@ import (
 func BuildOrderService(ctx context.Context, logger *slog.Logger) (*service.OrderService, error) {
 	mu := &sync.Mutex{}
 	// repositories
-	orderRepo := memory.NewOrderRepository()
+	orderRepo := memory.NewOrderRepository(mu)
 	productRepo := memory.NewProductRepository(mu)
-	userRepo := memory.NewUserRepository()
+	userRepo := memory.NewUserRepository(mu)
 	txManager := memory.NewTxManager(mu)
 	bus := eventbus.New(logger)
 
