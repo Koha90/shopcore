@@ -73,8 +73,8 @@ func (s *Service) CreateDatabaseProfile(ctx context.Context, params CreateDataba
 	return s.dbs.Save(ctx, profile)
 }
 
-// ListDatabaseProfile returns safe views of all database profiles.
-func (s *Service) ListDatabaseProfile(ctx context.Context) ([]DatabaseProfileView, error) {
+// ListDatabaseProfiles returns safe views of all database profiles.
+func (s *Service) ListDatabaseProfiles(ctx context.Context) ([]DatabaseProfileView, error) {
 	profiles, err := s.dbs.List(ctx)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (s *Service) ListDatabaseProfile(ctx context.Context) ([]DatabaseProfileVie
 
 	result := make([]DatabaseProfileView, 0, len(profiles))
 	for _, profile := range profiles {
-		result = append(result, toDatabaseProfileView(*profile))
+		result = append(result, toDatabaseProfileView(profile))
 	}
 
 	return result, nil
@@ -190,7 +190,7 @@ func (s *Service) ListBots(ctx context.Context) ([]BotView, error) {
 
 	result := make([]BotView, 0, len(bots))
 	for _, bot := range bots {
-		result = append(result, toBotView(*bot, dbNames[bot.DatabaseID]))
+		result = append(result, toBotView(bot, dbNames[bot.DatabaseID]))
 	}
 
 	return result, nil

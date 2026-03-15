@@ -6,7 +6,7 @@ import "context"
 type BotRepository interface {
 	Save(ctx context.Context, bot *BotConfig) error
 	ByID(ctx context.Context, id string) (*BotConfig, error)
-	List(ctx context.Context) ([]*BotConfig, error)
+	List(ctx context.Context) ([]BotConfig, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -14,6 +14,6 @@ type BotRepository interface {
 type DatabaseProfileRepository interface {
 	Save(ctx context.Context, profile *DatabaseProfile) error
 	ByID(ctx context.Context, id string) (*DatabaseProfile, error)
-	List(ctx context.Context) ([]*DatabaseProfile, error)
+	List(ctx context.Context) ([]DatabaseProfile, error)
 	Delete(ctx context.Context, id string) error
 }
