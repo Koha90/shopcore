@@ -8,10 +8,34 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"botmanager/internal/botconfig"
 	"botmanager/internal/manager"
 )
 
 const defaultPageSize = 10
+
+type LayoutMode string
+
+const (
+	LayoutDesktop LayoutMode = "desktop"
+	LayoutMobile  LayoutMode = "mobile"
+)
+
+type StatusFilter string
+
+const (
+	StatusFilterAll      StatusFilter = "all"
+	StatusFilterRunning  StatusFilter = "running"
+	StatusFilterStopped  StatusFilter = "stopped"
+	StatusFilterFailed   StatusFilter = "failed"
+	StatusFilterStarting StatusFilter = "starting"
+	StatusFilterStopping StatusFilter = "stopping"
+)
+
+// BotConfigReader defines configuration queries required by TUI.
+type BotConfigReader interface {
+	BotByID(ctx context.Context, id string) (botconfig.BotView, error)
+}
 
 // BotManager defines mangager operations required by TUI.
 type BotManager interface {
@@ -42,7 +66,11 @@ type Summary struct {
 // Model represents Bubble Tea application model.
 type Model struct {
 	manager BotManager
+	config  BotConfigReader
 	theme   Theme
+	layout  LayoutMode
+
+	statusFilter StatusFilter
 
 	bots         []manager.Info
 	filteredBots []manager.Info
@@ -62,11 +90,14 @@ type Model struct {
 }
 
 // NewModel creates new TUI model.
-func NewModel(m BotManager, theme Theme) Model {
+func NewModel(m BotManager, cfg BotConfigReader, theme Theme) Model {
 	model := Model{
-		manager:  m,
-		theme:    theme,
-		pageSize: defaultPageSize,
+		manager:      m,
+		config:       cfg,
+		theme:        theme,
+		pageSize:     defaultPageSize,
+		layout:       LayoutDesktop,
+		statusFilter: StatusFilterAll,
 	}
 	model.refresh()
 	return model
@@ -91,43 +122,25 @@ func (m *Model) refresh() {
 	m.ensureCursorVisible()
 }
 
-func buildSummary(bots []manager.Info) Summary {
-	var s Summary
-	s.Total = len(bots)
-
-	for _, bot := range bots {
-		switch bot.Status {
-		case manager.StatusRunning:
-			s.Running++
-		case manager.StatusStopped:
-			s.Stopped++
-		case manager.StatusFailed:
-			s.Failed++
-		case manager.StatusStarting:
-			s.Starting++
-		case manager.StatusStopping:
-			s.Stopping++
-		}
-	}
-
-	return s
-}
-
 func (m *Model) applyFilter() {
-	if strings.TrimSpace(m.filter) == "" {
-		m.filteredBots = append([]manager.Info(nil), m.bots...)
-		return
-	}
-
 	q := strings.ToLower(strings.TrimSpace(m.filter))
 	result := make([]manager.Info, 0, len(m.bots))
 
 	for _, bot := range m.bots {
-		if strings.Contains(strings.ToLower(bot.ID), q) ||
-			strings.Contains(strings.ToLower(bot.Name), q) ||
-			strings.Contains(strings.ToLower(string(bot.Status)), q) {
-			result = append(result, bot)
+		if q != "" {
+			if !strings.Contains(strings.ToLower(bot.ID), q) &&
+				!strings.Contains(strings.ToLower(bot.Name), q) &&
+				!strings.Contains(strings.ToLower(string(bot.Status)), q) {
+				continue
+			}
 		}
+
+		if m.statusFilter != StatusFilterAll &&
+			string(bot.Status) != string(m.statusFilter) {
+			continue
+		}
+
+		result = append(result, bot)
 	}
 
 	m.filteredBots = result
@@ -263,12 +276,27 @@ func (m *Model) scrollDown() {
 	}
 }
 
+func (m Model) selectedConfig() *botconfig.BotView {
+	id := m.selectedID()
+	if id == "" || m.config == nil {
+		return nil
+	}
+
+	cfg, err := m.config.BotByID(context.Background(), id)
+	if err != nil {
+		return nil
+	}
+
+	return &cfg
+}
+
 // Update handles TUI messages and user actions.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.layout = detectLayout(msg.Width)
 		return m, nil
 
 	case tickMsg:
@@ -401,8 +429,61 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					message: fmt.Sprintf("restarted %s", id),
 				}
 			}
+
+		case "1":
+			m.statusFilter = StatusFilterAll
+			m.resetListPosition()
+			m.refresh()
+			return m, nil
+
+		case "2":
+			m.statusFilter = StatusFilterRunning
+			m.resetListPosition()
+			m.refresh()
+			return m, nil
+
+		case "3":
+			m.statusFilter = StatusFilterStopped
+			m.resetListPosition()
+			m.refresh()
+			return m, nil
+
+		case "4":
+			m.statusFilter = StatusFilterFailed
+			m.resetListPosition()
+			m.refresh()
+			return m, nil
 		}
 	}
 
 	return m, nil
+}
+
+func detectLayout(width int) LayoutMode {
+	if width < 100 {
+		return LayoutMobile
+	}
+	return LayoutDesktop
+}
+
+func buildSummary(bots []manager.Info) Summary {
+	var s Summary
+	s.Total = len(bots)
+
+	for _, bot := range bots {
+		switch bot.Status {
+		case manager.StatusRunning:
+			s.Running++
+		case manager.StatusStopped:
+			s.Stopped++
+		case manager.StatusFailed:
+			s.Failed++
+		case manager.StatusStarting:
+			s.Starting++
+		case manager.StatusStopping:
+			s.Stopping++
+		}
+	}
+
+	return s
 }

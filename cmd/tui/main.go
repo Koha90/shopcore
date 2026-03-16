@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"botmanager/internal/botconfig"
+	"botmanager/internal/botconfig/inmemory"
 	"botmanager/internal/manager"
 	"botmanager/internal/tui"
 )
@@ -17,6 +19,7 @@ func (r *demoRunner) Run(ctx context.Context, spec manager.BotSpec) error {
 		time.Sleep(700 * time.Millisecond)
 		return errors.New("telegram auth failed")
 	case "slow-bot":
+		time.Sleep(10 * time.Second)
 		<-ctx.Done()
 		return nil
 	default:
@@ -116,7 +119,27 @@ func main() {
 		Token: "token-12",
 	}))
 
-	if err := tui.Run(m); err != nil {
+	botsRepo := inmemory.NewBotRepository()
+	dbRepo := inmemory.NewDatabaseProfileRepository()
+	cfgSvc := botconfig.NewService(botsRepo, dbRepo, nil)
+
+	_ = cfgSvc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postgres://demo",
+		IsEnabled: true,
+	})
+
+	_ = cfgSvc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:         "shop-main",
+		Name:       "Shop Main",
+		Token:      "123456:demo-toke",
+		DatabaseID: "main-db",
+		IsEnabled:  true,
+	})
+
+	if err := tui.Run(m, cfgSvc); err != nil {
 		panic(err)
 	}
 }

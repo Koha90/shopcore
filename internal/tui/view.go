@@ -12,7 +12,14 @@ import (
 
 // View renders full TUI screen.
 func (m Model) View() tea.View {
-	title := m.theme.Title.Render("botmanager · runtime panel")
+	if m.layout == LayoutMobile {
+		return m.viewMobile()
+	}
+	return m.viewDesktop()
+}
+
+func (m Model) viewDesktop() tea.View {
+	title := m.theme.Title.Render("platform admin · telegram runtime")
 	summary := m.renderSummary()
 	filterBar := m.renderFilterBar()
 
@@ -69,6 +76,66 @@ func (m Model) renderSummary() string {
 	return box.Render(strings.Join(parts, "  •  "))
 }
 
+func (m Model) renderMobileSummary() string {
+	line1 := strings.Join([]string{
+		m.theme.Muted.Render(fmt.Sprintf("%d total", m.summary.Total)),
+		m.theme.Running.Render(fmt.Sprintf("%d run", m.summary.Running)),
+		m.theme.Stopped.Render(fmt.Sprintf("%d stop", m.summary.Stopped)),
+	}, "  •  ")
+
+	line2 := strings.Join([]string{
+		m.theme.Failed.Render(fmt.Sprintf("%d fail", m.summary.Failed)),
+		m.theme.Starting.Render(fmt.Sprintf("%d start", m.summary.Starting)),
+		m.theme.Stopping.Render(fmt.Sprintf("%d stoping", m.summary.Stopping)),
+	}, "  •  ")
+
+	filter := m.theme.Help.Render(
+		fmt.Sprintf("filter: %s  |  1 all  2 run  3 stop  4 fail", m.statusFilter),
+	)
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(0, 1)
+
+	return box.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			line1,
+			line2,
+			filter,
+		),
+	)
+}
+
+func (m Model) viewMobile() tea.View {
+	title := m.theme.Title.Render("platform admin")
+	summary := m.renderMobileSummary()
+	filterBar := m.renderFilterBar()
+
+	content := m.renderList()
+
+	status := m.renderStatusBar()
+	help := m.theme.Help.Render("j/k move • / filter • s start • x stop • r restart • q quit")
+
+	v := tea.NewView(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			title,
+			summary,
+			filterBar,
+			"",
+			content,
+			"",
+			status,
+			help,
+		),
+	)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
+}
+
 func (m Model) renderFilterBar() string {
 	if m.filtering {
 		return m.theme.StatusBar.Render("filter: " + m.filter)
@@ -119,6 +186,7 @@ func (m Model) renderList() string {
 
 func (m Model) renderDetails() string {
 	info := m.selectedInfo()
+	cfg := m.selectedConfig()
 
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Details"))
@@ -126,6 +194,7 @@ func (m Model) renderDetails() string {
 	if info == nil {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
 	} else {
+		lines = append(lines, m.theme.ListHeader.Render("Runtime"))
 		lines = append(lines, fmt.Sprintf("ID: %s", info.ID))
 		lines = append(lines, fmt.Sprintf("Name: %s", info.Name))
 		lines = append(lines, fmt.Sprintf("Status: %s", m.renderStatus(info.Status)))
@@ -135,13 +204,26 @@ func (m Model) renderDetails() string {
 		} else {
 			lines = append(lines, m.theme.Error.Render("Last error: "+info.LastError))
 		}
+
+		lines = append(lines, "")
+		lines = append(lines, m.theme.ListHeader.Render("Config"))
+
+		if cfg == nil {
+			lines = append(lines, m.theme.Muted.Render("config unavailable"))
+		} else {
+			lines = append(lines, fmt.Sprintf("Config name: %s", cfg.Name))
+			lines = append(lines, fmt.Sprintf("Token: %s", cfg.TokenMasked))
+			lines = append(lines, fmt.Sprintf("Database: %s", cfg.DatabaseName))
+			lines = append(lines, fmt.Sprintf("Enabled: %t", cfg.IsEnabled))
+		}
+
 	}
 
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.theme.Border.GetForeground()).
 		Padding(1, 2).
-		Width(52)
+		Width(56)
 
 	return box.Render(strings.Join(lines, "\n"))
 }
