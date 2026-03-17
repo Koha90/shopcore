@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -20,34 +21,53 @@ func (m Model) View() tea.View {
 
 func (m Model) viewDesktop() tea.View {
 	title := m.theme.Title.Render("platform admin · telegram runtime")
-	summary := m.renderSummary()
-	filterBar := m.renderFilterBar()
-
-	left := m.renderList()
-	right := m.renderDetails()
-
-	content := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		left,
-		right,
-	)
-
 	status := m.renderStatusBar()
-	help := m.theme.Help.Render("↑/↓ or j/k move • / filter • mouse click select • wheel scroll • s start • x stop • r restart • q quit")
+
+	var body string
+	var help string
+
+	switch m.screen {
+	case ScreenBotActions:
+		body = m.renderBotActions()
+		help = m.theme.Help.Render("↑/↓ or j/k move • enter select • esc back • q quit")
+
+	case ScreenBotConfig:
+		body = m.renderBotConfig()
+		help = m.theme.Help.Render("esc back • q quit")
+
+	default:
+		summary := m.renderSummary()
+		filterBar := m.renderFilterBar()
+
+		content := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.renderList(),
+			m.renderDetails(),
+		)
+
+		body = lipgloss.JoinVertical(
+			lipgloss.Left,
+			summary,
+			filterBar,
+			"",
+			content,
+		)
+		help = m.theme.Help.Render(
+			"↑/↓ or j/k move • enter options • / filter • mouse click select • wheel scroll • s start • x stop • r restart • q quit",
+		)
+	}
 
 	v := tea.NewView(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
-			summary,
-			filterBar,
-			"",
-			content,
+			body,
 			"",
 			status,
 			help,
 		),
 	)
+
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	return v
@@ -110,22 +130,40 @@ func (m Model) renderMobileSummary() string {
 
 func (m Model) viewMobile() tea.View {
 	title := m.theme.Title.Render("platform admin")
-	summary := m.renderMobileSummary()
-	filterBar := m.renderFilterBar()
-
-	content := m.renderList()
-
 	status := m.renderStatusBar()
-	help := m.theme.Help.Render("j/k move • / filter • s start • x stop • r restart • q quit")
+
+	var body string
+	var help string
+
+	switch m.screen {
+	case ScreenBotActions:
+		body = m.renderBotActions()
+		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
+
+	case ScreenBotConfig:
+		body = m.renderBotConfig()
+		help = m.theme.Help.Render("esc back • q quit")
+
+	default:
+		summary := m.renderMobileSummary()
+		filterBar := m.renderFilterBar()
+		content := m.renderList()
+
+		body = lipgloss.JoinVertical(
+			lipgloss.Left,
+			summary,
+			filterBar,
+			"",
+			content,
+		)
+		help = m.theme.Help.Render("j/k move • enter options • / filter • 1/2/3/4 status • q quit")
+	}
 
 	v := tea.NewView(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
-			summary,
-			filterBar,
-			"",
-			content,
+			body,
 			"",
 			status,
 			help,
@@ -228,6 +266,38 @@ func (m Model) renderDetails() string {
 	return box.Render(strings.Join(lines, "\n"))
 }
 
+func (m Model) renderBotActions() string {
+	info := m.selectedInfo()
+
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Bot options"))
+
+	if info == nil {
+		lines = append(lines, m.theme.Muted.Render("nothing selected"))
+	} else {
+		lines = append(lines, fmt.Sprintf("Name: %s", info.Name))
+		lines = append(lines, fmt.Sprintf("Status: %s", m.renderStatus(info.Status)))
+		lines = append(lines, "")
+		lines = append(lines, m.theme.ListHeader.Render("Actions"))
+
+		for i, action := range m.botActions() {
+			line := action
+			if i == m.actionCursor {
+				lines = append(lines, m.theme.ListSelected.Render("> "+line))
+			} else {
+				lines = append(lines, m.theme.ListItem.Render("  "+line))
+			}
+		}
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
+}
+
 func (m Model) renderStatusBar() string {
 	if m.lastErr != nil {
 		return m.theme.Error.Render("error: " + m.lastErr.Error())
@@ -253,4 +323,29 @@ func (m Model) renderStatus(status manager.Status) string {
 	default:
 		return m.theme.Muted.Render(string(status))
 	}
+}
+
+func (m Model) renderBotConfig() string {
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Bot config"))
+
+	if m.selectedBotConfig == nil {
+		lines = append(lines, m.theme.Muted.Render("loading or unavailable"))
+	} else {
+		cfg := m.selectedBotConfig
+		lines = append(lines, fmt.Sprintf("ID: %s", cfg.ID))
+		lines = append(lines, fmt.Sprintf("Name: %s", cfg.Name))
+		lines = append(lines, fmt.Sprintf("Token: %s", cfg.TokenMasked))
+		lines = append(lines, fmt.Sprintf("Database ID: %s", cfg.DatabaseID))
+		lines = append(lines, fmt.Sprintf("Database: %s", cfg.DatabaseName))
+		lines = append(lines, fmt.Sprintf("Enabled: %t", cfg.IsEnabled))
+		lines = append(lines, fmt.Sprintf("Updated: %s", cfg.UpdatedAt.Format(time.DateTime)))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
 }
