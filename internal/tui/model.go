@@ -32,9 +32,10 @@ const (
 type ScreenMode string
 
 const (
-	ScreenList       ScreenMode = "list"
-	ScreenBotActions ScreenMode = "bot_actions"
-	ScreenBotConfig  ScreenMode = "bot_config"
+	ScreenList          ScreenMode = "list"
+	ScreenBotActions    ScreenMode = "bot_actions"
+	ScreenBotConfig     ScreenMode = "bot_config"
+	ScreenEditBotConfig ScreenMode = "edit_bot_config"
 )
 
 // BotConfigReader defines configuration queries required by TUI.
@@ -61,6 +62,24 @@ type Summary struct {
 	Stopping int
 }
 
+// BotConfigEditForm represents editable bot configuration fields in TUI.
+type BotConfigEditForm struct {
+	Name       string
+	IsEnabled  bool
+	DatabaseID string
+}
+
+// EditField identifies currently selected field in bot config edit screen.
+type EditField int
+
+const (
+	EditFieldName EditField = iota
+	EditFieldEnabled
+	EditFieldDatabase
+	EditFieldSave
+	EditFieldCancel
+)
+
 // Model represents Bubble Tea application model.
 type Model struct {
 	manager BotManager
@@ -73,6 +92,10 @@ type Model struct {
 	statusFilter StatusFilter
 
 	selectedBotConfig *botconfig.BotView
+
+	editForm   BotConfigEditForm
+	editCursor EditField
+	editDirty  bool
 
 	bots         []manager.Info
 	filteredBots []manager.Info

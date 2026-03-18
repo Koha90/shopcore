@@ -83,7 +83,26 @@ func (m Model) handleBotAction() (tea.Model, tea.Cmd) {
 		return m, loadBotConfigCmd(m.config, id)
 
 	case "edit config":
-		m.message = "edit config: next step"
+		cfg := m.selectedBotConfig
+		if cfg == nil {
+			cfg = m.selectedConfig()
+		}
+		if cfg == nil {
+			m.lastErr = fmt.Errorf("config unavailable")
+			m.message = "cannot open edit config"
+			return m, nil
+		}
+
+		m.editForm = BotConfigEditForm{
+			Name:       cfg.Name,
+			IsEnabled:  cfg.IsEnabled,
+			DatabaseID: cfg.DatabaseID,
+		}
+		m.editCursor = EditFieldName
+		m.editDirty = false
+		m.screen = ScreenEditBotConfig
+		m.lastErr = nil
+		m.message = "edit config"
 		return m, nil
 
 	case "back":
@@ -93,4 +112,47 @@ func (m Model) handleBotAction() (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// handleEditToggleOrAction handles toggle-like edit actions for current field.
+func (m Model) handleEditToggleOrAction() (tea.Model, tea.Cmd) {
+	switch m.editCursor {
+	case EditFieldEnabled:
+		m.editForm.IsEnabled = !m.editForm.IsEnabled
+		m.editDirty = true
+		return m, nil
+
+	default:
+		return m, nil
+	}
+}
+
+// handleEditEnter handles Enter key in bot config edit screen.
+func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
+	switch m.editCursor {
+	case EditFieldName:
+		return m, nil
+
+	case EditFieldEnabled:
+		m.editForm.IsEnabled = !m.editForm.IsEnabled
+		m.editDirty = true
+		return m, nil
+
+	case EditFieldDatabase:
+		m.message = "database profile select: next step"
+		return m, nil
+
+	case EditFieldSave:
+		m.message = "save config: next step"
+		return m, nil
+
+	case EditFieldCancel:
+		m.screen = ScreenBotActions
+		m.message = "edit cancelled"
+		m.lastErr = nil
+		return m, nil
+
+	default:
+		return m, nil
+	}
 }

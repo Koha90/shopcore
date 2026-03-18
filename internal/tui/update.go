@@ -138,6 +138,62 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
+		if m.screen == ScreenEditBotConfig {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+
+			case "esc":
+				m.screen = ScreenBotActions
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
+
+			case "up", "k", "л":
+				if m.editCursor > EditFieldName {
+					m.editCursor--
+				} else {
+					m.editCursor = EditFieldCancel
+				}
+				return m, nil
+
+			case "down", "j", "о":
+				if m.editCursor < EditFieldCancel {
+					m.editCursor++
+				} else {
+					m.editCursor = EditFieldName
+				}
+				return m, nil
+
+			case "left", "h", "р":
+				return m.handleEditToggleOrAction()
+
+			case "right", "l", "д":
+				return m.handleEditToggleOrAction()
+
+			case " ":
+				return m.handleEditToggleOrAction()
+
+			case "enter":
+				return m.handleEditEnter()
+
+			case "backspace":
+				if m.editCursor == EditFieldName && len(m.editForm.Name) > 0 {
+					m.editForm.Name = m.editForm.Name[:len(m.editForm.Name)-1]
+					m.editDirty = true
+				}
+				return m, nil
+
+			default:
+				if m.editCursor == EditFieldName && msg.Text != "" {
+					m.editForm.Name += msg.Text
+					m.editDirty = true
+					return m, nil
+				}
+			}
+
+			return m, nil
+		}
 
 		switch msg.String() {
 		case "q", "ctrl+c":

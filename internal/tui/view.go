@@ -35,6 +35,10 @@ func (m Model) viewDesktop() tea.View {
 		body = m.renderBotConfig()
 		help = m.theme.Help.Render("esc back • q quit")
 
+	case ScreenEditBotConfig:
+		body = m.renderEditBotConfig()
+		help = m.theme.Help.Render("↑/↓ or j/k move • type name • space toggle • enter select • esc back • q quit")
+
 	default:
 		summary := m.renderSummary()
 		filterBar := m.renderFilterBar()
@@ -144,6 +148,10 @@ func (m Model) viewMobile() tea.View {
 		body = m.renderBotConfig()
 		help = m.theme.Help.Render("esc back • q quit")
 
+	case ScreenEditBotConfig:
+		body = m.renderEditBotConfig()
+		help = m.theme.Help.Render("j/k move • type name • space toggle • enter select • esc back • q quit")
+
 	default:
 		summary := m.renderMobileSummary()
 		filterBar := m.renderFilterBar()
@@ -192,12 +200,15 @@ func (m Model) renderList() string {
 
 	visible := m.visibleBots()
 
+	const labelWidth = 25
+
 	if len(visible) == 0 {
 		lines = append(lines, m.theme.Muted.Render("no bots match filter"))
 	} else {
 		for i, bot := range visible {
 			absoluteIndex := m.offset + i
-			line := fmt.Sprintf("%s  %s", bot.Name, m.renderStatus(bot.Status))
+			line := renderKeyValue(labelWidth, bot.Name, m.renderStatus(bot.Status))
+
 			if absoluteIndex == m.cursor {
 				lines = append(lines, m.theme.ListSelected.Render(line))
 				continue
@@ -229,13 +240,15 @@ func (m Model) renderDetails() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Details"))
 
+	const labelWidth = 12
+
 	if info == nil {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
 	} else {
 		lines = append(lines, m.theme.ListHeader.Render("Runtime"))
-		lines = append(lines, fmt.Sprintf("ID: %s", info.ID))
-		lines = append(lines, fmt.Sprintf("Name: %s", info.Name))
-		lines = append(lines, fmt.Sprintf("Status: %s", m.renderStatus(info.Status)))
+		lines = append(lines, renderKeyValue(labelWidth, "ID", info.ID))
+		lines = append(lines, renderKeyValue(labelWidth, "Name", info.Name))
+		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatus(info.Status)))
 
 		if info.LastError == "" {
 			lines = append(lines, "Last error: none")
@@ -249,10 +262,10 @@ func (m Model) renderDetails() string {
 		if cfg == nil {
 			lines = append(lines, m.theme.Muted.Render("config unavailable"))
 		} else {
-			lines = append(lines, fmt.Sprintf("Config name: %s", cfg.Name))
-			lines = append(lines, fmt.Sprintf("Token: %s", cfg.TokenMasked))
-			lines = append(lines, fmt.Sprintf("Database: %s", cfg.DatabaseName))
-			lines = append(lines, fmt.Sprintf("Enabled: %t", cfg.IsEnabled))
+			lines = append(lines, renderKeyValue(labelWidth, "Config name", cfg.Name))
+			lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
+			lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
+			lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		}
 
 	}
@@ -272,11 +285,13 @@ func (m Model) renderBotActions() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot options"))
 
+	const labelWidth = 12
+
 	if info == nil {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
 	} else {
-		lines = append(lines, fmt.Sprintf("Name: %s", info.Name))
-		lines = append(lines, fmt.Sprintf("Status: %s", m.renderStatus(info.Status)))
+		lines = append(lines, renderKeyValue(labelWidth, "Name", info.Name))
+		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatus(info.Status)))
 		lines = append(lines, "")
 		lines = append(lines, m.theme.ListHeader.Render("Actions"))
 
@@ -329,17 +344,19 @@ func (m Model) renderBotConfig() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot config"))
 
+	const labelWidth int = 12
+
 	if m.selectedBotConfig == nil {
 		lines = append(lines, m.theme.Muted.Render("loading or unavailable"))
 	} else {
 		cfg := m.selectedBotConfig
-		lines = append(lines, fmt.Sprintf("ID: %s", cfg.ID))
-		lines = append(lines, fmt.Sprintf("Name: %s", cfg.Name))
-		lines = append(lines, fmt.Sprintf("Token: %s", cfg.TokenMasked))
-		lines = append(lines, fmt.Sprintf("Database ID: %s", cfg.DatabaseID))
-		lines = append(lines, fmt.Sprintf("Database: %s", cfg.DatabaseName))
-		lines = append(lines, fmt.Sprintf("Enabled: %t", cfg.IsEnabled))
-		lines = append(lines, fmt.Sprintf("Updated: %s", cfg.UpdatedAt.Format(time.DateTime)))
+		lines = append(lines, renderKeyValue(labelWidth, "ID", cfg.ID)) // fmt.Sprintf("ID: %s", cfg.ID))
+		lines = append(lines, renderKeyValue(labelWidth, "Name", cfg.Name))
+		lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
+		lines = append(lines, renderKeyValue(labelWidth, "Database ID", cfg.DatabaseID))
+		lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
+		lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
+		lines = append(lines, renderKeyValue(labelWidth, "Updated", cfg.UpdatedAt.Format(time.DateTime)))
 	}
 
 	box := lipgloss.NewStyle().
@@ -348,4 +365,66 @@ func (m Model) renderBotConfig() string {
 		Padding(1, 2)
 
 	return box.Render(strings.Join(lines, "\n"))
+}
+
+func (m Model) renderEditBotConfig() string {
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Edit bot config"))
+	lines = append(lines, "")
+
+	nameValue := m.editForm.Name
+	if nameValue == "" {
+		nameValue = "—"
+	}
+
+	rows := []struct {
+		field EditField
+		label string
+		value string
+	}{
+		{EditFieldName, "Name", m.editForm.Name},
+		{EditFieldEnabled, "Enabled", fmt.Sprintf("%t", m.editForm.IsEnabled)},
+		{EditFieldDatabase, "Database ID", m.editForm.DatabaseID},
+		{EditFieldSave, "Save", ""},
+		{EditFieldCancel, "Cancel", ""},
+	}
+
+	const labelWidth = 12
+
+	for _, row := range rows {
+		line := renderKeyValue(labelWidth, row.label, row.value)
+
+		cursor := " "
+		if row.field == m.editCursor {
+			cursor = ">"
+		}
+
+		line = cursor + " " + line
+
+		if row.field == m.editCursor {
+			lines = append(lines, m.theme.ListSelected.Render(line))
+		} else {
+			lines = append(lines, m.theme.ListItem.Render(line))
+		}
+	}
+
+	if m.editDirty {
+		lines = append(lines, "")
+		lines = append(lines, m.theme.Failed.Render("unsaved changes"))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
+}
+
+func renderKeyValue(labelWidth int, label, value string) string {
+	if value == "" {
+		return label
+	}
+
+	return fmt.Sprintf("%-*s: %s", labelWidth, label, value)
 }

@@ -58,8 +58,8 @@ func GruvboxTheme() Theme {
 		ListSelected: lipgloss.NewStyle().
 			Bold(true).
 			Foreground(bg).
-			Background(blue).
-			Padding(0, 1),
+			Background(blue),
+		// Padding(0, 1),
 
 		StatusBar: lipgloss.NewStyle().
 			Foreground(bg).
