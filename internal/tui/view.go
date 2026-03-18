@@ -382,7 +382,7 @@ func (m Model) renderEditBotConfig() string {
 		label string
 		value string
 	}{
-		{EditFieldName, "Name", m.editForm.Name},
+		{EditFieldName, "Name", nameValue},
 		{EditFieldEnabled, "Enabled", fmt.Sprintf("%t", m.editForm.IsEnabled)},
 		{EditFieldDatabase, "Database ID", m.editForm.DatabaseID},
 		{EditFieldSave, "Save", ""},
@@ -401,11 +401,7 @@ func (m Model) renderEditBotConfig() string {
 
 		line = cursor + " " + line
 
-		if row.field == m.editCursor {
-			lines = append(lines, m.theme.ListSelected.Render(line))
-		} else {
-			lines = append(lines, m.theme.ListItem.Render(line))
-		}
+		lines = append(lines, m.renderFormRow(row.field == m.editCursor, line))
 	}
 
 	if m.editDirty {
@@ -427,4 +423,11 @@ func renderKeyValue(labelWidth int, label, value string) string {
 	}
 
 	return fmt.Sprintf("%-*s: %s", labelWidth, label, value)
+}
+
+func (m Model) renderFormRow(selected bool, line string) string {
+	if selected {
+		return m.theme.FormSelected.Render(line)
+	}
+	return m.theme.FormItem.Render(line)
 }

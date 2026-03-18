@@ -20,6 +20,9 @@ type Theme struct {
 	Failed       lipgloss.Style
 	Starting     lipgloss.Style
 	Stopping     lipgloss.Style
+
+	FormItem     lipgloss.Style
+	FormSelected lipgloss.Style
 }
 
 // GruvboxTheme returns default gruvbox-inspired theme.
@@ -35,6 +38,8 @@ func GruvboxTheme() Theme {
 	blue := lipgloss.Color("#458588")
 	aqua := lipgloss.Color("#689d6a")
 	orange := lipgloss.Color("#d65d0e")
+
+	rowBase := lipgloss.NewStyle()
 
 	return Theme{
 		App: lipgloss.NewStyle().
@@ -52,14 +57,21 @@ func GruvboxTheme() Theme {
 			Bold(true).
 			Foreground(aqua),
 
-		ListItem: lipgloss.NewStyle().
+		ListItem: rowBase.
 			Foreground(aqua),
 
-		ListSelected: lipgloss.NewStyle().
+		ListSelected: rowBase.
 			Bold(true).
 			Foreground(bg).
 			Background(blue),
-		// Padding(0, 1),
+
+		FormItem: rowBase.
+			Foreground(aqua),
+
+		FormSelected: rowBase.
+			Bold(true).
+			Foreground(bg).
+			Background(blue),
 
 		StatusBar: lipgloss.NewStyle().
 			Foreground(bg).
