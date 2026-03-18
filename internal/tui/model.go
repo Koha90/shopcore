@@ -32,15 +32,17 @@ const (
 type ScreenMode string
 
 const (
-	ScreenList          ScreenMode = "list"
-	ScreenBotActions    ScreenMode = "bot_actions"
-	ScreenBotConfig     ScreenMode = "bot_config"
-	ScreenEditBotConfig ScreenMode = "edit_bot_config"
+	ScreenList                   ScreenMode = "list"
+	ScreenBotActions             ScreenMode = "bot_actions"
+	ScreenBotConfig              ScreenMode = "bot_config"
+	ScreenEditBotConfig          ScreenMode = "edit_bot_config"
+	ScreenSelecteDatabaseProfile ScreenMode = "select_database_profile"
 )
 
 // BotConfigReader defines configuration queries required by TUI.
 type BotConfigReader interface {
 	BotByID(ctx context.Context, id string) (botconfig.BotView, error)
+	ListDatabaseProfiles(ctx context.Context) ([]botconfig.DatabaseProfileView, error)
 }
 
 // BotManager defines mangager operations required by TUI.
@@ -100,6 +102,9 @@ type Model struct {
 	bots         []manager.Info
 	filteredBots []manager.Info
 	summary      Summary
+
+	databaseProfiles []botconfig.DatabaseProfileView
+	databaseCursor   int
 
 	cursor       int
 	actionCursor int

@@ -39,6 +39,10 @@ func (m Model) viewDesktop() tea.View {
 		body = m.renderEditBotConfig()
 		help = m.theme.Help.Render("↑/↓ or j/k move • type name • space toggle • enter select • esc back • q quit")
 
+	case ScreenSelecteDatabaseProfile:
+		body = m.renderDatabaseProfileSelect()
+		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
+
 	default:
 		summary := m.renderSummary()
 		filterBar := m.renderFilterBar()
@@ -151,6 +155,10 @@ func (m Model) viewMobile() tea.View {
 	case ScreenEditBotConfig:
 		body = m.renderEditBotConfig()
 		help = m.theme.Help.Render("j/k move • type name • space toggle • enter select • esc back • q quit")
+
+	case ScreenSelecteDatabaseProfile:
+		body = m.renderDatabaseProfileSelect()
+		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
 
 	default:
 		summary := m.renderMobileSummary()
@@ -407,6 +415,42 @@ func (m Model) renderEditBotConfig() string {
 	if m.editDirty {
 		lines = append(lines, "")
 		lines = append(lines, m.theme.Failed.Render("unsaved changes"))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
+}
+
+func (m Model) renderDatabaseProfileSelect() string {
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Select database profile"))
+	lines = append(lines, "")
+
+	if len(m.databaseProfiles) == 0 {
+		lines = append(lines, m.theme.Muted.Render("loading or unavailable"))
+	} else {
+		const labelWidth = 12
+
+		for i, profile := range m.databaseProfiles {
+			name := profile.Name
+			if name == "" {
+				name = "—"
+			}
+
+			value := renderKeyValue(labelWidth, name, profile.Driver)
+
+			cursor := " "
+			if i == m.databaseCursor {
+				cursor = ">"
+			}
+
+			line := cursor + " " + value
+			lines = append(lines, m.renderFormRow(i == m.databaseCursor, line))
+		}
 	}
 
 	box := lipgloss.NewStyle().

@@ -43,3 +43,24 @@ func loadBotConfigCmd(cfg BotConfigReader, id string) tea.Cmd {
 		}
 	}
 }
+
+type databaseProfilesLoadedMsg struct {
+	profiles []botconfig.DatabaseProfileView
+	err      error
+}
+
+func loadDatabaseProfilesCmd(cfg BotConfigReader) tea.Cmd {
+	return func() tea.Msg {
+		if cfg == nil {
+			return databaseProfilesLoadedMsg{
+				err: fmt.Errorf("config reader unavailable"),
+			}
+		}
+
+		profiles, err := cfg.ListDatabaseProfiles(context.Background())
+		return databaseProfilesLoadedMsg{
+			profiles: profiles,
+			err:      err,
+		}
+	}
+}

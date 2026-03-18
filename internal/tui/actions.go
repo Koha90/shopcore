@@ -139,8 +139,12 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case EditFieldDatabase:
-		m.message = "database profile select: next step"
-		return m, nil
+		m.screen = ScreenSelecteDatabaseProfile
+		m.databaseProfiles = nil
+		m.databaseCursor = 0
+		m.message = "loading database profiles..."
+		m.lastErr = nil
+		return m, loadDatabaseProfilesCmd(m.config)
 
 	case EditFieldSave:
 		m.message = "save config: next step"

@@ -194,6 +194,55 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, nil
 		}
+		if m.screen == ScreenSelecteDatabaseProfile {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+
+			case "esc":
+				m.screen = ScreenEditBotConfig
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
+
+			case "up", "k", "л":
+				if len(m.databaseProfiles) == 0 {
+					return m, nil
+				}
+				if m.databaseCursor > 0 {
+					m.databaseCursor--
+				} else {
+					m.databaseCursor = len(m.databaseProfiles) - 1
+				}
+				return m, nil
+
+			case "down", "j", "о":
+				if len(m.databaseProfiles) == 0 {
+					return m, nil
+				}
+				if m.databaseCursor < len(m.databaseProfiles)-1 {
+					m.databaseCursor++
+				} else {
+					m.databaseCursor = 0
+				}
+				return m, nil
+
+			case "enter":
+				if len(m.databaseProfiles) == 0 {
+					return m, nil
+				}
+
+				profile := m.databaseProfiles[m.databaseCursor]
+				m.editForm.DatabaseID = profile.ID
+				m.editDirty = true
+				m.screen = ScreenSelecteDatabaseProfile
+				m.message = "database profile selected"
+				m.lastErr = nil
+				return m, nil
+			}
+
+			return m, nil
+		}
 
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -315,6 +364,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.selectedBotConfig = &cfg
 		m.lastErr = nil
 		m.message = "config loaded"
+		return m, nil
+
+	case databaseProfilesLoadedMsg:
+		if msg.err != nil {
+			m.databaseProfiles = nil
+			m.lastErr = msg.err
+			m.message = "database profiles load failed"
+			return m, nil
+		}
+
+		m.databaseProfiles = msg.profiles
+		m.lastErr = nil
+		m.message = "database profiles loaded"
 		return m, nil
 	}
 

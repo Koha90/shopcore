@@ -77,17 +77,21 @@ func (m *Manager) Start(ctx context.Context, id string) error {
 	m.mu.Unlock()
 
 	go func() {
-		m.mu.Lock()
-		if current, ok := m.entries[id]; ok {
-			current.status = StatusRunning
-		}
-		m.mu.Unlock()
+		defer close(done)
 
-		err := m.runner.Run(runCtx, spec)
+		readyOnce := sync.OnceFunc(func() {
+			m.mu.Lock()
+			defer m.mu.Unlock()
+
+			if current, ok := m.entries[id]; ok && current.status == StatusStarting {
+				current.status = StatusRunning
+			}
+		})
+
+		err := m.runner.Run(runCtx, spec, readyOnce)
 
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		defer close(done)
 
 		current, ok := m.entries[id]
 		if !ok {
