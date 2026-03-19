@@ -10,10 +10,12 @@ import (
 	"botmanager/internal/botconfig"
 )
 
+// BotRepository stores bot configs in PostgreSQL.
 type BotRepository struct {
 	pool *pgxpool.Pool
 }
 
+// Save create or updates bot config by ID.
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
 		INSER INTO bot_configs (
@@ -32,6 +34,7 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 	return err
 }
 
+// ByID returns bot config by ID.
 func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConfig, error) {
 	const q = `
 		SELECT id, name, token, database_id, is_enabled, updated_at
@@ -58,6 +61,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 	return &bot, nil
 }
 
+// List returns all bot configs sorted by ID.
 func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error) {
 	const q = `
 		SELECT id, name, token, database_id, is_enabled, updated_at
@@ -94,8 +98,12 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 	return result, nil
 }
 
+// Delete removes bot config by ID.
 func (r *BotRepository) Delete(ctx context.Context, id string) error {
-	const q = `DELETE FROM bot_configs WHERE id = $1`
+	const q = `
+		DELETE FROM bot_configs
+		WHERE id = $1
+	`
 
 	tag, err := r.pool.Exec(ctx, q, id)
 	if err != nil {

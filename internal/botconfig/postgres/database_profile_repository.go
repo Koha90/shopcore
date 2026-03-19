@@ -10,7 +10,7 @@ import (
 	"botmanager/internal/botconfig"
 )
 
-// DatabaseProfileRepository stores database profile in PostgreSQL.
+// DatabaseProfileRepository stores database profiles in PostgreSQL.
 type DatabaseProfileRepository struct {
 	pool *pgxpool.Pool
 }
