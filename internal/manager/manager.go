@@ -206,6 +206,20 @@ func (m *Manager) List() []Info {
 	return result
 }
 
+// Rename updates display name of registered bot runtime.
+func (m *Manager) Rename(id string, name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	entry, ok := m.entries[id]
+	if !ok {
+		return ErrBotNotFound
+	}
+
+	entry.spec.Name = name
+	return nil
+}
+
 func infoFromEntry(entry *Entry) Info {
 	lastError := ""
 	if entry.lastError != nil {

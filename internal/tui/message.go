@@ -66,8 +66,9 @@ func loadDatabaseProfilesCmd(cfg BotConfigService) tea.Cmd {
 }
 
 type botConfigSavedMsg struct {
-	id  string
-	err error
+	id   string
+	name string
+	err  error
 }
 
 func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) tea.Cmd {
@@ -87,8 +88,9 @@ func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) t
 		})
 
 		return botConfigSavedMsg{
-			id:  id,
-			err: err,
+			id:   id,
+			name: form.Name,
+			err:  err,
 		}
 	}
 }

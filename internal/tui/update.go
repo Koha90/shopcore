@@ -493,6 +493,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		if err := m.manager.Rename(msg.id, msg.name); err != nil {
+			m.lastErr = err
+			m.message = "config saved, runtime name sync failed"
+			return m, loadBotConfigCmd(m.config, msg.id)
+		}
+
 		m.editDirty = false
 		m.lastErr = nil
 		m.message = "config saved"
