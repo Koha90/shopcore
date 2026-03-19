@@ -43,6 +43,10 @@ func (m Model) viewDesktop() tea.View {
 		body = m.renderDatabaseProfileSelect()
 		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
 
+	case ScreenConfirmDiscardEdit:
+		body = m.renderConfirmDiscardEdit()
+		help = m.theme.Help.Render("↑/↓ or j/k move • enter select • esc back • q quit")
+
 	default:
 		summary := m.renderSummary()
 		filterBar := m.renderFilterBar()
@@ -160,6 +164,10 @@ func (m Model) viewMobile() tea.View {
 		body = m.renderDatabaseProfileSelect()
 		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
 
+	case ScreenConfirmDiscardEdit:
+		body = m.renderConfirmDiscardEdit()
+		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
+
 	default:
 		summary := m.renderMobileSummary()
 		filterBar := m.renderFilterBar()
@@ -243,7 +251,8 @@ func (m Model) renderList() string {
 
 func (m Model) renderDetails() string {
 	info := m.selectedInfo()
-	cfg := m.selectedConfig()
+	cfg := m.selectedBotConfig
+	cfgMatchesSelection := cfg != nil && m.selectedBotConfigID == m.selectedID()
 
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Details"))
@@ -267,9 +276,12 @@ func (m Model) renderDetails() string {
 		lines = append(lines, "")
 		lines = append(lines, m.theme.ListHeader.Render("Config"))
 
-		if cfg == nil {
-			lines = append(lines, m.theme.Muted.Render("config unavailable"))
-		} else {
+		switch {
+		case m.selectedBotConfigLoading:
+			lines = append(lines, m.theme.Muted.Render("config loading..."))
+		case !cfgMatchesSelection:
+			lines = append(lines, m.theme.Muted.Render("config not loaded"))
+		default:
 			lines = append(lines, renderKeyValue(labelWidth, "Config name", cfg.Name))
 			lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
 			lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
@@ -400,7 +412,17 @@ func (m Model) renderEditBotConfig() string {
 	const labelWidth = 12
 
 	for _, row := range rows {
-		line := renderKeyValue(labelWidth, row.label, row.value)
+		value := row.value
+
+		if row.field == EditFieldName && m.editTyping {
+			value = m.editBuffer
+			if value == "" {
+				value = " "
+			}
+			value += "█"
+		}
+
+		line := renderKeyValue(labelWidth, row.label, value)
 
 		cursor := " "
 		if row.field == m.editCursor {
@@ -408,7 +430,6 @@ func (m Model) renderEditBotConfig() string {
 		}
 
 		line = cursor + " " + line
-
 		lines = append(lines, m.renderFormRow(row.field == m.editCursor, line))
 	}
 
@@ -474,4 +495,34 @@ func (m Model) renderFormRow(selected bool, line string) string {
 		return m.theme.FormSelected.Render(line)
 	}
 	return m.theme.FormItem.Render(line)
+}
+
+func (m Model) renderConfirmDiscardEdit() string {
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Discard unsaved changes?"))
+	lines = append(lines, "")
+	lines = append(lines, m.theme.Muted.Render("You have unsaved changes in bot config"))
+	lines = append(lines, "")
+
+	options := []string{
+		"discard changes",
+		"continue editing",
+	}
+
+	for i, option := range options {
+		cursor := " "
+		if i == m.confirmCursor {
+			cursor = ">"
+		}
+
+		line := cursor + " " + option
+		lines = append(lines, m.renderFormRow(i == m.confirmCursor, line))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
 }

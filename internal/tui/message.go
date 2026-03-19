@@ -28,7 +28,7 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-func loadBotConfigCmd(cfg BotConfigReader, id string) tea.Cmd {
+func loadBotConfigCmd(cfg BotConfigService, id string) tea.Cmd {
 	return func() tea.Msg {
 		if cfg == nil || id == "" {
 			return botConfigLoadMsg{
@@ -49,7 +49,7 @@ type databaseProfilesLoadedMsg struct {
 	err      error
 }
 
-func loadDatabaseProfilesCmd(cfg BotConfigReader) tea.Cmd {
+func loadDatabaseProfilesCmd(cfg BotConfigService) tea.Cmd {
 	return func() tea.Msg {
 		if cfg == nil {
 			return databaseProfilesLoadedMsg{
@@ -61,6 +61,55 @@ func loadDatabaseProfilesCmd(cfg BotConfigReader) tea.Cmd {
 		return databaseProfilesLoadedMsg{
 			profiles: profiles,
 			err:      err,
+		}
+	}
+}
+
+type botConfigSavedMsg struct {
+	id  string
+	err error
+}
+
+func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) tea.Cmd {
+	return func() tea.Msg {
+		if cfg == nil || id == "" {
+			return botConfigSavedMsg{
+				err: fmt.Errorf("config service unavailable"),
+			}
+		}
+
+		err := cfg.UpdateBot(context.Background(), botconfig.UpdateBotParams{
+			ID:         id,
+			Name:       form.Name,
+			Token:      nil,
+			DatabaseID: form.DatabaseID,
+			IsEnabled:  form.IsEnabled,
+		})
+
+		return botConfigSavedMsg{
+			id:  id,
+			err: err,
+		}
+	}
+}
+
+type editBotConfigLoadedMsg struct {
+	config botconfig.BotView
+	err    error
+}
+
+func loadEditBotConfigCmd(cfg BotConfigService, id string) tea.Cmd {
+	return func() tea.Msg {
+		if cfg == nil || id == "" {
+			return editBotConfigLoadedMsg{
+				err: fmt.Errorf("config service unavailable"),
+			}
+		}
+
+		view, err := cfg.BotByID(context.Background(), id)
+		return editBotConfigLoadedMsg{
+			config: view,
+			err:    err,
 		}
 	}
 }

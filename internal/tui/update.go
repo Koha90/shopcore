@@ -139,11 +139,46 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if m.screen == ScreenEditBotConfig {
+			if m.editTyping {
+				switch msg.String() {
+				case "enter":
+					m.editForm.Name = m.editBuffer
+					m.editDirty = true
+					m.editTyping = false
+					m.message = "name updated"
+					return m, nil
+
+				case "esc":
+					m.editTyping = false
+					m.editBuffer = ""
+					return m, nil
+
+				case "backspace":
+					if len(m.editBuffer) > 0 {
+						m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
+					}
+					return m, nil
+
+				default:
+					if msg.Text != "" {
+						m.editBuffer += msg.Text
+					}
+					return m, nil
+				}
+			}
 			switch msg.String() {
 			case "q", "ctrl+c":
 				return m, tea.Quit
 
 			case "esc":
+				if m.editDirty {
+					m.screen = ScreenConfirmDiscardEdit
+					m.confirmCursor = 0
+					m.message = "unsaved changes"
+					m.lastErr = nil
+					return m, nil
+				}
+
 				m.screen = ScreenBotActions
 				m.message = ""
 				m.lastErr = nil
@@ -175,6 +210,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.handleEditToggleOrAction()
 
 			case "enter":
+				if m.editCursor == EditFieldName {
+					m.editTyping = true
+					m.editBuffer = m.editForm.Name
+					m.message = "editing name (enter to apply, esc to cancel)"
+					return m, nil
+				}
 				return m.handleEditEnter()
 
 			case "backspace":
@@ -183,13 +224,52 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.editDirty = true
 				}
 				return m, nil
+			}
 
-			default:
-				if m.editCursor == EditFieldName && msg.Text != "" {
-					m.editForm.Name += msg.Text
-					m.editDirty = true
+			return m, nil
+		}
+		if m.screen == ScreenConfirmDiscardEdit {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+
+			case "esc":
+				m.screen = ScreenEditBotConfig
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
+
+			case "up", "k", "л", "left", "h", "р":
+				if m.confirmCursor > 0 {
+					m.confirmCursor--
+				} else {
+					m.confirmCursor = 1
+				}
+				return m, nil
+
+			case "down", "j", "о", "right", "l", "д":
+				if m.confirmCursor < 1 {
+					m.confirmCursor++
+				} else {
+					m.confirmCursor = 0
+				}
+				return m, nil
+
+			case "enter":
+				if m.confirmCursor == 0 {
+					m.editDirty = false
+					m.screen = ScreenBotActions
+					m.message = "changes discarded"
+					m.lastErr = nil
+					m.editForm = BotConfigEditForm{}
+					m.editCursor = EditFieldName
 					return m, nil
 				}
+
+				m.screen = ScreenEditBotConfig
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
 			}
 
 			return m, nil
@@ -353,6 +433,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case botConfigLoadMsg:
+		m.selectedBotConfigLoading = false
+
 		if msg.err != nil {
 			m.selectedBotConfig = nil
 			m.lastErr = msg.err
@@ -362,8 +444,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cfg := msg.config
 		m.selectedBotConfig = &cfg
+		m.selectedBotConfigID = cfg.ID
 		m.lastErr = nil
 		m.message = "config loaded"
+		return m, nil
+
+	case editBotConfigLoadedMsg:
+		if msg.err != nil {
+			m.lastErr = msg.err
+			m.message = "cannot open edit config"
+			return m, nil
+		}
+
+		cfg := msg.config
+		m.selectedBotConfig = &cfg
+		m.selectedBotConfigID = cfg.ID
+		m.selectedBotConfigLoading = false
+
+		m.editForm = BotConfigEditForm{
+			Name:       cfg.Name,
+			IsEnabled:  cfg.IsEnabled,
+			DatabaseID: cfg.DatabaseID,
+		}
+		m.editCursor = EditFieldName
+		m.editDirty = false
+		m.screen = ScreenEditBotConfig
+		m.lastErr = nil
+		m.message = "edit config"
 		return m, nil
 
 	case databaseProfilesLoadedMsg:
@@ -378,6 +485,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lastErr = nil
 		m.message = "database profiles loaded"
 		return m, nil
+
+	case botConfigSavedMsg:
+		if msg.err != nil {
+			m.lastErr = msg.err
+			m.message = "config save failed"
+			return m, nil
+		}
+
+		m.editDirty = false
+		m.lastErr = nil
+		m.message = "config saved"
+		m.screen = ScreenBotConfig
+		return m, loadBotConfigCmd(m.config, msg.id)
 	}
 
 	return m, nil

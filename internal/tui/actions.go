@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -72,38 +73,26 @@ func (m Model) handleBotAction() (tea.Model, tea.Cmd) {
 		}
 
 	case "view config":
-		id := m.selectedID()
+		id = m.selectedID()
 		if id == "" {
 			return m, nil
 		}
 		m.screen = ScreenBotConfig
 		m.selectedBotConfig = nil
+		m.selectedBotConfigID = id
+		m.selectedBotConfigLoading = true
 		m.lastErr = nil
 		m.message = "loading config..."
 		return m, loadBotConfigCmd(m.config, id)
 
 	case "edit config":
-		cfg := m.selectedBotConfig
-		if cfg == nil {
-			cfg = m.selectedConfig()
-		}
-		if cfg == nil {
-			m.lastErr = fmt.Errorf("config unavailable")
-			m.message = "cannot open edit config"
+		if id == "" {
 			return m, nil
 		}
 
-		m.editForm = BotConfigEditForm{
-			Name:       cfg.Name,
-			IsEnabled:  cfg.IsEnabled,
-			DatabaseID: cfg.DatabaseID,
-		}
-		m.editCursor = EditFieldName
-		m.editDirty = false
-		m.screen = ScreenEditBotConfig
 		m.lastErr = nil
-		m.message = "edit config"
-		return m, nil
+		m.message = "loading config for edit..."
+		return m, loadEditBotConfigCmd(m.config, id)
 
 	case "back":
 		m.screen = ScreenList
@@ -147,8 +136,27 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 		return m, loadDatabaseProfilesCmd(m.config)
 
 	case EditFieldSave:
-		m.message = "save config: next step"
-		return m, nil
+		id := m.selectedID()
+		if id == "" {
+			m.lastErr = fmt.Errorf("bot id is empty")
+			m.message = "save failed"
+			return m, nil
+		}
+
+		if strings.TrimSpace(m.editForm.Name) == "" {
+			m.lastErr = fmt.Errorf("name cannot be empty")
+			m.message = "validation error"
+			return m, nil
+		}
+
+		if strings.TrimSpace(m.editForm.DatabaseID) == "" {
+			m.lastErr = fmt.Errorf("database id cannot be empty")
+			m.message = "validation error"
+			return m, nil
+		}
+		m.message = "saving config..."
+		m.lastErr = nil
+		return m, saveBotConfigCmd(m.config, id, m.editForm)
 
 	case EditFieldCancel:
 		m.screen = ScreenBotActions

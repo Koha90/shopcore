@@ -37,12 +37,14 @@ const (
 	ScreenBotConfig              ScreenMode = "bot_config"
 	ScreenEditBotConfig          ScreenMode = "edit_bot_config"
 	ScreenSelecteDatabaseProfile ScreenMode = "select_database_profile"
+	ScreenConfirmDiscardEdit     ScreenMode = "confirm_discard_edit"
 )
 
-// BotConfigReader defines configuration queries required by TUI.
-type BotConfigReader interface {
+// BotConfigService defines configuration operations required by TUI.
+type BotConfigService interface {
 	BotByID(ctx context.Context, id string) (botconfig.BotView, error)
 	ListDatabaseProfiles(ctx context.Context) ([]botconfig.DatabaseProfileView, error)
+	UpdateBot(ctx context.Context, params botconfig.UpdateBotParams) error
 }
 
 // BotManager defines mangager operations required by TUI.
@@ -85,7 +87,7 @@ const (
 // Model represents Bubble Tea application model.
 type Model struct {
 	manager BotManager
-	config  BotConfigReader
+	config  BotConfigService
 	theme   Theme
 
 	layout LayoutMode
@@ -93,11 +95,17 @@ type Model struct {
 
 	statusFilter StatusFilter
 
-	selectedBotConfig *botconfig.BotView
+	selectedBotConfig        *botconfig.BotView
+	selectedBotConfigID      string
+	selectedBotConfigLoading bool
 
 	editForm   BotConfigEditForm
 	editCursor EditField
 	editDirty  bool
+	editTyping bool
+	editBuffer string
+
+	confirmCursor int
 
 	bots         []manager.Info
 	filteredBots []manager.Info
@@ -122,7 +130,7 @@ type Model struct {
 }
 
 // NewModel creates new TUI model.
-func NewModel(m BotManager, cfg BotConfigReader, theme Theme) Model {
+func NewModel(m BotManager, cfg BotConfigService, theme Theme) Model {
 	model := Model{
 		manager:      m,
 		config:       cfg,
@@ -140,20 +148,4 @@ func NewModel(m BotManager, cfg BotConfigReader, theme Theme) Model {
 // Init initializes TUI model.
 func (m Model) Init() tea.Cmd {
 	return tickCmd()
-}
-
-// selectedConfig loads selected bot config on demand.
-// TODO: remove I/O from view path and reuse loaded config state/cmd flow.
-func (m Model) selectedConfig() *botconfig.BotView {
-	id := m.selectedID()
-	if id == "" || m.config == nil {
-		return nil
-	}
-
-	cfg, err := m.config.BotByID(context.Background(), id)
-	if err != nil {
-		return nil
-	}
-
-	return &cfg
 }
