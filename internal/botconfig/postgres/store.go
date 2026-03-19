@@ -1,27 +1,29 @@
 package postgres
 
-import "database/sql"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 // Store provides PostgreSQL-backend repositories for botconfig.
 type Store struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
 // NewStore creates a new PostgreSQL store.
-func NewStore(db *sql.DB) *Store {
-	if db == nil {
-		panic("botconfig/postgres: db is nil")
+func NewStore(pool *pgxpool.Pool) *Store {
+	if pool == nil {
+		panic("botconfig/postgres: pool is nil")
 	}
 
-	return &Store{db: db}
+	return &Store{pool: pool}
 }
 
 // BotRepository returns PostgreSQL-backend bat repository.
 func (s *Store) BotRepository() *BotRepository {
-	return &BotRepository{db: s.db}
+	return &BotRepository{pool: s.pool}
 }
 
 // DatabaseProfileRepository returns PostgreSQL-backend database profile repository.
 func (s *Store) DatabaseProfileRepository() *DatabaseProfileRepository {
-	return &DatabaseProfileRepository{db: s.db}
+	return &DatabaseProfileRepository{pool: s.pool}
 }

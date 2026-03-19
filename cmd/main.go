@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
+	"botmanager/internal/botconfig"
+	botpg "botmanager/internal/botconfig/postgres"
 	"botmanager/internal/config"
 	"botmanager/pkg/logger"
 	"botmanager/pkg/migrator"
@@ -37,6 +42,22 @@ func main() {
 
 	logger, _ := logger.Setup(cfg.Env)
 	logger.Debug("debug mode is enabled")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		log.Fatalf("failed to create pgx pool: %v", err)
+	}
+
+	store := botpg.NewStore(pool)
+
+	_ = botconfig.NewService(
+		store.BotRepository(),
+		store.DatabaseProfileRepository(),
+		logger,
+	)
 
 	log.Println("All migrations applied successfully!")
 }

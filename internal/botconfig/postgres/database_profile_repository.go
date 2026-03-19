@@ -5,14 +5,22 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"botmanager/internal/botconfig"
 )
 
+// DatabaseProfileRepository stores database profile in PostgreSQL.
 type DatabaseProfileRepository struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
+// Save create or updates database profile by ID.
 func (r *DatabaseProfileRepository) Save(ctx context.Context, profile *botconfig.DatabaseProfile) error {
+	if profile == nil {
+		return errors.New("botconfig/postgres: database profile is nil")
+	}
+
 	const q = `
 		INSERT INTO database_profiles (
 			id, name, driver, dsn, is_enabled, updated_at
@@ -26,7 +34,7 @@ func (r *DatabaseProfileRepository) Save(ctx context.Context, profile *botconfig
 			updated_at = EXCLUDED.updated_at
 	`
 
-	_, err := r.db.ExecContext(
+	_, err := r.pool.Exec(
 		ctx,
 		q,
 		profile.ID,
@@ -39,6 +47,7 @@ func (r *DatabaseProfileRepository) Save(ctx context.Context, profile *botconfig
 	return err
 }
 
+// ByID returns database profile by ID.
 func (r *DatabaseProfileRepository) ByID(ctx context.Context, id string) (*botconfig.DatabaseProfile, error) {
 	const q = `
 		SELECT id, name, driver, dsn, is_enabled, updated_at
@@ -47,7 +56,8 @@ func (r *DatabaseProfileRepository) ByID(ctx context.Context, id string) (*botco
 	`
 
 	var profile botconfig.DatabaseProfile
-	err := r.db.QueryRowContext(ctx, q, id).
+
+	err := r.pool.QueryRow(ctx, q, id).
 		Scan(
 			&profile.ID,
 			&profile.Name,
@@ -66,6 +76,7 @@ func (r *DatabaseProfileRepository) ByID(ctx context.Context, id string) (*botco
 	return &profile, nil
 }
 
+// List returns all database profiles sorted by ID.
 func (r *DatabaseProfileRepository) List(ctx context.Context) ([]botconfig.DatabaseProfile, error) {
 	const q = `
 		SELECT id, name, driver, dsn, is_enabled, updated_at
@@ -73,20 +84,22 @@ func (r *DatabaseProfileRepository) List(ctx context.Context) ([]botconfig.Datab
 		ORDER BY id
 	`
 
-	rows, err := r.db.QueryContext(ctx, q)
+	rows, err := r.pool.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var result []botconfig.DatabaseProfile
+	result := make([]botconfig.DatabaseProfile, 0)
 	for rows.Next() {
 		var profile botconfig.DatabaseProfile
+
 		if err := rows.Scan(
 			&profile.ID, &profile.Name, &profile.Driver, &profile.DSN, &profile.IsEnabled, &profile.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
 		result = append(result, profile)
 	}
 
@@ -97,19 +110,19 @@ func (r *DatabaseProfileRepository) List(ctx context.Context) ([]botconfig.Datab
 	return result, nil
 }
 
+// Delete removes database profile by ID.
 func (r *DatabaseProfileRepository) Delete(ctx context.Context, id string) error {
-	const q = `DELETE FROM database_profiles WHERE id = $1`
+	const q = `
+		DELETE FROM database_profiles
+		WHERE id = $1
+	`
 
-	res, err := r.db.ExecContext(ctx, q, id)
+	tag, err := r.pool.Exec(ctx, q, id)
 	if err != nil {
 		return err
 	}
 
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
+	if tag.RowsAffected() == 0 {
 		return botconfig.ErrDatabaseProfileNotFound
 	}
 

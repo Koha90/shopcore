@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"botmanager/internal/botconfig"
 )
 
 type BotRepository struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
@@ -26,7 +28,7 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 			updated_at = EXCLUDED.updated_at
 	`
 
-	_, err := r.db.ExecContext(ctx, q, cfg.ID, cfg.Name, cfg.Token, cfg.DatabaseID, cfg.IsEnabled, cfg.UpdatedAt)
+	_, err := r.pool.Exec(ctx, q, cfg.ID, cfg.Name, cfg.Token, cfg.DatabaseID, cfg.IsEnabled, cfg.UpdatedAt)
 	return err
 }
 
@@ -38,7 +40,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 	`
 
 	var bot botconfig.BotConfig
-	err := r.db.QueryRowContext(ctx, q, id).Scan(
+	err := r.pool.QueryRow(ctx, q, id).Scan(
 		&bot.ID,
 		&bot.Name,
 		&bot.Token,
@@ -63,7 +65,7 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 		ORDER BY id
 	`
 
-	rows, err := r.db.QueryContext(ctx, q)
+	rows, err := r.pool.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +97,12 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 func (r *BotRepository) Delete(ctx context.Context, id string) error {
 	const q = `DELETE FROM bot_configs WHERE id = $1`
 
-	res, err := r.db.ExecContext(ctx, q, id)
+	tag, err := r.pool.Exec(ctx, q, id)
 	if err != nil {
 		return err
 	}
 
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
+	if tag.RowsAffected() == 0 {
 		return botconfig.ErrBotNotFound
 	}
 
