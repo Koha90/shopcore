@@ -2,7 +2,10 @@ CREATE TABLE IF NOT EXISTS bot_configs (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   token TEXT NOT NULL,
-  database_id TEXT NOT NULL REFERENCES database_profiles(id) ON DELETE RESTRICT,
+  database_id TEXT NOT NULL
+    REFERENCES database_profiles(id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
   is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

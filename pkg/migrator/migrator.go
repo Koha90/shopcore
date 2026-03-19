@@ -9,7 +9,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-// MigratePostrgres performs migrations for Postgresql.
+// MigratePostgres performs migrations for Postgresql.
 // The db URL should be: "postgres://user:pass@host:port/dbname?ssmode=disable"
 func MigratePostgres(dbURL string, migrationsPath string) error {
 	m, err := migrate.New(
