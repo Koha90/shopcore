@@ -24,5 +24,5 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_is_enable ON users(is_enable);
+CREATE INDEX IF NOT EXISTS idx_users_is_enabled ON users(is_enabled);
 CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users(tg_id);

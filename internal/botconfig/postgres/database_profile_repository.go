@@ -27,10 +27,10 @@ func (r *DatabaseProfileRepository) Save(ctx context.Context, profile *botconfig
 		)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
-			name = EXCLUDED.name
-			driver = EXCLUDED.driver
-			dsn = EXCLUDED.dsn
-			is_enabled = EXCLUDED.is_enabled
+			name = EXCLUDED.name,
+			driver = EXCLUDED.driver,
+			dsn = EXCLUDED.dsn,
+			is_enabled = EXCLUDED.is_enabled,
 			updated_at = EXCLUDED.updated_at
 	`
 

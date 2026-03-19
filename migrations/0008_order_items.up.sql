@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   variant_id BIGINT NOT NULL REFERENCES product_variants(id) ON DELETE RESTRICT,
   quantity INT NOT NULL CHECK (quantity > 0),
-  unit_price BIGINT NOT CHECK (unit_price >= 0)
+  unit_price BIGINT NOT NULL CHECK (unit_price >= 0)
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
