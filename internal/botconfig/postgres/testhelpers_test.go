@@ -66,6 +66,12 @@ func newTestPool(t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
+// dbExecutor is a minimal test-only abstraction used by fixture helpers.
+// It keep helper code small and decoupled from concrete pool type.
+// type dbExecutor interface {
+// 	Exec(ctx context.Context, sql string, arguments ...any) (commandTag, error)
+// }
+
 func waitForPostgres(ctx context.Context, dsn string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 

@@ -18,7 +18,7 @@ type BotRepository struct {
 // Save create or updates bot config by ID.
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
-		INSER INTO bot_configs (
+		INSERT INTO bot_configs (
 			id, name, token, database_id, is_enabled, updated_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6)
