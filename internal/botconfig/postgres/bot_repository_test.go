@@ -108,12 +108,12 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 
 	got, err := repo.ByID(ctx, bot.ID)
 	require.NoError(t, err)
-	require.NotNil(t, err)
+	require.NotNil(t, got)
 
 	require.Equal(t, "Shop Main Renamed", got.Name)
 	require.Equal(t, "123456:demo-token-updated", got.Token)
 	require.Equal(t, "analytics-db", got.DatabaseID)
-	require.False(t, bot.IsEnabled)
+	require.False(t, got.IsEnabled)
 	require.WithinDuration(t, bot.UpdatedAt, got.UpdatedAt, time.Second)
 }
 

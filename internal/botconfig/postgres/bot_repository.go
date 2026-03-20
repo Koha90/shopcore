@@ -15,7 +15,7 @@ type BotRepository struct {
 	pool *pgxpool.Pool
 }
 
-// Save create or updates bot config by ID.
+// Save creates or updates bot configuration by ID.
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
 		INSERT INTO bot_configs (
@@ -25,7 +25,7 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			token = EXCLUDED.token,
-			database_id = EXCLUDED.is_enabled,
+			database_id = EXCLUDED.database_id,
 			is_enabled = EXCLUDED.is_enabled,
 			updated_at = EXCLUDED.updated_at
 	`
