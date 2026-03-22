@@ -40,7 +40,7 @@ psql:
 	docker compose exec postgres psql -U $(DB_USER) -d $(DB_DATABASE)
 
 migrate:
-	go run ./cmd/tui
+	go run ./cmd/migrate
 
 run-tui:
 	go run ./cmd/tui
@@ -59,3 +59,8 @@ fmt:
 
 lint:
 	go test ./... >/dev/null
+
+dev:
+	docker compose up -d postgres
+	go run ./cmd/migrate
+	go run ./cmd/tui

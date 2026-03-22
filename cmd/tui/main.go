@@ -19,7 +19,6 @@ import (
 	"botmanager/internal/manager"
 	"botmanager/internal/tui"
 	"botmanager/pkg/logger"
-	"botmanager/pkg/migrator"
 )
 
 // demoRunner simulates bot runtime lifecycle for local development.
@@ -67,11 +66,6 @@ func main() {
 	}()
 
 	dsn := mustPostgresDSN()
-
-	if err = migrator.MigratePostgres(dsn, "./migrations"); err != nil {
-		appLogger.Error("failed to migrate database", "err", err)
-		os.Exit(1)
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
