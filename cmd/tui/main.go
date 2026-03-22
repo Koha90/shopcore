@@ -3,19 +3,36 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"os"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 
 	"botmanager/internal/app/bootstrap"
 	"botmanager/internal/botconfig"
-	"botmanager/internal/botconfig/inmemory"
+	botconfigpg "botmanager/internal/botconfig/postgres"
+	"botmanager/internal/config"
 	"botmanager/internal/manager"
 	"botmanager/internal/tui"
+	"botmanager/pkg/logger"
+	"botmanager/pkg/migrator"
 )
 
+// demoRunner simulates bot runtime lifecycle for local development.
+//
+// It is intentionally simple:
+//   - broken-bot fails during startup
+//   - slow-bot becomes ready after a delay
+//   - other bots become ready immediately
+//
+// This runner is useful while wiring storage, bootstrap, and TUI together
+// before real Telegram runtime is connected.
 type demoRunner struct{}
 
-// Run simulates bot runtime lifecycle for local demo.
+// Run starts demo bot runtime and reports readiness through ready callback.
 func (r *demoRunner) Run(ctx context.Context, spec manager.BotSpec, ready func()) error {
 	switch spec.ID {
 	case "broken-bot":
@@ -36,76 +53,127 @@ func (r *demoRunner) Run(ctx context.Context, spec manager.BotSpec, ready func()
 }
 
 func main() {
-	ctx := context.Background()
+	_ = godotenv.Load()
 
-	m := manager.New(&demoRunner{})
+	cfg := config.MustLoad()
 
-	botsRepo := inmemory.NewBotRepository()
-	dbRepo := inmemory.NewDatabaseProfileRepository()
-	cfgSvc := botconfig.NewService(botsRepo, dbRepo, nil)
+	appLogger, err := logger.Setup(cfg.Env)
+	if err != nil {
+		log.Fatalf("setup logger: %v", err)
+	}
+	defer func() {
+		_ = appLogger.Close()
+	}()
 
-	_ = cfgSvc.CreateDatabaseProfile(ctx, botconfig.CreateDatabaseProfileParams{
-		ID:        "main-db",
-		Name:      "Main DB",
-		Driver:    "postgres",
-		DSN:       "postgres://demo-main",
-		IsEnabled: true,
-	})
+	dsn := mustPostgresDSN()
 
-	_ = cfgSvc.CreateDatabaseProfile(ctx, botconfig.CreateDatabaseProfileParams{
-		ID:        "analytics-db",
-		Name:      "Analytics DB",
-		Driver:    "postgres",
-		DSN:       "postgres://demo-analytics",
-		IsEnabled: true,
-	})
+	if err := migrator.MigratePostgres(dsn, "./migrations"); err != nil {
+		appLogger.Error("failed to migrate database", "err", err)
+		os.Exit(1)
+	}
 
-	_ = cfgSvc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:demo-token-main",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	_ = cfgSvc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "slow-bot",
-		Name:       "Slow Bot",
-		Token:      "123456:demo-token-slow",
-		DatabaseID: "analytics-db",
-		IsEnabled:  true,
-	})
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		appLogger.Error("failed to create pgx pool", "err", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
 
-	_ = cfgSvc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "broken-bot",
-		Name:       "Broken Bot",
-		Token:      "123456:demo-token-broken",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-	})
+	if err := pool.Ping(ctx); err != nil {
+		appLogger.Error("failed to ping postgres", "err", err)
+		os.Exit(1)
+	}
 
-	starter := bootstrap.NewStarter(cfgSvc, m)
+	store := botconfigpg.NewStore(pool)
 
-	results, err := starter.StartEnabled(ctx)
-	for _, result := range results {
+	cfgSvc := botconfig.NewService(
+		store.BotRepository(),
+		store.DatabaseProfileRepository(),
+		nil,
+	)
+
+	mgr := manager.New(&demoRunner{})
+
+	starter := bootstrap.NewStarter(cfgSvc, mgr)
+
+	bootstrapResults, err := starter.StartEnabled(context.Background())
+	for _, result := range bootstrapResults {
 		if result.Err != nil {
-			log.Printf("bootstrap bot=%s failed: %v", result.ID, result.Err)
+			appLogger.Error(
+				"bootstrap bot failed",
+				"bot_id", result.ID,
+				"registered", result.Registered,
+				"started", result.Started,
+				"err", result.Err,
+			)
 			continue
 		}
 
-		log.Printf(
-			"bootstrap bot=%s registered=%t started=%t",
-			result.ID,
-			result.Registered,
-			result.Started,
+		appLogger.Info(
+			"bootstrap bot ok",
+			"bot_id", result.ID,
+			"registered", result.Registered,
+			"started", result.Started,
 		)
 	}
 
 	if err != nil {
-		log.Printf("bootstrap completed with errors: %v", err)
+		appLogger.Error("bootstrap finished with errors", "err", err)
 	}
 
-	if err := tui.Run(m, cfgSvc); err != nil {
-		panic(err)
+	if err := tui.Run(mgr, cfgSvc); err != nil {
+		appLogger.Error("tui exited with error", "err", err)
+		os.Exit(1)
 	}
+}
+
+// mustPostgresDSN builds PostgreSQL DSN from environment variables.
+//
+// Required environment variables:
+//   - DB_HOST
+//   - DB_PORT
+//   - DB_USER
+//   - DB_PASSWORD
+//   - DB_DATABASE
+//
+// Optional:
+//   - DB_SSLMODE (defaults to disable)
+func mustPostgresDSN() string {
+	host := mustEnv("DB_HOST")
+	port := mustEnv("DB_PORT")
+	user := mustEnv("DB_USER")
+	password := mustEnv("DB_PASSWORD")
+	database := mustEnv("DB_DATABASE")
+	sslmode := envOrDefault("DB_SSLMODE", "disable")
+
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		user,
+		password,
+		host,
+		port,
+		database,
+		sslmode,
+	)
+}
+
+// mustEnv returns required environment variable or exits process immediately.
+func mustEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("required environment variable %s is not set", key)
+	}
+	return value
+}
+
+// envOrDefault returns environment variable value or fallback if empty.
+func envOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
 }
