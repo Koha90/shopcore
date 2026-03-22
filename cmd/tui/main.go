@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"botmanager/internal/app/bootstrap"
+	"botmanager/internal/app/seed"
 	"botmanager/internal/botconfig"
 	botconfigpg "botmanager/internal/botconfig/postgres"
 	"botmanager/internal/config"
@@ -67,7 +68,7 @@ func main() {
 
 	dsn := mustPostgresDSN()
 
-	if err := migrator.MigratePostgres(dsn, "./migrations"); err != nil {
+	if err = migrator.MigratePostgres(dsn, "./migrations"); err != nil {
 		appLogger.Error("failed to migrate database", "err", err)
 		os.Exit(1)
 	}
@@ -82,7 +83,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(ctx); err != nil {
+	if err = pool.Ping(ctx); err != nil {
 		appLogger.Error("failed to ping postgres", "err", err)
 		os.Exit(1)
 	}
@@ -94,6 +95,11 @@ func main() {
 		store.DatabaseProfileRepository(),
 		nil,
 	)
+
+	if err = seed.EnsureDemoData(context.Background(), cfgSvc); err != nil {
+		appLogger.Error("failed to ensure demo data", "err", err)
+		os.Exit(1)
+	}
 
 	mgr := manager.New(&demoRunner{})
 
