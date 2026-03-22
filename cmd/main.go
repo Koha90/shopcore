@@ -56,7 +56,7 @@ func main() {
 	_ = botconfig.NewService(
 		store.BotRepository(),
 		store.DatabaseProfileRepository(),
-		logger,
+		logger.Logger,
 	)
 
 	log.Println("All migrations applied successfully!")

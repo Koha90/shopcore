@@ -14,7 +14,7 @@ type RuntimeBot struct {
 	Name       string
 	Token      string
 	DatabaseID string
-	IsEnables  bool
+	IsEnabled  bool
 }
 
 // RuntimePort defines internal bot runtime bootstrap use cases.
@@ -46,7 +46,7 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 			Name:       bot.Name,
 			Token:      bot.Token,
 			DatabaseID: bot.DatabaseID,
-			IsEnables:  bot.IsEnabled,
+			IsEnabled:  bot.IsEnabled,
 		})
 	}
 
