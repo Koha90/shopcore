@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
 	"botmanager/internal/app/bootstrap"
+	"botmanager/internal/app/pgapp"
 	"botmanager/internal/app/seed"
 	"botmanager/internal/botconfig"
 	botconfigpg "botmanager/internal/botconfig/postgres"
@@ -65,22 +64,17 @@ func main() {
 		_ = appLogger.Close()
 	}()
 
-	dsn := mustPostgresDSN()
+	pgCfg := pgapp.LoadConfigFromEnv()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, dsn)
+	pool, err := pgapp.OpenPool(ctx, pgCfg)
 	if err != nil {
-		appLogger.Error("failed to create pgx pool", "err", err)
+		appLogger.Error("failed to open postgres pool", "err", err)
 		os.Exit(1)
 	}
 	defer pool.Close()
-
-	if err = pool.Ping(ctx); err != nil {
-		appLogger.Error("failed to ping postgres", "err", err)
-		os.Exit(1)
-	}
 
 	store := botconfigpg.NewStore(pool)
 
@@ -128,52 +122,4 @@ func main() {
 		appLogger.Error("tui exited with error", "err", err)
 		os.Exit(1)
 	}
-}
-
-// mustPostgresDSN builds PostgreSQL DSN from environment variables.
-//
-// Required environment variables:
-//   - DB_HOST
-//   - DB_PORT
-//   - DB_USER
-//   - DB_PASSWORD
-//   - DB_DATABASE
-//
-// Optional:
-//   - DB_SSLMODE (defaults to disable)
-func mustPostgresDSN() string {
-	host := mustEnv("DB_HOST")
-	port := mustEnv("DB_PORT")
-	user := mustEnv("DB_USER")
-	password := mustEnv("DB_PASSWORD")
-	database := mustEnv("DB_DATABASE")
-	sslmode := envOrDefault("DB_SSLMODE", "disable")
-
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		user,
-		password,
-		host,
-		port,
-		database,
-		sslmode,
-	)
-}
-
-// mustEnv returns required environment variable or exits process immediately.
-func mustEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Fatalf("required environment variable %s is not set", key)
-	}
-	return value
-}
-
-// envOrDefault returns environment variable value or fallback if empty.
-func envOrDefault(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-	return value
 }
