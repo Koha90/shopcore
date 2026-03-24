@@ -5,8 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"botmanager/internal/botconfig"
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/botconfig"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 const defaultPageSize = 10

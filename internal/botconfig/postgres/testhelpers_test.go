@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"botmanager/pkg/migrator"
+	"github.com/koha90/shopcore/pkg/migrator"
 )
 
 func newTestPool(t *testing.T) *pgxpool.Pool {
@@ -22,7 +22,7 @@ func newTestPool(t *testing.T) *pgxpool.Pool {
 	container, err := tcpostgres.Run(
 		ctx,
 		"postgres:16-alpine",
-		tcpostgres.WithDatabase("botmanager_test"),
+		tcpostgres.WithDatabase("github.com/koha90/shopcore_test"),
 		tcpostgres.WithUsername("postgres"),
 		tcpostgres.WithPassword("postgres"),
 	)

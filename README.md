@@ -1,6 +1,6 @@
-![CI](https://github.com/Koha90/botmanager/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Koha90/github.com/koha90/shopcore/actions/workflows/ci.yml/badge.svg)
 
-# botmanager
+# github.com/koha90/shopcore
 
 E-commerce платформа с мульти-интерфейсами:
 - Telegram (primary)

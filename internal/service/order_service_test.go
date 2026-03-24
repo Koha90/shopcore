@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 func TestOrderService_CreateForVariant(t *testing.T) {

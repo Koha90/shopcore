@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"botmanager/internal/botconfig"
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 func TestDatabaseProfileRepository_SaveAndByID(t *testing.T) {

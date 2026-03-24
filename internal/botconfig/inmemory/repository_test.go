@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"botmanager/internal/botconfig"
-	botconfigmem "botmanager/internal/botconfig/inmemory"
+	"github.com/koha90/shopcore/internal/botconfig"
+	botconfigmem "github.com/koha90/shopcore/internal/botconfig/inmemory"
 )
 
 func TestBotRepository_SaveByIDListDelete(t *testing.T) {

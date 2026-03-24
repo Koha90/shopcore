@@ -7,13 +7,13 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"botmanager/internal/app/bootstrap"
-	"botmanager/internal/app/runtime/demo"
-	"botmanager/internal/app/seed"
-	"botmanager/internal/app/tuiapp"
-	"botmanager/internal/config"
-	"botmanager/internal/tui"
-	"botmanager/pkg/logger"
+	"github.com/koha90/shopcore/internal/app/bootstrap"
+	"github.com/koha90/shopcore/internal/app/runtime/demo"
+	"github.com/koha90/shopcore/internal/app/seed"
+	"github.com/koha90/shopcore/internal/app/tuiapp"
+	"github.com/koha90/shopcore/internal/config"
+	"github.com/koha90/shopcore/internal/tui"
+	"github.com/koha90/shopcore/pkg/logger"
 )
 
 func main() {

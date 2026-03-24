@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 // ProductVariantRepository defines persistence operations

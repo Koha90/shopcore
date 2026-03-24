@@ -8,10 +8,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"botmanager/internal/app/pgapp"
-	"botmanager/internal/botconfig"
-	botconfigpg "botmanager/internal/botconfig/postgres"
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/app/pgapp"
+	"github.com/koha90/shopcore/internal/botconfig"
+	botconfigpg "github.com/koha90/shopcore/internal/botconfig/postgres"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // openPool initialized PostgreSQL connection pool for the TUI application.

@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"botmanager/internal/botconfig"
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 // DatabaseProfileRepository stores database profiles in PostgreSQL.

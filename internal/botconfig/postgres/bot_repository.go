@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"botmanager/internal/botconfig"
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 // BotRepository stores bot configs in PostgreSQL.

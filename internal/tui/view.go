@@ -8,7 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // View renders full TUI screen.

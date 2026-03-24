@@ -3,7 +3,7 @@ package seed
 import (
 	"context"
 
-	"botmanager/internal/botconfig"
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 // BotConfigSeedService defines botconfig operations required for demo seed.

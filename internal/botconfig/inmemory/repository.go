@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"botmanager/internal/botconfig"
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 // BotRepository stores bot configurations in process memory.

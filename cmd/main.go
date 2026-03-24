@@ -10,11 +10,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"botmanager/internal/botconfig"
-	botpg "botmanager/internal/botconfig/postgres"
-	"botmanager/internal/config"
-	"botmanager/pkg/logger"
-	"botmanager/pkg/migrator"
+	"github.com/koha90/shopcore/internal/botconfig"
+	botpg "github.com/koha90/shopcore/internal/botconfig/postgres"
+	"github.com/koha90/shopcore/internal/config"
+	"github.com/koha90/shopcore/pkg/logger"
+	"github.com/koha90/shopcore/pkg/migrator"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"botmanager/internal/app/pgapp"
-	"botmanager/pkg/migrator"
+	"github.com/koha90/shopcore/internal/app/pgapp"
+	"github.com/koha90/shopcore/pkg/migrator"
 )
 
 func main() {

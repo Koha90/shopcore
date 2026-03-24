@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"botmanager/internal/botconfig"
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/botconfig"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // stubRuntimeSource implements RuntimeSource for bootstrap tests.

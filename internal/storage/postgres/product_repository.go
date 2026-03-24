@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 // ProductRepository represent product repository.

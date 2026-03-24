@@ -8,10 +8,10 @@ import (
 	"context"
 	"net/http"
 
-	"botmanager/internal/config"
-	transporthttp "botmanager/internal/transport/http"
-	"botmanager/internal/transport/http/handler"
-	"botmanager/pkg/logger"
+	"github.com/koha90/shopcore/internal/config"
+	transporthttp "github.com/koha90/shopcore/internal/transport/http"
+	"github.com/koha90/shopcore/internal/transport/http/handler"
+	"github.com/koha90/shopcore/pkg/logger"
 )
 
 type App struct {

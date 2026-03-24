@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // Runner simulates bot runtime lifecycle for local development.

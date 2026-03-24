@@ -3,7 +3,7 @@ package tuiapp
 import (
 	"time"
 
-	"botmanager/internal/app/pgapp"
+	"github.com/koha90/shopcore/internal/app/pgapp"
 )
 
 // Config contains infrastructures settings required to build the TUI

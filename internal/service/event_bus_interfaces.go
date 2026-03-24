@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 // EventBus defines in-process event publishing mechanism.

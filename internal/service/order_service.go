@@ -11,7 +11,7 @@ import (
 	"log/slog"
 	"time"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 // OrderService orchestrates order-related use cases.

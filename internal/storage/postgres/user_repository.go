@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	"botmanager/internal/domain"
-	"botmanager/internal/service"
+	"github.com/koha90/shopcore/internal/domain"
+	"github.com/koha90/shopcore/internal/service"
 )
 
 var _ service.UserRepository = (*UserRepository)(nil)

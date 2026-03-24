@@ -1,4 +1,4 @@
-APP_NAME := botmanager
+APP_NAME := github.com/koha90/shopcore
 DB_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=$(DB_SSLMODE)
 
 include .env

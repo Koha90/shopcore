@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: botmanager-postgres
+    container_name: github.com/koha90/shopcore-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}

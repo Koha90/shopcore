@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"botmanager/internal/botconfig"
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/botconfig"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // RuntimeSource defines runtime bot configuration required for startup.

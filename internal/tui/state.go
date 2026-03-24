@@ -3,7 +3,7 @@ package tui
 import (
 	"strings"
 
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 func (m *Model) refresh() {

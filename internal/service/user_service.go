@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"botmanager/internal/domain"
+	"github.com/koha90/shopcore/internal/domain"
 )
 
 // UserService orchestrates user-related use cases.

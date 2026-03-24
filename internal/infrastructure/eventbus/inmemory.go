@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"botmanager/internal/domain"
-	"botmanager/internal/service"
+	"github.com/koha90/shopcore/internal/domain"
+	"github.com/koha90/shopcore/internal/service"
 )
 
 // InMemoryBus delivers domain events to subscribed handlers

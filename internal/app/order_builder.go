@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"sync"
 
-	"botmanager/internal/domain"
-	"botmanager/internal/infrastructure/eventbus"
-	"botmanager/internal/service"
-	"botmanager/internal/storage/memory"
+	"github.com/koha90/shopcore/internal/domain"
+	"github.com/koha90/shopcore/internal/infrastructure/eventbus"
+	"github.com/koha90/shopcore/internal/service"
+	"github.com/koha90/shopcore/internal/storage/memory"
 )
 
 // BuildOrderService creates in-memory dependencies for local development

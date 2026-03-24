@@ -6,8 +6,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"botmanager/internal/botconfig"
-	"botmanager/internal/manager"
+	"github.com/koha90/shopcore/internal/botconfig"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 // App is the fully wired dependency container for cmd/tui.

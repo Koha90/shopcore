@@ -12,9 +12,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"botmanager/internal/domain"
-	"botmanager/internal/service"
-	"botmanager/internal/transport/http/dto"
+	"github.com/koha90/shopcore/internal/domain"
+	"github.com/koha90/shopcore/internal/service"
+	"github.com/koha90/shopcore/internal/transport/http/dto"
 )
 
 // OrderHandler handles HTTP requests related to orders.
