@@ -16,9 +16,13 @@ type Config struct {
 // LoadConfigFromEnv loads tuiapp configuration from environment.
 //
 // It delegates PostgreSQL parsing to pgapp.LoadConfigFromEnv.
-func LoadConfigFromEnv() Config {
-	return Config{
-		Postgres:      pgapp.LoadConfigFromEnv(),
-		OpenDBTimeout: 10 * time.Second,
+func LoadConfigFromEnv() (Config, error) {
+	pgcfg, err := pgapp.LoadConfigFromEnv()
+	if err != nil {
+		return Config{}, err
 	}
+	return Config{
+		Postgres:      pgcfg,
+		OpenDBTimeout: 10 * time.Second,
+	}, nil
 }

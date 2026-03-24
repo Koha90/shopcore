@@ -12,7 +12,10 @@ import (
 func main() {
 	_ = godotenv.Load()
 
-	cfg := pgapp.LoadConfigFromEnv()
+	cfg, err := pgapp.LoadConfigFromEnv()
+	if err != nil {
+		log.Fatalf("failed to load config from env: %v", err)
+	}
 
 	if err := migrator.MigratePostgres(cfg.DSN(), "./migrations"); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)

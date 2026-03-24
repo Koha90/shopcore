@@ -1,8 +1,10 @@
 package pgapp
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Config contains PostgreSQL connection parameters required by application
@@ -29,14 +31,38 @@ type Config struct {
 //   - DB_SSLMODE (defaults to disable)
 //
 // The function panics if a required environment variable is missing.
-func LoadConfigFromEnv() Config {
-	return Config{
-		Host:     mustEnv("DB_HOST"),
-		Port:     mustEnv("DB_PORT"),
-		User:     mustEnv("DB_USER"),
-		Password: mustEnv("DB_PASSWORD"),
-		Database: mustEnv("DB_DATABASE"),
+func LoadConfigFromEnv() (Config, error) {
+	cfg := Config{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     envOrDefault("DB_PORT", "5432"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Database: os.Getenv("DB_DATABASE"),
 		SSLMode:  envOrDefault("DB_SSLMODE", "disable"),
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
+	}
+
+	return cfg, nil
+}
+
+// Validate checks whether the config contains required fields.
+func (c Config) Validate() error {
+	switch {
+	case strings.TrimSpace(c.Host) == "":
+		return errors.New("DB_HOST is required")
+	case strings.TrimSpace(c.Port) == "":
+		return errors.New("DB_PORT is required")
+	case strings.TrimSpace(c.User) == "":
+		return errors.New("DB_USER is required")
+	case strings.TrimSpace(c.Password) == "":
+		return errors.New("DB_PASSWORD is required")
+	case strings.TrimSpace(c.Database) == "":
+		return errors.New("DB_DATABASE is required")
+	default:
+		return nil
 	}
 }
 
@@ -51,14 +77,6 @@ func (c Config) DSN() string {
 		c.Database,
 		c.SSLMode,
 	)
-}
-
-func mustEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		panic(fmt.Sprintf("required environment variable %s is not set", key))
-	}
-	return value
 }
 
 func envOrDefault(key, fallback string) string {

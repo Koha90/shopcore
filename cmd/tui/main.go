@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/koha90/shopcore/internal/app/bootstrap"
-	"github.com/koha90/shopcore/internal/app/runtime/demo"
+	"github.com/koha90/shopcore/internal/app/runtime/telegram"
 	"github.com/koha90/shopcore/internal/app/seed"
 	"github.com/koha90/shopcore/internal/app/tuiapp"
 	"github.com/koha90/shopcore/internal/config"
@@ -27,9 +27,21 @@ func main() {
 	}
 	defer func() { _ = appLogger.Close() }()
 
-	appCfg := tuiapp.LoadConfigFromEnv()
+	appCfg, err := tuiapp.LoadConfigFromEnv()
+	if err != nil {
+		appLogger.Error("load tui config", "err", err)
+		os.Exit(1)
+	}
 
-	app, err := tuiapp.New(context.Background(), appCfg, demo.NewRunner(), appLogger.Logger)
+	tgCfg, err := telegram.LoadConfigFromEnv()
+	if err != nil {
+		appLogger.Error("load telegram config", "err", err)
+		os.Exit(1)
+	}
+
+	runner := telegram.NewRunner(tgCfg, appLogger.Logger)
+
+	app, err := tuiapp.New(context.Background(), appCfg, runner, appLogger.Logger)
 	if err != nil {
 		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
