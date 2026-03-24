@@ -20,7 +20,11 @@ func (r *Runner) startHandler(spec manager.BotSpec) func(context.Context, *tgbot
 			Text:   "Привет. Я бот платформы Shopcore  ",
 		})
 		if err != nil {
-			r.log.Error("telegram send start reply failed", "bot_id", spec.ID, "err", err)
+			r.log.Error(
+				"telegram send start reply failed",
+				"bot_id", spec.ID,
+				"err", err,
+			)
 		}
 	}
 }
@@ -42,6 +46,10 @@ func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgb
 
 func (r *Runner) errorsHandler(spec manager.BotSpec) func(error) {
 	return func(err error) {
-		r.log.Error("telegram runtime error", "bot_id", spec.ID, "err", err)
+		r.log.Error(
+			"telegram runtime error",
+			"bot_id", spec.ID,
+			"err", err,
+		)
 	}
 }

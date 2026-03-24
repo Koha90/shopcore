@@ -33,12 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	tgCfg, err := telegram.LoadConfigFromEnv()
-	if err != nil {
-		appLogger.Error("load telegram config", "err", err)
-		os.Exit(1)
-	}
-
+	tgCfg := telegram.LoadConfigFromEnv()
 	runner := telegram.NewRunner(tgCfg, appLogger.Logger)
 
 	app, err := tuiapp.New(context.Background(), appCfg, runner, appLogger.Logger)

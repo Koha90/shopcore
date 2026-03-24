@@ -8,9 +8,10 @@ import "context"
 // Token is runtime configuration and must not be treated
 // as bot identity.
 type BotSpec struct {
-	ID    string
-	Name  string
-	Token string
+	ID         string
+	Name       string
+	Token      string
+	DatabaseID string
 }
 
 // Entry stores bot runtime state managed by Manager.
