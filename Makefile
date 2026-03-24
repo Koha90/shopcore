@@ -1,5 +1,7 @@
 APP_NAME := github.com/koha90/shopcore
 DB_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=$(DB_SSLMODE)
+DB_USER ?= postgres
+DB_NAME ?= shopcore
 
 include .env
 export
@@ -59,8 +61,16 @@ fmt:
 
 lint:
 	go test ./... >/dev/null
+	
+wait-db:
+	@echo "waiting for postgres..."
+	@until docker compose exec -T postgres pg_isready -U $(DB_USER) -d $(DB_NAME) >/dev/null 2>&1; do \
+		sleep 1; \
+	done
+	@echo "postgres is ready"
 
 dev:
 	docker compose up -d postgres
+	$(MAKE) wait-db
 	go run ./cmd/migrate
 	go run ./cmd/tui

@@ -59,7 +59,7 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService) error {
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
 		ID:         "shop-main",
 		Name:       "Shop Main",
-		Token:      "123456:demo-token-main",
+		Token:      "8046427793:AAEBRp4grScSfNrKNKVUlsXh22f6jf6N-Es",
 		DatabaseID: "main-db",
 		IsEnabled:  true,
 	}); err != nil {
@@ -69,7 +69,7 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService) error {
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
 		ID:         "slow-bot",
 		Name:       "Slow Bot",
-		Token:      "123456:demo-token-slow",
+		Token:      "7561451770:AAE1G-vwEcavrFdhJ2KP50J5nW2f4KdE1YQ",
 		DatabaseID: "analytics-db",
 		IsEnabled:  true,
 	}); err != nil {
