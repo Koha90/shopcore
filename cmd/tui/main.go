@@ -2,52 +2,19 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 
 	"botmanager/internal/app/bootstrap"
+	"botmanager/internal/app/runtime/demo"
 	"botmanager/internal/app/seed"
 	"botmanager/internal/app/tuiapp"
 	"botmanager/internal/config"
-	"botmanager/internal/manager"
 	"botmanager/internal/tui"
 	"botmanager/pkg/logger"
 )
-
-// demoRunner simulates bot runtime lifecycle for local development.
-//
-// It is intentionally simple:
-//   - broken-bot fails during startup
-//   - slow-bot becomes ready after a delay
-//   - other bots become ready immediately
-//
-// This runner is useful while wiring storage, bootstrap, and TUI together
-// before real Telegram runtime is connected.
-type demoRunner struct{}
-
-// Run starts demo bot runtime and reports readiness through ready callback.
-func (r *demoRunner) Run(ctx context.Context, spec manager.BotSpec, ready func()) error {
-	switch spec.ID {
-	case "broken-bot":
-		time.Sleep(700 * time.Millisecond)
-		return errors.New("telegram auth failed")
-
-	case "slow-bot":
-		time.Sleep(4 * time.Second)
-		ready()
-		<-ctx.Done()
-		return nil
-
-	default:
-		ready()
-		<-ctx.Done()
-		return nil
-	}
-}
 
 func main() {
 	_ = godotenv.Load()
@@ -62,7 +29,7 @@ func main() {
 
 	appCfg := tuiapp.LoadConfigFromEnv()
 
-	app, err := tuiapp.New(context.Background(), appCfg, &demoRunner{}, appLogger.Logger)
+	app, err := tuiapp.New(context.Background(), appCfg, demo.NewRunner(), appLogger.Logger)
 	if err != nil {
 		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
