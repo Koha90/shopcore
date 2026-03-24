@@ -17,7 +17,7 @@ type Manager struct {
 
 // New creates a new Manager instance.
 //
-// runner mos not be nil.
+// runner must not be nil.
 func New(runner Runner) *Manager {
 	if runner == nil {
 		panic("manager: Runner is nil")

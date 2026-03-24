@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// Config contains PostgreSQL connection patameters required by application
+// Config contains PostgreSQL connection parameters required by application
 // entrypoints.
 type Config struct {
 	Host     string
@@ -27,6 +27,8 @@ type Config struct {
 //
 // Optional:
 //   - DB_SSLMODE (defaults to disable)
+//
+// The function panics if a required environment variable is missing.
 func LoadConfigFromEnv() Config {
 	return Config{
 		Host:     mustEnv("DB_HOST"),

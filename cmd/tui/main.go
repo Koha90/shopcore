@@ -10,10 +10,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"botmanager/internal/app/bootstrap"
-	"botmanager/internal/app/pgapp"
 	"botmanager/internal/app/seed"
-	"botmanager/internal/botconfig"
-	botconfigpg "botmanager/internal/botconfig/postgres"
+	"botmanager/internal/app/tuiapp"
 	"botmanager/internal/config"
 	"botmanager/internal/manager"
 	"botmanager/internal/tui"
@@ -60,41 +58,26 @@ func main() {
 	if err != nil {
 		log.Fatalf("setup logger: %v", err)
 	}
-	defer func() {
-		_ = appLogger.Close()
-	}()
+	defer func() { _ = appLogger.Close() }()
 
-	pgCfg := pgapp.LoadConfigFromEnv()
+	appCfg := tuiapp.LoadConfigFromEnv()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := pgapp.OpenPool(ctx, pgCfg)
+	app, err := tuiapp.New(context.Background(), appCfg, &demoRunner{}, appLogger.Logger)
 	if err != nil {
-		appLogger.Error("failed to open postgres pool", "err", err)
+		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
 	}
-	defer pool.Close()
+	defer app.Close()
 
-	store := botconfigpg.NewStore(pool)
-
-	cfgSvc := botconfig.NewService(
-		store.BotRepository(),
-		store.DatabaseProfileRepository(),
-		nil,
-	)
-
-	if err = seed.EnsureDemoData(context.Background(), cfgSvc); err != nil {
-		appLogger.Error("failed to ensure demo data", "err", err)
+	if err := seed.EnsureDemoData(context.Background(), app.BotConfig); err != nil {
+		appLogger.Error("failed to ensure demo", "err", err)
 		os.Exit(1)
 	}
 
-	mgr := manager.New(&demoRunner{})
+	starter := bootstrap.NewStarter(app.BotConfig, app.Manager)
 
-	starter := bootstrap.NewStarter(cfgSvc, mgr)
-
-	bootstrapResults, err := starter.StartEnabled(context.Background())
-	for _, result := range bootstrapResults {
+	results, err := starter.StartEnabled(context.Background())
+	for _, result := range results {
 		if result.Err != nil {
 			appLogger.Error(
 				"bootstrap bot failed",
@@ -118,7 +101,7 @@ func main() {
 		appLogger.Error("bootstrap finished with errors", "err", err)
 	}
 
-	if err := tui.Run(mgr, cfgSvc); err != nil {
+	if err = tui.Run(app.Manager, app.BotConfig); err != nil {
 		appLogger.Error("tui exited with error", "err", err)
 		os.Exit(1)
 	}

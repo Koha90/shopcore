@@ -2,7 +2,7 @@ package manager
 
 import "context"
 
-// Runner execute a bot runtime.
+// Runner executes a bot runtime.
 //
 // Run is expected to block until bot stops or fails.
 // Manager passes a cancelable context to control lifecycle.
