@@ -47,10 +47,6 @@ func (m Model) viewDesktop() tea.View {
 		body = m.renderConfirmDiscardEdit()
 		help = m.theme.Help.Render("↑/↓ or j/k move • enter select • esc back • q quit")
 
-	case ScreenEditBotToken:
-		body = m.renderEditBotToken()
-		help = m.theme.Help.Render("type or paste token • enter save • esc back • q quit")
-
 	default:
 		summary := m.renderSummary()
 		filterBar := m.renderFilterBar()
