@@ -15,6 +15,7 @@ func (m Model) botActions() []string {
 		"restart",
 		"view config",
 		"edit config",
+		"edit token",
 		"back",
 	}
 }
@@ -93,6 +94,12 @@ func (m Model) handleBotAction() (tea.Model, tea.Cmd) {
 		m.lastErr = nil
 		m.message = "loading config for edit..."
 		return m, loadEditBotConfigCmd(m.config, id)
+
+	case "edit token":
+		m.screen = ScreenEditBotToken
+		m.message = ""
+		m.lastErr = nil
+		return m, loadBotConfigCmd(m.config, m.selectedID())
 
 	case "back":
 		m.screen = ScreenList

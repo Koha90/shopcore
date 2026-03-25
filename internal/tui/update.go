@@ -2,7 +2,9 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -85,6 +87,55 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		}
+
+		// Shared text input flow or name/token editing.
+		if m.inputMode != InputModeNone {
+			var cmd tea.Cmd
+			m.textInput, cmd = m.textInput.Update(msg)
+
+			switch msg.String() {
+			case "esc":
+				m.resetTextInput()
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
+
+			case "enter":
+				value := strings.TrimSpace(m.textInput.Value())
+
+				switch m.inputMode {
+				case InputModeEditName:
+					if value == "" {
+						m.message = ""
+						m.lastErr = errors.New("name is empty")
+						return m, nil
+					}
+
+					m.editForm.Name = value
+					m.editDirty = true
+					m.resetTextInput()
+					m.message = "name updated"
+					m.lastErr = nil
+					return m, nil
+
+				case InputModeEditToken:
+					if value == "" {
+						m.message = ""
+						m.lastErr = errors.New("token is empty")
+						return m, nil
+					}
+
+					m.message = "saving token..."
+					m.lastErr = nil
+					token := value
+					m.resetTextInput()
+					return m, updateBotTokenCmd(m.config, m.selectedID(), token)
+				}
+			}
+
+			return m, cmd
+		}
+
 		if m.screen == ScreenBotActions {
 			switch msg.String() {
 			case "q", "ctrl+c":
@@ -125,6 +176,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
+
 		if m.screen == ScreenBotConfig {
 			switch msg.String() {
 			case "q", "ctrl+c":
@@ -138,34 +190,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
+
 		if m.screen == ScreenEditBotConfig {
-			if m.editTyping {
-				switch msg.String() {
-				case "enter":
-					m.editForm.Name = m.editBuffer
-					m.editDirty = true
-					m.editTyping = false
-					m.message = "name updated"
-					return m, nil
-
-				case "esc":
-					m.editTyping = false
-					m.editBuffer = ""
-					return m, nil
-
-				case "backspace":
-					if len(m.editBuffer) > 0 {
-						m.editBuffer = m.editBuffer[:len(m.editBuffer)-1]
-					}
-					return m, nil
-
-				default:
-					if msg.Text != "" {
-						m.editBuffer += msg.Text
-					}
-					return m, nil
-				}
-			}
 			switch msg.String() {
 			case "q", "ctrl+c":
 				return m, tea.Quit
@@ -211,23 +237,47 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case "enter":
 				if m.editCursor == EditFieldName {
-					m.editTyping = true
-					m.editBuffer = m.editForm.Name
+					m.textInput = newTexInput()
+					m.inputMode = InputModeEditName
+					m.textInput.SetValue(m.editForm.Name)
+					m.textInput.Focus()
 					m.message = "editing name (enter to apply, esc to cancel)"
+					m.lastErr = nil
 					return m, nil
 				}
 				return m.handleEditEnter()
-
-			case "backspace":
-				if m.editCursor == EditFieldName && len(m.editForm.Name) > 0 {
-					m.editForm.Name = m.editForm.Name[:len(m.editForm.Name)-1]
-					m.editDirty = true
-				}
-				return m, nil
 			}
 
 			return m, nil
 		}
+
+		if m.screen == ScreenEditBotToken {
+			switch msg.String() {
+			case "q", "ctrl+c":
+				return m, tea.Quit
+
+			case "esc":
+				m.resetTextInput()
+				m.screen = ScreenBotActions
+				m.message = ""
+				m.lastErr = nil
+				return m, nil
+
+			case "enter":
+				if m.inputMode != InputModeEditToken {
+					m.textInput = newTexInput()
+					m.inputMode = InputModeEditToken
+					m.textInput.SetValue("")
+					m.textInput.Focus()
+					m.message = "editing toke (enter to save, esc to cancel)"
+					m.lastErr = nil
+					return m, nil
+				}
+			}
+
+			return m, nil
+		}
+
 		if m.screen == ScreenConfirmDiscardEdit {
 			switch msg.String() {
 			case "q", "ctrl+c":
@@ -274,6 +324,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, nil
 		}
+
 		if m.screen == ScreenSelecteDatabaseProfile {
 			switch msg.String() {
 			case "q", "ctrl+c":
@@ -315,7 +366,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				profile := m.databaseProfiles[m.databaseCursor]
 				m.editForm.DatabaseID = profile.ID
 				m.editDirty = true
-				m.screen = ScreenSelecteDatabaseProfile
+				m.screen = ScreenEditBotConfig
 				m.message = "database profile selected"
 				m.lastErr = nil
 				return m, nil
@@ -504,6 +555,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.message = "config saved"
 		m.screen = ScreenBotConfig
 		return m, loadBotConfigCmd(m.config, msg.id)
+
+	case botTokenSavedMsg:
+		m.resetTextInput()
+		m.lastErr = nil
+		m.message = "token saved"
+		m.screen = ScreenBotConfig
+
+		return m, loadBotConfigCmd(m.config, msg.id)
+
+	case botTokenSaveFailedMsg:
+		m.lastErr = msg.err
+		m.message = "token save failed"
+		return m, nil
 	}
 
 	return m, nil

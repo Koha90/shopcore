@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/koha90/shopcore/internal/botconfig"
@@ -36,8 +37,17 @@ const (
 	ScreenBotActions             ScreenMode = "bot_actions"
 	ScreenBotConfig              ScreenMode = "bot_config"
 	ScreenEditBotConfig          ScreenMode = "edit_bot_config"
+	ScreenEditBotToken           ScreenMode = "edit_bot_token"
 	ScreenSelecteDatabaseProfile ScreenMode = "select_database_profile"
 	ScreenConfirmDiscardEdit     ScreenMode = "confirm_discard_edit"
+)
+
+type InputMode int
+
+const (
+	InputModeNone InputMode = iota
+	InputModeEditName
+	InputModeEditToken
 )
 
 // BotConfigService defines configuration operations required by TUI.
@@ -45,6 +55,9 @@ type BotConfigService interface {
 	BotByID(ctx context.Context, id string) (botconfig.BotView, error)
 	ListDatabaseProfiles(ctx context.Context) ([]botconfig.DatabaseProfileView, error)
 	UpdateBot(ctx context.Context, params botconfig.UpdateBotParams) error
+
+	BotToken(ctx context.Context, id string) (string, error)
+	UpdateBotToken(ctx context.Context, id string, token string) error
 }
 
 // BotManager defines mangager operations required by TUI.
@@ -100,11 +113,12 @@ type Model struct {
 	selectedBotConfigID      string
 	selectedBotConfigLoading bool
 
+	textInput textinput.Model
+	inputMode InputMode
+
 	editForm   BotConfigEditForm
 	editCursor EditField
 	editDirty  bool
-	editTyping bool
-	editBuffer string
 
 	confirmCursor int
 
@@ -131,15 +145,17 @@ type Model struct {
 }
 
 // NewModel creates new TUI model.
-func NewModel(m BotManager, cfg BotConfigService, theme Theme) Model {
+func NewModel(mgr BotManager, cfg BotConfigService, theme Theme) Model {
 	model := Model{
-		manager:      m,
+		manager:      mgr,
 		config:       cfg,
 		theme:        theme,
 		pageSize:     defaultPageSize,
 		layout:       LayoutDesktop,
 		statusFilter: StatusFilterAll,
 		screen:       ScreenList,
+		textInput:    newTexInput(),
+		inputMode:    InputModeNone,
 	}
 
 	model.refresh()
@@ -149,4 +165,12 @@ func NewModel(m BotManager, cfg BotConfigService, theme Theme) Model {
 // Init initializes TUI model.
 func (m Model) Init() tea.Cmd {
 	return tickCmd()
+}
+
+func newTexInput() textinput.Model {
+	ti := textinput.New()
+	ti.Placeholder = ""
+	ti.CharLimit = 512
+	ti.SetWidth(48)
+	return ti
 }

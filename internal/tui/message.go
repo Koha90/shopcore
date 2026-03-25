@@ -115,3 +115,20 @@ func loadEditBotConfigCmd(cfg BotConfigService, id string) tea.Cmd {
 		}
 	}
 }
+
+type botTokenSavedMsg struct {
+	id string
+}
+
+type botTokenSaveFailedMsg struct {
+	err error
+}
+
+func updateBotTokenCmd(cfg BotConfigService, id, token string) tea.Cmd {
+	return func() tea.Msg {
+		if err := cfg.UpdateBotToken(context.Background(), id, token); err != nil {
+			return botTokenSaveFailedMsg{err: err}
+		}
+		return botTokenSavedMsg{id: id}
+	}
+}

@@ -47,6 +47,10 @@ func (m Model) viewDesktop() tea.View {
 		body = m.renderConfirmDiscardEdit()
 		help = m.theme.Help.Render("↑/↓ or j/k move • enter select • esc back • q quit")
 
+	case ScreenEditBotToken:
+		body = m.renderEditBotToken()
+		help = m.theme.Help.Render("type or paste token • enter save • esc back • q quit")
+
 	default:
 		summary := m.renderSummary()
 		filterBar := m.renderFilterBar()
@@ -167,6 +171,10 @@ func (m Model) viewMobile() tea.View {
 	case ScreenConfirmDiscardEdit:
 		body = m.renderConfirmDiscardEdit()
 		help = m.theme.Help.Render("j/k move • enter select • esc back • q quit")
+
+	case ScreenEditBotToken:
+		body = m.renderEditBotToken()
+		help = m.theme.Help.Render("type or paste token • enter save • esc back • q quit")
 
 	default:
 		summary := m.renderMobileSummary()
@@ -414,12 +422,8 @@ func (m Model) renderEditBotConfig() string {
 	for _, row := range rows {
 		value := row.value
 
-		if row.field == EditFieldName && m.editTyping {
-			value = m.editBuffer
-			if value == "" {
-				value = " "
-			}
-			value += "█"
+		if row.field == EditFieldName && m.inputMode == InputModeEditName {
+			value = m.textInput.View()
 		}
 
 		line := renderKeyValue(labelWidth, row.label, value)
@@ -522,6 +526,42 @@ func (m Model) renderConfirmDiscardEdit() string {
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.theme.Border.GetForeground()).
+		Padding(1, 2)
+
+	return box.Render(strings.Join(lines, "\n"))
+}
+
+func (m Model) renderEditBotToken() string {
+	var lines []string
+	lines = append(lines, m.theme.ListHeader.Render("Edit bot token"))
+	lines = append(lines, "")
+
+	if m.selectedBotConfig == nil {
+		lines = append(lines, m.theme.Muted.Render("config loading or unavailable"))
+	} else {
+		cfg := m.selectedBotConfig
+
+		lines = append(lines, renderKeyValue(20, "ID", cfg.ID))
+		lines = append(lines, renderKeyValue(20, "Name", cfg.Name))
+		lines = append(lines, renderKeyValue(20, "Current", cfg.TokenMasked))
+		lines = append(lines, "")
+
+		lines = append(lines, m.theme.Muted.Render("Paste new token and press Enter"))
+		lines = append(lines, m.theme.Muted.Render("Esc to cancel"))
+		lines = append(lines, "")
+
+		value := "press Enter to edit"
+		if m.inputMode == InputModeEditToken {
+			value = m.textInput.View()
+		}
+
+		line := "> " + renderKeyValue(20, "New token", value)
+		lines = append(lines, m.renderFormRow(true, line))
+	}
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.theme.Border.GetBackground()).
 		Padding(1, 2)
 
 	return box.Render(strings.Join(lines, "\n"))

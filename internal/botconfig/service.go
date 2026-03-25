@@ -214,3 +214,40 @@ func (s *Service) BotByID(ctx context.Context, id string) (BotView, error) {
 
 	return toBotView(*bot, profile.Name), nil
 }
+
+// BotToken returns raw bot token by identifier.
+//
+// This method is intended for internal operator workflows where token rotation
+// or controlled reveal is required. Callers must treat returned value as secret.
+func (s *Service) BotToken(ctx context.Context, id string) (string, error) {
+	if id == "" {
+		return "", ErrBotIDEmpty
+	}
+
+	bot, err := s.bots.ByID(ctx, id)
+	if err != nil {
+		return "", ErrBotNotFound
+	}
+
+	return bot.Token, nil
+}
+
+// UpdateBotToken replaces bot token without modifying other bot fields.
+func (s *Service) UpdateBotToken(ctx context.Context, id string, token string) error {
+	if id == "" {
+		return ErrBotIDEmpty
+	}
+	if token == "" {
+		return ErrBotTokenEmpty
+	}
+
+	bot, err := s.bots.ByID(ctx, id)
+	if err != nil {
+		return ErrBotNotFound
+	}
+
+	bot.Token = token
+	bot.UpdatedAt = time.Now()
+
+	return s.bots.Save(ctx, bot)
+}
