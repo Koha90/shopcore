@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -33,8 +34,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	runtimeLogger, err := logger.NewFileLogger("logs/runtime.log", slog.LevelInfo)
+	if err != nil {
+		appLogger.Error("setup runtime logger", "err", err)
+		os.Exit(1)
+	}
+
 	tgCfg := telegram.LoadConfigFromEnv()
-	runner := telegram.NewRunner(tgCfg, appLogger.Logger)
+	runner := telegram.NewRunner(tgCfg, runtimeLogger.Logger)
 
 	app, err := tuiapp.New(context.Background(), appCfg, runner, appLogger.Logger)
 	if err != nil {
