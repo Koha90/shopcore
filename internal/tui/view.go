@@ -95,6 +95,7 @@ func (m Model) renderSummary() string {
 		m.theme.Running.Render(fmt.Sprintf("running: %d", m.summary.Running)),
 		m.theme.Stopped.Render(fmt.Sprintf("stopped: %d", m.summary.Stopped)),
 		m.theme.Failed.Render(fmt.Sprintf("failed: %d", m.summary.Failed)),
+		m.theme.Muted.Render(fmt.Sprintf("disabled: %d", m.summary.Disabled)),
 	}
 
 	if m.summary.Starting > 0 {
@@ -123,6 +124,7 @@ func (m Model) renderMobileSummary() string {
 		m.theme.Failed.Render(fmt.Sprintf("%d fail", m.summary.Failed)),
 		m.theme.Starting.Render(fmt.Sprintf("%d start", m.summary.Starting)),
 		m.theme.Stopping.Render(fmt.Sprintf("%d stoping", m.summary.Stopping)),
+		m.theme.Muted.Render(fmt.Sprintf("%d disabled", m.summary.Disabled)),
 	}, "  •  ")
 
 	filter := m.theme.Help.Render(
@@ -231,7 +233,7 @@ func (m Model) renderList() string {
 	} else {
 		for i, bot := range visible {
 			absoluteIndex := m.offset + i
-			line := renderKeyValue(labelWidth, bot.Name, m.renderStatus(bot.Status))
+			line := renderKeyValue(labelWidth, bot.Name, m.renderStatusText(bot.Status))
 
 			if absoluteIndex == m.cursor {
 				lines = append(lines, m.theme.ListSelected.Render(line))
@@ -258,7 +260,7 @@ func (m Model) renderList() string {
 }
 
 func (m Model) renderDetails() string {
-	info := m.selectedInfo()
+	info := m.selectedBot()
 	cfg := m.selectedBotConfig
 	cfgMatchesSelection := cfg != nil && m.selectedBotConfigID == m.selectedID()
 
@@ -273,7 +275,7 @@ func (m Model) renderDetails() string {
 		lines = append(lines, m.theme.ListHeader.Render("Runtime"))
 		lines = append(lines, renderKeyValue(labelWidth, "ID", info.ID))
 		lines = append(lines, renderKeyValue(labelWidth, "Name", info.Name))
-		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatus(info.Status)))
+		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatusText(info.Status)))
 
 		if info.LastError == "" {
 			lines = append(lines, "Last error: none")
@@ -308,7 +310,7 @@ func (m Model) renderDetails() string {
 }
 
 func (m Model) renderBotActions() string {
-	info := m.selectedInfo()
+	info := m.selectedBot()
 
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot options"))
@@ -319,7 +321,7 @@ func (m Model) renderBotActions() string {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
 	} else {
 		lines = append(lines, renderKeyValue(labelWidth, "Name", info.Name))
-		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatus(info.Status)))
+		lines = append(lines, renderKeyValue(labelWidth, "Status", m.renderStatusText(info.Status)))
 		lines = append(lines, "")
 		lines = append(lines, m.theme.ListHeader.Render("Actions"))
 
@@ -565,4 +567,23 @@ func (m Model) renderEditBotToken() string {
 		Padding(1, 2)
 
 	return box.Render(strings.Join(lines, "\n"))
+}
+
+func (m Model) renderStatusText(status string) string {
+	switch status {
+	case string(manager.StatusRunning):
+		return m.theme.Running.Render(status)
+	case string(manager.StatusStopped):
+		return m.theme.Stopped.Render(status)
+	case string(manager.StatusFailed):
+		return m.theme.Failed.Render(status)
+	case string(manager.StatusStarting):
+		return m.theme.Starting.Render(status)
+	case string(manager.StatusStopping):
+		return m.theme.Stopping.Render(status)
+	case StatusDisabled:
+		return m.theme.Muted.Render(status)
+	default:
+		return m.theme.Muted.Render(status)
+	}
 }

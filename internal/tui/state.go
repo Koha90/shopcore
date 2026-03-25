@@ -1,14 +1,52 @@
 package tui
 
 import (
+	"context"
 	"strings"
 
 	"github.com/koha90/shopcore/internal/manager"
 )
 
 func (m *Model) refresh() {
-	m.bots = m.manager.List()
-	m.summary = buildSummary(m.bots)
+	configBots, err := m.config.ListBots(context.Background())
+	if err != nil {
+		m.lastErr = err
+		m.message = "bot list load failed"
+		return
+	}
+
+	runtimeBots := m.manager.List()
+	runtimeByID := make(map[string]manager.Info, len(runtimeBots))
+	for _, info := range runtimeBots {
+		runtimeByID[info.ID] = info
+	}
+
+	rows := make([]BotRow, 0, len(configBots))
+	for _, bot := range configBots {
+		row := BotRow{
+			ID:           bot.ID,
+			Name:         bot.Name,
+			DatabaseID:   bot.DatabaseID,
+			DatabaseName: bot.DatabaseName,
+			IsEnabled:    bot.IsEnabled,
+			TokenMasked:  bot.TokenMasked,
+			Status:       "disabled",
+		}
+
+		if bot.IsEnabled {
+			if info, ok := runtimeByID[bot.ID]; ok {
+				row.Status = string(info.Status)
+				row.LastError = info.LastError
+			} else {
+				row.Status = string(manager.StatusStopped)
+			}
+		}
+
+		rows = append(rows, row)
+	}
+
+	m.bots = rows
+	m.summary = buildSummary(rows)
 	m.applyFilter()
 	m.clampCursor()
 	m.ensureCursorVisible()
@@ -16,7 +54,7 @@ func (m *Model) refresh() {
 
 func (m *Model) applyFilter() {
 	q := strings.ToLower(strings.TrimSpace(m.filter))
-	result := make([]manager.Info, 0, len(m.bots))
+	result := make([]BotRow, 0, len(m.bots))
 
 	for _, bot := range m.bots {
 		if q != "" {
@@ -85,7 +123,7 @@ func (m *Model) ensureCursorVisible() {
 	}
 }
 
-func (m Model) visibleBots() []manager.Info {
+func (m Model) visibleBots() []BotRow {
 	if len(m.filteredBots) == 0 {
 		return nil
 	}
@@ -106,7 +144,7 @@ func (m Model) selectedID() string {
 	return m.filteredBots[m.cursor].ID
 }
 
-func (m Model) selectedInfo() *manager.Info {
+func (m Model) selectedBot() *BotRow {
 	if len(m.filteredBots) == 0 {
 		return nil
 	}
@@ -168,22 +206,24 @@ func (m *Model) scrollDown() {
 	}
 }
 
-func buildSummary(bots []manager.Info) Summary {
+func buildSummary(bots []BotRow) Summary {
 	var s Summary
 	s.Total = len(bots)
 
 	for _, bot := range bots {
 		switch bot.Status {
-		case manager.StatusRunning:
+		case string(manager.StatusRunning):
 			s.Running++
-		case manager.StatusStopped:
+		case string(manager.StatusStopped):
 			s.Stopped++
-		case manager.StatusFailed:
+		case string(manager.StatusFailed):
 			s.Failed++
-		case manager.StatusStarting:
+		case string(manager.StatusStarting):
 			s.Starting++
-		case manager.StatusStopping:
+		case string(manager.StatusStopping):
 			s.Stopping++
+		case StatusDisabled:
+			s.Disabled++
 		}
 	}
 

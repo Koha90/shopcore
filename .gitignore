@@ -9,3 +9,7 @@ config.yaml
 
 # binary
 bin
+
+# logs
+*.log
+logs

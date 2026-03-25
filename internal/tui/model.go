@@ -28,7 +28,10 @@ const (
 	StatusFilterFailed   StatusFilter = "failed"
 	StatusFilterStarting StatusFilter = "starting"
 	StatusFilterStopping StatusFilter = "stopping"
+	StatusFilterDisabled StatusFilter = "disabled"
 )
+
+const StatusDisabled = "disabled"
 
 type ScreenMode string
 
@@ -50,9 +53,22 @@ const (
 	InputModeEditToken
 )
 
+type BotRow struct {
+	ID           string
+	Name         string
+	DatabaseID   string
+	DatabaseName string
+	IsEnabled    bool
+	TokenMasked  string
+
+	Status    string
+	LastError string
+}
+
 // BotConfigService defines configuration operations required by TUI.
 type BotConfigService interface {
 	BotByID(ctx context.Context, id string) (botconfig.BotView, error)
+	ListBots(ctx context.Context) ([]botconfig.BotView, error)
 	ListDatabaseProfiles(ctx context.Context) ([]botconfig.DatabaseProfileView, error)
 	UpdateBot(ctx context.Context, params botconfig.UpdateBotParams) error
 
@@ -78,6 +94,7 @@ type Summary struct {
 	Failed   int
 	Starting int
 	Stopping int
+	Disabled int
 }
 
 // BotConfigEditForm represents editable bot configuration fields in TUI.
@@ -122,8 +139,8 @@ type Model struct {
 
 	confirmCursor int
 
-	bots         []manager.Info
-	filteredBots []manager.Info
+	bots         []BotRow
+	filteredBots []BotRow
 	summary      Summary
 
 	databaseProfiles []botconfig.DatabaseProfileView
