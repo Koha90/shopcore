@@ -26,3 +26,5 @@ time=2026-03-25T13:36:11.527+05:00 level=INFO source=/home/koha90/projects/shopc
 time=2026-03-25T13:36:11.586+05:00 level=INFO source=/home/koha90/projects/shopcore/internal/app/runtime/telegram/runner.go:74 msg="telegram runtime started" bot_id=shop-main name="Shop Main"
 time=2026-03-25T13:36:34.435+05:00 level=INFO source=/home/koha90/projects/shopcore/internal/app/runtime/telegram/runner.go:74 msg="telegram runtime started" bot_id=slow-bot name="Slow Bot"
 time=2026-03-25T13:36:34.501+05:00 level=INFO source=/home/koha90/projects/shopcore/internal/app/runtime/telegram/runner.go:74 msg="telegram runtime started" bot_id=shop-main name="Shop Main"
+time=2026-03-25T17:42:20.756+05:00 level=INFO source=/home/koha90/projects/shopcore/internal/app/runtime/telegram/runner.go:74 msg="telegram runtime started" bot_id=shop-main name="Shop Main"
+time=2026-03-25T17:42:20.841+05:00 level=INFO source=/home/koha90/projects/shopcore/internal/app/runtime/telegram/runner.go:74 msg="telegram runtime started" bot_id=slow-bot name="Slow Bot"
