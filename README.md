@@ -1,4 +1,4 @@
-![CI](https://github.com/Koha90/github.com/koha90/shopcore/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Koha90/shopcore/actions/workflows/ci.yml/badge.svg)
 
 # shopcore
 
