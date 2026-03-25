@@ -235,7 +235,9 @@ func (p *Product) ArchiveVariant(id int, now time.Time) error {
 		return ErrCannotArchiveLastVariant
 	}
 
-	target.Archive(now)
+	if err := target.Archive(now); err != nil {
+		return err
+	}
 	p.incrementVersion()
 	p.addEvent(NewVariantArchived(id))
 	return nil

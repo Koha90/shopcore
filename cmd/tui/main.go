@@ -48,7 +48,11 @@ func main() {
 		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
 	}
-	defer app.Close()
+	defer func() {
+		if err := app.Close(); err != nil {
+			appLogger.Error("close app", "err", err)
+		}
+	}()
 
 	if err := seed.EnsureDemoData(context.Background(), app.BotConfig); err != nil {
 		appLogger.Error("failed to ensure demo", "err", err)

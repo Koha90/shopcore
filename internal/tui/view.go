@@ -353,23 +353,6 @@ func (m Model) renderStatusBar() string {
 	return m.theme.StatusBar.Render("ready")
 }
 
-func (m Model) renderStatus(status manager.Status) string {
-	switch status {
-	case manager.StatusRunning:
-		return m.theme.Running.Render(string(status))
-	case manager.StatusStopped:
-		return m.theme.Stopped.Render(string(status))
-	case manager.StatusFailed:
-		return m.theme.Failed.Render(string(status))
-	case manager.StatusStarting:
-		return m.theme.Starting.Render(string(status))
-	case manager.StatusStopping:
-		return m.theme.Stopping.Render(string(status))
-	default:
-		return m.theme.Muted.Render(string(status))
-	}
-}
-
 func (m Model) renderBotConfig() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot config"))

@@ -194,12 +194,12 @@ func (r *UserRepository) exec(ctx context.Context, query string, args ...any) (s
 	return r.db.ExecContext(ctx, query, args...)
 }
 
-func (r *UserRepository) query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
-	if tx, ok := txFromContext(ctx); ok {
-		return tx.QueryContext(ctx, query, args...)
-	}
-	return r.db.QueryContext(ctx, query, args...)
-}
+// func (r *UserRepository) query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+// 	if tx, ok := txFromContext(ctx); ok {
+// 		return tx.QueryContext(ctx, query, args...)
+// 	}
+// 	return r.db.QueryContext(ctx, query, args...)
+// }
 
 func (r *UserRepository) queryRow(ctx context.Context, query string, args ...any) *sql.Row {
 	if tx, ok := txFromContext(ctx); ok {

@@ -206,7 +206,7 @@ func (r *OrderRepo) loadItems(ctx context.Context, orderID int) ([]domain.OrderI
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var items []domain.OrderItem
 

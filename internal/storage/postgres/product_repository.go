@@ -36,7 +36,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 		}
 	}()
 
@@ -48,7 +48,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 			p.CategoryID(), p.Name(), p.Description(), p.ImagePath(), p.Version(),
 		).Scan(&productID)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			r.logger.Error("failed to insert product", "err", err)
 			return err
 		}
@@ -63,7 +63,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 			p.CategoryID(), p.Name(), p.Description(), p.ImagePath(), p.Version(), p.ID(), p.Version(),
 		)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			r.logger.Error("failed to update product", "err", err)
 			return err
 		}
@@ -84,7 +84,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 				RETURNING id
 			`, productID, v.PackSize(), v.DistrictID(), v.Price()).Scan(&variantID)
 			if err != nil {
-				tx.Rollback()
+				_ = tx.Rollback()
 				r.logger.Error("failed to insert variant", "productID", productID, "err", err)
 				return err
 			}
@@ -97,7 +97,7 @@ func (r *ProductRepository) Save(ctx context.Context, p *domain.Product) error {
 				WHERE id=$4 
 			`, v.PackSize(), v.DistrictID(), v.Price(), v.ID())
 			if err != nil {
-				tx.Rollback()
+				_ = tx.Rollback()
 				r.logger.Error("failed to update variant", "id", v.ID(), "err", err)
 				return err
 			}
@@ -180,7 +180,7 @@ func (r *ProductRepository) loadVariants(
 		r.logger.Error("failed to query variants", "product_id", productID, "err", err)
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var variants []domain.ProductVariant
 
