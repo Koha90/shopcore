@@ -43,11 +43,12 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 		}
 
 		result = append(result, RuntimeBot{
-			ID:         bot.ID,
-			Name:       bot.Name,
-			Token:      bot.Token,
-			DatabaseID: bot.DatabaseID,
-			IsEnabled:  bot.IsEnabled,
+			ID:            bot.ID,
+			Name:          bot.Name,
+			Token:         bot.Token,
+			DatabaseID:    bot.DatabaseID,
+			IsEnabled:     bot.IsEnabled,
+			StartScenario: startScenarioForBot(bot.ID),
 		})
 	}
 
@@ -56,4 +57,15 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 	})
 
 	return result, nil
+}
+
+func startScenarioForBot(id string) string {
+	switch id {
+	case "shop-main":
+		return "reply_welcome"
+	case "slow-bot":
+		return "inline_catalog"
+	default:
+		return "reply_welcome"
+	}
 }

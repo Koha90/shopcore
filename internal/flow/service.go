@@ -9,11 +9,27 @@ import (
 // ErrUnknownAction is returned when flow cannot resolve an action.
 var ErrUnknownAction error = errors.New("unknown flow action")
 
-// DefaultInlineCatalogColumns defines the default number of columns used
-// inline catalog rendering
-//
-// Later this can be moved into bot-specific runtime configuration.
-const DefaultInlineCatalogColumns = 1
+const (
+	// DefaultCompactRootColumns defines the default column count for inline root
+	// view opened from reply-based welcome scenario.
+	DefaultCompactRootColumns = 1
+
+	// DefaultExtendedRootColumns defines the default column count for inline root
+	// view opened directly by inline start scenario.
+	DefaultExtendedRootColumns = 2
+)
+
+// RootVariant controls how the root inline selection view sould be rendered.
+type RootVariant string
+
+const (
+	// RootVariantCompact renders only the main selectable entities.
+	RootVariantCompact RootVariant = "compact"
+
+	// CatalogVariantExtended renders the main selectable entities plus utility
+	// actions below.
+	RootVariantExtended RootVariant = "extended"
+)
 
 // Service builds initial and next-step views for bot flows.
 //
@@ -29,7 +45,8 @@ func NewService() *Service {
 func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
 	switch NormalizeStartScenario(req.StartScenario) {
 	case StartScenarioInlineCatalog:
-		return buildInlineCatalogStart(DefaultInlineCatalogColumns), nil
+		return buildExtendedInlineCatalogView(), nil
+
 	case StartScenarioReplyWelcome:
 		fallthrough
 	default:
@@ -39,18 +56,22 @@ func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) 
 
 // HandleAction resolves the next bot view for an action.
 //
-// nav:back always returns the original start scenario for the current bot.
+// For nav:back always returns the root inline screen that matches the current
+// start scenario. Later it should become session/history-aware.
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
 	switch req.ActionID {
 	case ActionBack:
-		return s.Start(ctx, StartRequest{
-			BotID:         req.BotID,
-			BotName:       req.BotName,
-			StartScenario: req.StartScenario,
-		})
+		switch NormalizeStartScenario(req.StartScenario) {
+		case StartScenarioInlineCatalog:
+			return buildExtendedInlineCatalogView(), nil
+		case StartScenarioReplyWelcome:
+			fallthrough
+		default:
+			return buildCompactInlineCatalogView(), nil
+		}
 
 	case ActionCatalogStart:
-		return buildInlineCatalogStart(DefaultInlineCatalogColumns), nil
+		return buildCompactInlineCatalogView(), nil
 
 	case ActionCabinetOpen:
 		return buildDetailView(
@@ -89,16 +110,16 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		), nil
 
 	case ActionCategoryPhones:
-		return buildCategoryView("Телефоны"), nil
+		return buildEntityView("Телефоны"), nil
 
 	case ActionCategoryLaptops:
-		return buildCategoryView("Ноутбуки"), nil
+		return buildEntityView("Ноутбуки"), nil
 
 	case ActionCategoryRouters:
-		return buildCategoryView("Роутеры"), nil
+		return buildEntityView("Роутеры"), nil
 
 	case ActionCategoryAudio:
-		return buildCategoryView("Аудио"), nil
+		return buildEntityView("Аудио"), nil
 
 	default:
 		return ViewModel{}, ErrUnknownAction
@@ -107,8 +128,8 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 
 // ResolveReplyAction maps reply-button text to action identifiers.
 //
-// This is intentionally narrow and only handles known start-menu buttons.
-// More advanced reply routing should later becomee session-aware.
+// For now this resolver is intentionally narrow and stateless.
+// Later reply routing should become session-aware.
 func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 	switch strings.TrimSpace(text) {
 	case "Каталог", "♻️ Каталог":
@@ -146,40 +167,68 @@ func buildReplyWelcomeStart() ViewModel {
 	}
 }
 
-func buildInlineCatalogStart(columns int) ViewModel {
+func buildCompactInlineCatalogView() ViewModel {
+	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact)
+}
+
+func buildExtendedInlineCatalogView() ViewModel {
+	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended)
+}
+
+// buildRootSelectionView renders the root inline selection screen.
+//
+// The compact variant renders only the main selectable entities.
+// The extended variant renders the same entities plus utility action below.
+func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
 	cols := normalizeColumns(columns)
+
+	sections := []ActionSection{
+		{
+			Columns: cols,
+			Actions: []ActionButton{
+				{ID: ActionCategoryPhones, Label: "Москва"},
+				{ID: ActionCategoryLaptops, Label: "СПб"},
+				{ID: ActionCategoryRouters, Label: "Казань"},
+				{ID: ActionCategoryAudio, Label: "Екатеринбург"},
+			},
+		},
+	}
+
+	if variant == RootVariantExtended {
+		sections = append(sections, ActionSection{
+			Columns: 1,
+			Actions: []ActionButton{
+				{ID: ActionBalanceOpen, Label: "Баланс"},
+				{ID: ActionBotsMine, Label: "Мои боты"},
+				{ID: ActionOrderLast, Label: "Последний заказ"},
+			},
+		})
+	}
+
 	return ViewModel{
-		Text: "Каталог",
+		Text: "Каталог\n\nВыберите раздел:",
+		Inline: &InlineKeyboardView{
+			Sections: sections,
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildEntityView(title string) ViewModel {
+	return ViewModel{
+		Text: title + "\n\nЗдесь будет следующий шаг сценартя для выбранной сущности.",
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
-					Columns: cols,
-					Actions: []ActionButton{
-						{ID: ActionCategoryPhones, Label: "Телефоны"},
-						{ID: ActionCategoryLaptops, Label: "Ноутбуки"},
-						{ID: ActionCategoryRouters, Label: "Роутеры"},
-						{ID: ActionCategoryAudio, Label: "Аудио"},
-					},
-				},
-				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBalanceOpen, Label: "Баланс"},
-						{ID: ActionBotsMine, Label: "Мои боты"},
-						{ID: ActionOrderLast, Label: "Последний заказ"},
+						{ID: ActionBack, Label: "Назад"},
 					},
 				},
 			},
 		},
 		RemoveReply: true,
 	}
-}
-
-func buildCategoryView(title string) ViewModel {
-	return buildDetailView(
-		title,
-		"Здесь будет каталог категорий, пагинация, карточка товаров и переход к покупке.",
-	)
 }
 
 func buildDetailView(title, body string) ViewModel {
