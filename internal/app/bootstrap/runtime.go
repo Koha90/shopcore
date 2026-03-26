@@ -71,10 +71,11 @@ func (s *Starter) StartEnabled(ctx context.Context) ([]Result, error) {
 		result := Result{ID: bot.ID}
 
 		spec := manager.BotSpec{
-			ID:         bot.ID,
-			Name:       bot.Name,
-			Token:      bot.Token,
-			DatabaseID: bot.DatabaseID,
+			ID:            bot.ID,
+			Name:          bot.Name,
+			Token:         bot.Token,
+			DatabaseID:    bot.DatabaseID,
+			StartScenario: bot.StartScenario,
 		}
 
 		err := s.manager.Register(spec)

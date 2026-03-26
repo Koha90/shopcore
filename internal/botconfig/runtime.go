@@ -10,11 +10,12 @@ import (
 // This model is internal-facing. Unlike BotView, it includes raw token becouse
 // runtime bootstrap mus be able to start real bot processes.
 type RuntimeBot struct {
-	ID         string
-	Name       string
-	Token      string
-	DatabaseID string
-	IsEnabled  bool
+	ID            string
+	Name          string
+	Token         string
+	DatabaseID    string
+	IsEnabled     bool
+	StartScenario string
 }
 
 // RuntimePort defines internal bot runtime bootstrap use cases.

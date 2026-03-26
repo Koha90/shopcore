@@ -105,12 +105,18 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 // More advanced reply routing should later becomee session-aware.
 func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 	switch strings.TrimSpace(text) {
-	case "Каталог":
+	case "Каталог", "♻️ Каталог":
 		return ActionCatalogStart, true
-	case "Мой кабинет":
+
+	case "Мой кабинет", "⚙️ Мой кабинет":
 		return ActionCabinetOpen, true
-	case "Поддержка":
+
+	case "Поддержка", "🤷‍♂️ Поддержка":
 		return ActionSupportOpen, true
+
+	case "Отзывы", "📨 Отзывы":
+		return ActionReviewsOpen, true
+
 	default:
 		return "", false
 	}
