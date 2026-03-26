@@ -10,13 +10,15 @@ import (
 
 	tgbot "github.com/go-telegram/bot"
 
+	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 )
 
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
-	cfg Config
-	log *slog.Logger
+	cfg  Config
+	log  *slog.Logger
+	flow *flow.Service
 }
 
 // NewRunner implements manager.Runner using Telegram runtime runner.
@@ -26,14 +28,15 @@ func NewRunner(cfg Config, log *slog.Logger) *Runner {
 	}
 
 	return &Runner{
-		cfg: cfg,
-		log: log,
+		cfg:  cfg,
+		log:  log,
+		flow: flow.NewService(),
 	}
 }
 
 // Run starts Telegram bot runtime for a single managed bot instance.
 //
-// The bot token is taken from spec.Token.
+// Bot token is taken from spec.Token.
 // Shared runtime settings such as proxy and timeouts are taken Runner config.
 func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) error {
 	if strings.TrimSpace(spec.Token) == "" {
@@ -50,9 +53,13 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		tgbot.WithCheckInitTimeout(r.cfg.CheckInitTimeout),
 		tgbot.WithDefaultHandler(r.defaultHandler(spec)),
 		tgbot.WithErrorsHandler(r.errorsHandler(spec)),
+		tgbot.WithAllowedUpdates(tgbot.AllowedUpdates{
+			"message",
+			"callback_query",
+		}),
+		tgbot.WithNotAsyncHandlers(),
 	}
 
-	var once sync.Once
 	if r.cfg.Debug {
 		opts = append(opts, tgbot.WithDebug())
 	}
@@ -69,6 +76,14 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		r.startHandler(spec),
 	)
 
+	b.RegisterHandler(
+		tgbot.HandlerTypeCallbackQueryData,
+		callbackPrefix,
+		tgbot.MatchTypePrefix,
+		r.callbackHandler(spec),
+	)
+
+	var once sync.Once
 	once.Do(ready)
 
 	r.log.Info(
