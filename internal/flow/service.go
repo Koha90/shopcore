@@ -9,6 +9,12 @@ import (
 // ErrUnknownAction is returned when flow cannot resolve an action.
 var ErrUnknownAction error = errors.New("unknown flow action")
 
+// DefaultInlineCatalogColumns defines the default number of columns used
+// inline catalog rendering
+//
+// Later this can be moved into bot-specific runtime configuration.
+const DefaultInlineCatalogColumns = 1
+
 // Service builds initial and next-step views for bot flows.
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
@@ -23,7 +29,7 @@ func NewService() *Service {
 func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
 	switch NormalizeStartScenario(req.StartScenario) {
 	case StartScenarioInlineCatalog:
-		return buildInlineCatalogStart(), nil
+		return buildInlineCatalogStart(DefaultInlineCatalogColumns), nil
 	case StartScenarioReplyWelcome:
 		fallthrough
 	default:
@@ -44,7 +50,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		})
 
 	case ActionCatalogStart:
-		return buildInlineCatalogStart(), nil
+		return buildInlineCatalogStart(DefaultInlineCatalogColumns), nil
 
 	case ActionCabinetOpen:
 		return buildDetailView(
@@ -140,13 +146,14 @@ func buildReplyWelcomeStart() ViewModel {
 	}
 }
 
-func buildInlineCatalogStart() ViewModel {
+func buildInlineCatalogStart(columns int) ViewModel {
+	cols := normalizeColumns(columns)
 	return ViewModel{
 		Text: "Каталог",
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
-					Columns: 2,
+					Columns: cols,
 					Actions: []ActionButton{
 						{ID: ActionCategoryPhones, Label: "Телефоны"},
 						{ID: ActionCategoryLaptops, Label: "Ноутбуки"},
@@ -190,4 +197,11 @@ func buildDetailView(title, body string) ViewModel {
 		},
 		RemoveReply: true,
 	}
+}
+
+func normalizeColumns(v int) int {
+	if v <= 0 {
+		return 1
+	}
+	return v
 }
