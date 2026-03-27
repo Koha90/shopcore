@@ -45,7 +45,7 @@ func NewService() *Service {
 func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
 	switch NormalizeStartScenario(req.StartScenario) {
 	case StartScenarioInlineCatalog:
-		return buildExtendedInlineCatalogView(), nil
+		return buildExtendedRootSelectionView(), nil
 
 	case StartScenarioReplyWelcome:
 		fallthrough
@@ -60,33 +60,29 @@ func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) 
 // start scenario. Later it should become session/history-aware.
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
 	switch req.ActionID {
-	case ActionBack:
-		switch NormalizeStartScenario(req.StartScenario) {
-		case StartScenarioInlineCatalog:
-			return buildExtendedInlineCatalogView(), nil
-		case StartScenarioReplyWelcome:
-			fallthrough
-		default:
-			return buildCompactInlineCatalogView(), nil
-		}
+	case ActionRootCompact:
+		return buildCompactRootSelectionView(), nil
+
+	case ActionRootExtended:
+		return buildExtendedRootSelectionView(), nil
 
 	case ActionCatalogStart:
-		return buildCompactInlineCatalogView(), nil
+		return buildCompactRootSelectionView(), nil
 
 	case ActionCabinetOpen:
-		return buildDetailView(
+		return buildReplyDetailView(
 			"Мой кабинет",
 			"Здесь будут профиль, история, настройки и персональные данные пользователя.",
 		), nil
 
 	case ActionSupportOpen:
-		return buildDetailView(
+		return buildReplyDetailView(
 			"Поддержка",
 			"Здесь будет связь с оператором, FAQ и обработка обращений.",
 		), nil
 
 	case ActionReviewsOpen:
-		return buildDetailView(
+		return buildReplyDetailView(
 			"Отзывы",
 			"Здесь будут отзывы клиентов, рейтинг и публикация новых отзывов.",
 		), nil
@@ -95,31 +91,34 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return buildDetailView(
 			"Баланс",
 			"Здесь будет баланс аккаунта, пополнение и история операций.",
+			ActionRootExtended,
 		), nil
 
 	case ActionBotsMine:
 		return buildDetailView(
 			"Мои боты",
 			"Здесь будет список пользовательских ботов и быстрые действия по ним.",
+			ActionRootExtended,
 		), nil
 
 	case ActionOrderLast:
 		return buildDetailView(
 			"Последний заказ",
 			"Здесь будет карточка последнего заказа и повторное оформление.",
+			ActionRootExtended,
 		), nil
 
-	case ActionCategoryPhones:
-		return buildEntityView("Телефоны"), nil
+	case ActionEntity1:
+		return buildEntityView("Москва", backActionForScenario(req.StartScenario)), nil
 
-	case ActionCategoryLaptops:
-		return buildEntityView("Ноутбуки"), nil
+	case ActionEntity2:
+		return buildEntityView("СПб", backActionForScenario(req.StartScenario)), nil
 
-	case ActionCategoryRouters:
-		return buildEntityView("Роутеры"), nil
+	case ActionEntity3:
+		return buildEntityView("Казань", backActionForScenario(req.StartScenario)), nil
 
-	case ActionCategoryAudio:
-		return buildEntityView("Аудио"), nil
+	case ActionEntity4:
+		return buildEntityView("Екатеринбург", backActionForScenario(req.StartScenario)), nil
 
 	default:
 		return ViewModel{}, ErrUnknownAction
@@ -167,11 +166,11 @@ func buildReplyWelcomeStart() ViewModel {
 	}
 }
 
-func buildCompactInlineCatalogView() ViewModel {
+func buildCompactRootSelectionView() ViewModel {
 	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact)
 }
 
-func buildExtendedInlineCatalogView() ViewModel {
+func buildExtendedRootSelectionView() ViewModel {
 	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended)
 }
 
@@ -186,10 +185,10 @@ func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
 		{
 			Columns: cols,
 			Actions: []ActionButton{
-				{ID: ActionCategoryPhones, Label: "Москва"},
-				{ID: ActionCategoryLaptops, Label: "СПб"},
-				{ID: ActionCategoryRouters, Label: "Казань"},
-				{ID: ActionCategoryAudio, Label: "Екатеринбург"},
+				{ID: ActionEntity1, Label: "Москва"},
+				{ID: ActionEntity2, Label: "СПб"},
+				{ID: ActionEntity3, Label: "Казань"},
+				{ID: ActionEntity4, Label: "Екатеринбург"},
 			},
 		},
 	}
@@ -214,7 +213,7 @@ func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
 	}
 }
 
-func buildEntityView(title string) ViewModel {
+func buildEntityView(title string, backAction ActionID) ViewModel {
 	return ViewModel{
 		Text: title + "\n\nЗдесь будет следующий шаг сценартя для выбранной сущности.",
 		Inline: &InlineKeyboardView{
@@ -222,7 +221,7 @@ func buildEntityView(title string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						{ID: backAction, Label: "Назад"},
 					},
 				},
 			},
@@ -231,7 +230,7 @@ func buildEntityView(title string) ViewModel {
 	}
 }
 
-func buildDetailView(title, body string) ViewModel {
+func buildDetailView(title, body string, backAction ActionID) ViewModel {
 	return ViewModel{
 		Text: title + "\n\n" + body,
 		Inline: &InlineKeyboardView{
@@ -239,12 +238,34 @@ func buildDetailView(title, body string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						{ID: backAction, Label: "Назад"},
 					},
 				},
 			},
 		},
 		RemoveReply: true,
+	}
+}
+
+// buildReplyDetailView renders a detail screen opened from reply-menu actions.
+//
+// It intentionally does not include inline back navigation, because those
+// screens are not part of inline catalog flow.
+func buildReplyDetailView(title, body string) ViewModel {
+	return ViewModel{
+		Text:        title + "\n\n" + body,
+		RemoveReply: false,
+	}
+}
+
+func backActionForScenario(startScenario string) ActionID {
+	switch NormalizeStartScenario(startScenario) {
+	case StartScenarioInlineCatalog:
+		return ActionRootExtended
+	case StartScenarioReplyWelcome:
+		fallthrough
+	default:
+		return ActionRootCompact
 	}
 }
 

@@ -42,12 +42,13 @@ const (
 	ActionBotsMine    ActionID = "bots:mine"
 	ActionOrderLast   ActionID = "order:last"
 
-	ActionCategoryPhones  ActionID = "cat:phones"
-	ActionCategoryLaptops ActionID = "cat:laptops"
-	ActionCategoryRouters ActionID = "cat:routers"
-	ActionCategoryAudio   ActionID = "cat:audio"
+	ActionEntity1 ActionID = "entity:1"
+	ActionEntity2 ActionID = "entity:2"
+	ActionEntity3 ActionID = "entity:3"
+	ActionEntity4 ActionID = "entity:4"
 
-	ActionBack ActionID = "nav:back"
+	ActionRootCompact  ActionID = "root:compact"
+	ActionRootExtended ActionID = "root:extended"
 )
 
 // ViewModel describes a bot screen independent of concrete transport.
