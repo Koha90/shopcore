@@ -8,16 +8,17 @@ import (
 )
 
 var (
-	ErrBotNotFound              error = errors.New("bot config not found")
-	ErrDatabaseProfileNotFound  error = errors.New("database profile not found")
-	ErrBotIDEmpty               error = errors.New("bot id is required")
-	ErrBotNameEmpty             error = errors.New("bot name is required")
-	ErrBotTokenEmpty            error = errors.New("bot token is required")
-	ErrDatabaseIDEmpty          error = errors.New("database id is required")
-	ErrDatabaseProfileIDEmpty   error = errors.New("database profile id is required")
-	ErrDatabaseProfileNameEmpty error = errors.New("database profile name is required")
-	ErrDatabaseDriverEmpty      error = errors.New("database driver is required")
-	ErrDatabaseDSNEmpty         error = errors.New("database dsn is required")
+	ErrBotNotFound              = errors.New("bot config not found")
+	ErrDatabaseProfileNotFound  = errors.New("database profile not found")
+	ErrBotIDEmpty               = errors.New("bot id is required")
+	ErrBotNameEmpty             = errors.New("bot name is required")
+	ErrBotTokenEmpty            = errors.New("bot token is required")
+	ErrBotStartScenario         = errors.New("bot start scenario is required")
+	ErrDatabaseIDEmpty          = errors.New("database id is required")
+	ErrDatabaseProfileIDEmpty   = errors.New("database profile id is required")
+	ErrDatabaseProfileNameEmpty = errors.New("database profile name is required")
+	ErrDatabaseDriverEmpty      = errors.New("database driver is required")
+	ErrDatabaseDSNEmpty         = errors.New("database dsn is required")
 )
 
 // Service orchestrate bot and database profile configuration use cases.
@@ -116,6 +117,9 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 	if params.DatabaseID == "" {
 		return ErrDatabaseIDEmpty
 	}
+	if params.StartScenario == "" {
+		return ErrBotStartScenario
+	}
 
 	dbProfile, err := s.dbs.ByID(ctx, params.DatabaseID)
 	if err != nil || !dbProfile.IsEnabled {
@@ -123,12 +127,13 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 	}
 
 	bot := &BotConfig{
-		ID:         params.ID,
-		Name:       params.Name,
-		Token:      params.Token,
-		DatabaseID: params.DatabaseID,
-		IsEnabled:  params.IsEnabled,
-		UpdatedAt:  time.Now(),
+		ID:            params.ID,
+		Name:          params.Name,
+		Token:         params.Token,
+		DatabaseID:    params.DatabaseID,
+		StartScenario: params.StartScenario,
+		IsEnabled:     params.IsEnabled,
+		UpdatedAt:     time.Now(),
 	}
 
 	return s.bots.Save(ctx, bot)
@@ -145,6 +150,9 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 	if params.DatabaseID == "" {
 		return ErrDatabaseIDEmpty
 	}
+	if params.StartScenario == "" {
+		return ErrBotStartScenario
+	}
 
 	bot, err := s.bots.ByID(ctx, params.ID)
 	if err != nil {
@@ -158,6 +166,7 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 
 	bot.Name = params.Name
 	bot.DatabaseID = params.DatabaseID
+	bot.StartScenario = params.StartScenario
 	bot.IsEnabled = params.IsEnabled
 	bot.UpdatedAt = time.Now()
 

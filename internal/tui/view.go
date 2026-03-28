@@ -368,6 +368,7 @@ func (m Model) renderBotConfig() string {
 		lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
 		lines = append(lines, renderKeyValue(labelWidth, "Database ID", cfg.DatabaseID))
 		lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
+		lines = append(lines, renderKeyValue(labelWidth, "Start Scenario", cfg.StartScenario))
 		lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		lines = append(lines, renderKeyValue(labelWidth, "Updated", cfg.UpdatedAt.Format(time.DateTime)))
 	}
@@ -398,6 +399,7 @@ func (m Model) renderEditBotConfig() string {
 		{EditFieldName, "Name", nameValue},
 		{EditFieldEnabled, "Enabled", fmt.Sprintf("%t", m.editForm.IsEnabled)},
 		{EditFieldDatabase, "Database ID", m.editForm.DatabaseID},
+		{EditFieldStartScenario, "Start Scenario", m.editForm.StartScenario},
 		{EditFieldSave, "Save", ""},
 		{EditFieldCancel, "Cancel", ""},
 	}

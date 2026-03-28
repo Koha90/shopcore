@@ -99,9 +99,10 @@ type Summary struct {
 
 // BotConfigEditForm represents editable bot configuration fields in TUI.
 type BotConfigEditForm struct {
-	Name       string
-	IsEnabled  bool
-	DatabaseID string
+	Name          string
+	IsEnabled     bool
+	DatabaseID    string
+	StartScenario string
 }
 
 // EditField identifies currently selected field in bot config edit screen.
@@ -111,6 +112,7 @@ const (
 	EditFieldName EditField = iota
 	EditFieldEnabled
 	EditFieldDatabase
+	EditFieldStartScenario
 	EditFieldSave
 	EditFieldCancel
 )

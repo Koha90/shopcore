@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS bot_configs (
     REFERENCES database_profiles(id)
     ON UPDATE RESTRICT
     ON DELETE RESTRICT,
+  start_scenario TEXT NOT NULL DEFAULT 'reply_welcome',
   is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

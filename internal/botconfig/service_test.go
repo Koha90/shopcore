@@ -56,11 +56,12 @@ func TestService_CreateBot(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:abcdef-token",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:abcdef-token",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
@@ -70,6 +71,7 @@ func TestService_CreateBot(t *testing.T) {
 	require.Equal(t, "Shop Main", got.Name)
 	require.Equal(t, "main-db", got.DatabaseID)
 	require.Equal(t, "Main DB", got.DatabaseName)
+	require.Equal(t, "Main Start Scenario", got.StartScenario)
 	require.True(t, got.IsEnabled)
 	require.NotEmpty(t, got.TokenMasked)
 	require.NotEqual(t, "123456:abcdef-token", got.TokenMasked)
@@ -81,11 +83,12 @@ func TestService_CreateBot_ProfileNotFound(t *testing.T) {
 	svc := botconfig.NewService(bots, dbs, nil)
 
 	err := svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:abcdef-token",
-		DatabaseID: "missing-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:abcdef-token",
+		DatabaseID:    "missing-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)
 }
@@ -114,19 +117,21 @@ func TestService_UpdateBot(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:abcdef-token",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:abcdef-token",
+		DatabaseID:    "main-db",
+		StartScenario: "start scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
 	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main Updated",
-		DatabaseID: "backup-db",
-		IsEnabled:  false,
+		ID:            "shop-main",
+		Name:          "Shop Main Updated",
+		DatabaseID:    "backup-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     false,
 	})
 	require.NoError(t, err)
 
@@ -135,6 +140,7 @@ func TestService_UpdateBot(t *testing.T) {
 	require.Equal(t, "Shop Main Updated", got.Name)
 	require.Equal(t, "backup-db", got.DatabaseID)
 	require.Equal(t, "Backup DB", got.DatabaseName)
+	require.Equal(t, "Main Start Scenario", got.StartScenario)
 	require.False(t, got.IsEnabled)
 }
 
@@ -153,21 +159,23 @@ func TestService_UpdateBot_ReplaceToken(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "old-token-123456",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "old-token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
 	newToken := "new-token-654321"
 	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      &newToken,
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         &newToken,
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
@@ -191,20 +199,22 @@ func TestService_ListBots(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "bot-1",
-		Name:       "Bot One",
-		Token:      "token-one-123",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "bot-1",
+		Name:          "Bot One",
+		Token:         "token-one-123",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "bot-2",
-		Name:       "Bot Two",
-		Token:      "token-two-456",
-		DatabaseID: "main-db",
-		IsEnabled:  false,
+		ID:            "bot-2",
+		Name:          "Bot Two",
+		Token:         "token-two-456",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     false,
 	})
 	require.NoError(t, err)
 
@@ -228,11 +238,12 @@ func TestService_BotByID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:abcdef-token",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:abcdef-token",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
@@ -258,10 +269,11 @@ func TestService_UpdateBot_BotNotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-		ID:         "missing-bot",
-		Name:       "Missing Bot",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "missing-bot",
+		Name:          "Missing Bot",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrBotNotFound)
 }
@@ -281,19 +293,21 @@ func TestService_UpdateBot_ProfileNotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "token-123456",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.NoError(t, err)
 
 	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		DatabaseID: "missing-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		DatabaseID:    "missing-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)
 }

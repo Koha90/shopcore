@@ -19,25 +19,36 @@ type BotRepository struct {
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
 		INSERT INTO bot_configs (
-			id, name, token, database_id, is_enabled, updated_at
+			id, name, token, database_id, start_scenario, is_enabled, updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			token = EXCLUDED.token,
 			database_id = EXCLUDED.database_id,
+			start_scenario = EXCLUDED.start_scenario,
 			is_enabled = EXCLUDED.is_enabled,
 			updated_at = EXCLUDED.updated_at
 	`
 
-	_, err := r.pool.Exec(ctx, q, cfg.ID, cfg.Name, cfg.Token, cfg.DatabaseID, cfg.IsEnabled, cfg.UpdatedAt)
+	_, err := r.pool.Exec(
+		ctx,
+		q,
+		cfg.ID,
+		cfg.Name,
+		cfg.Token,
+		cfg.DatabaseID,
+		cfg.StartScenario,
+		cfg.IsEnabled,
+		cfg.UpdatedAt,
+	)
 	return err
 }
 
 // ByID returns bot config by ID.
 func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConfig, error) {
 	const q = `
-		SELECT id, name, token, database_id, is_enabled, updated_at
+		SELECT id, name, token, database_id, start_scenario, is_enabled, updated_at
 		FROM bot_configs
 		WHERE id = $1
 	`
@@ -48,6 +59,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 		&bot.Name,
 		&bot.Token,
 		&bot.DatabaseID,
+		&bot.StartScenario,
 		&bot.IsEnabled,
 		&bot.UpdatedAt,
 	)
@@ -64,7 +76,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 // List returns all bot configs sorted by ID.
 func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error) {
 	const q = `
-		SELECT id, name, token, database_id, is_enabled, updated_at
+		SELECT id, name, token, database_id, start_scenario, is_enabled, updated_at
 		FROM bot_configs
 		ORDER BY id
 	`
@@ -83,6 +95,7 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			&bot.Name,
 			&bot.Token,
 			&bot.DatabaseID,
+			&bot.StartScenario,
 			&bot.IsEnabled,
 			&bot.UpdatedAt,
 		); err != nil {

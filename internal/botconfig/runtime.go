@@ -14,8 +14,8 @@ type RuntimeBot struct {
 	Name          string
 	Token         string
 	DatabaseID    string
-	IsEnabled     bool
 	StartScenario string
+	IsEnabled     bool
 }
 
 // RuntimePort defines internal bot runtime bootstrap use cases.
@@ -46,9 +46,9 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 			ID:            bot.ID,
 			Name:          bot.Name,
 			Token:         bot.Token,
+			StartScenario: bot.StartScenario,
 			DatabaseID:    bot.DatabaseID,
 			IsEnabled:     bot.IsEnabled,
-			StartScenario: startScenarioForBot(bot.ID),
 		})
 	}
 
@@ -57,15 +57,4 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 	})
 
 	return result, nil
-}
-
-func startScenarioForBot(id string) string {
-	switch id {
-	case "shop-main":
-		return "reply_welcome"
-	case "slow-bot":
-		return "inline_catalog"
-	default:
-		return "reply_welcome"
-	}
 }

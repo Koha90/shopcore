@@ -21,12 +21,13 @@ func TestBotRepository_SaveAndByID(t *testing.T) {
 	now := time.Now().UTC().Round(time.Second)
 
 	bot := &botconfig.BotConfig{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:demo-token-main",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-		UpdatedAt:  now,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:demo-token-main",
+		DatabaseID:    "main-db",
+		StartScenario: "main scenario",
+		IsEnabled:     true,
+		UpdatedAt:     now,
 	}
 
 	// Foreign key requires existing database profile.
@@ -52,6 +53,7 @@ func TestBotRepository_SaveAndByID(t *testing.T) {
 	require.Equal(t, bot.Token, got.Token)
 	require.Equal(t, bot.DatabaseID, got.DatabaseID)
 	require.Equal(t, bot.IsEnabled, got.IsEnabled)
+	require.Equal(t, bot.StartScenario, got.StartScenario)
 	require.WithinDuration(t, bot.UpdatedAt, got.UpdatedAt, time.Second)
 }
 
@@ -85,12 +87,13 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	require.NoError(t, err)
 
 	bot := &botconfig.BotConfig{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:demo-token-main",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-		UpdatedAt:  now,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:demo-token-main",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
+		UpdatedAt:     now,
 	}
 
 	err = repo.Save(ctx, bot)
@@ -100,6 +103,7 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	bot.Name = "Shop Main Renamed"
 	bot.Token = "123456:demo-token-updated"
 	bot.DatabaseID = "analytics-db"
+	bot.StartScenario = "Updated Start Scenario"
 	bot.IsEnabled = false
 	bot.UpdatedAt = now.Add(time.Minute)
 
@@ -113,6 +117,7 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	require.Equal(t, "Shop Main Renamed", got.Name)
 	require.Equal(t, "123456:demo-token-updated", got.Token)
 	require.Equal(t, "analytics-db", got.DatabaseID)
+	require.Equal(t, "Updated Start Scenario", got.StartScenario)
 	require.False(t, got.IsEnabled)
 	require.WithinDuration(t, bot.UpdatedAt, got.UpdatedAt, time.Second)
 }
@@ -137,22 +142,24 @@ func TestBotRepository_List(t *testing.T) {
 	require.NoError(t, err)
 
 	err = repo.Save(ctx, &botconfig.BotConfig{
-		ID:         "z-bot",
-		Name:       "Z Bot",
-		Token:      "token-z",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-		UpdatedAt:  now,
+		ID:            "z-bot",
+		Name:          "Z Bot",
+		Token:         "token-z",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
+		UpdatedAt:     now,
 	})
 	require.NoError(t, err)
 
 	err = repo.Save(ctx, &botconfig.BotConfig{
-		ID:         "a-bot",
-		Name:       "A Bot",
-		Token:      "token-a",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-		UpdatedAt:  now,
+		ID:            "a-bot",
+		Name:          "A Bot",
+		Token:         "token-a",
+		DatabaseID:    "main-db",
+		StartScenario: "Main Start Scenario",
+		IsEnabled:     true,
+		UpdatedAt:     now,
 	})
 	require.NoError(t, err)
 
@@ -184,12 +191,13 @@ func TestBotRepository_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	err = repo.Save(ctx, &botconfig.BotConfig{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "123456:demo-token-main",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
-		UpdatedAt:  now,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "123456:demo-token-main",
+		DatabaseID:    "main-db",
+		StartScenario: "main scenario",
+		IsEnabled:     true,
+		UpdatedAt:     now,
 	})
 	require.NoError(t, err)
 

@@ -9,13 +9,14 @@ func maskToken(token string) string {
 
 func toBotView(bot BotConfig, dbName string) BotView {
 	return BotView{
-		ID:           bot.ID,
-		Name:         bot.Name,
-		TokenMasked:  maskToken(bot.Token),
-		DatabaseID:   bot.DatabaseID,
-		DatabaseName: dbName,
-		IsEnabled:    bot.IsEnabled,
-		UpdatedAt:    bot.UpdatedAt,
+		ID:            bot.ID,
+		Name:          bot.Name,
+		TokenMasked:   maskToken(bot.Token),
+		DatabaseID:    bot.DatabaseID,
+		DatabaseName:  dbName,
+		StartScenario: bot.StartScenario,
+		IsEnabled:     bot.IsEnabled,
+		UpdatedAt:     bot.UpdatedAt,
 	}
 }
 
