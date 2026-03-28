@@ -93,6 +93,56 @@ func TestService_CreateBot_ProfileNotFound(t *testing.T) {
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)
 }
 
+func TestService_CreateBot_StartScenarioEmpty(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postrgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "",
+		IsEnabled:     true,
+	})
+	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioEmpty)
+}
+
+func TestService_CreateBot_StartScenarioInvalid(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Shop Main",
+		Driver:    "postgres",
+		DSN:       "postgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "abracadabra",
+		IsEnabled:     true,
+	})
+	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioInvalid)
+}
+
 func TestService_UpdateBot(t *testing.T) {
 	bots := botconfigmem.NewBotRepository()
 	dbs := botconfigmem.NewDatabaseProfileRepository()
@@ -182,6 +232,74 @@ func TestService_UpdateBot_ReplaceToken(t *testing.T) {
 	raw, err := bots.ByID(context.Background(), "shop-main")
 	require.NoError(t, err)
 	require.Equal(t, newToken, raw.Token)
+}
+
+func TestService_UpdateBot_StartScenarioEmpty(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "reply_welcome",
+		IsEnabled:     true,
+	})
+	require.NoError(t, err)
+
+	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		DatabaseID:    "main-db",
+		StartScenario: "",
+		IsEnabled:     true,
+	})
+	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioEmpty)
+}
+
+func TestService_UpdateBot_StartScenarioInvalid(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "reply_welcome",
+		IsEnabled:     true,
+	})
+	require.NoError(t, err)
+
+	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		DatabaseID:    "main-db",
+		StartScenario: "not-a-real-scenario",
+		IsEnabled:     true,
+	})
+	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioInvalid)
 }
 
 func TestService_ListBots(t *testing.T) {
@@ -348,4 +466,34 @@ func TestService_ListDatabaseProfiles(t *testing.T) {
 	list, err := svc.ListDatabaseProfiles(context.Background())
 	require.NoError(t, err)
 	require.Len(t, list, 2)
+}
+
+func TestService_ListEnabledRuntimeBots_PropagatesStartScenario(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "inline_catalog",
+		IsEnabled:     true,
+	})
+	require.NoError(t, err)
+
+	list, err := svc.ListEnabledRuntimeBots(context.Background())
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	require.Equal(t, "inline_catalog", list[0].StartScenario)
 }
