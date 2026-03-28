@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	ErrProductNotFound    error = errors.New("product not found")
-	ErrInvalidProductName error = errors.New("invalid product name")
-	ErrInvalidCategoryID  error = errors.New("invalid category id")
-	ErrInvalidImageURL    error = errors.New("invalid image url")
-	ErrInvalidProductID   error = errors.New("invalid product id")
+	ErrProductNotFound    = errors.New("product not found")
+	ErrInvalidProductName = errors.New("invalid product name")
+	ErrInvalidCategoryID  = errors.New("invalid category id")
+	ErrInvalidImageURL    = errors.New("invalid image url")
+	ErrInvalidProductID   = errors.New("invalid product id")
 )
 
 // Product represents the product.

@@ -14,11 +14,11 @@ const (
 )
 
 var (
-	ErrInvalidRole         error = errors.New("invalid user role")
-	ErrInvalidCredentials  error = errors.New("invalid credentials")
-	ErrInsufficientBalance error = errors.New("insufficient balance")
-	ErrInvalidAmount       error = errors.New("amount must be positive")
-	ErrUserNotFound        error = errors.New("user not found")
+	ErrInvalidRole         = errors.New("invalid user role")
+	ErrInvalidCredentials  = errors.New("invalid credentials")
+	ErrInsufficientBalance = errors.New("insufficient balance")
+	ErrInvalidAmount       = errors.New("amount must be positive")
+	ErrUserNotFound        = errors.New("user not found")
 )
 
 // User represents an application user.

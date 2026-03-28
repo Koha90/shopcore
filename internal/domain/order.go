@@ -15,15 +15,15 @@ const (
 )
 
 var (
-	ErrInvalidOrderUserID    error = errors.New("invalid order user id")
-	ErrOrderEmpty            error = errors.New("order must contain items")
-	ErrOrderAlreadyPaid      error = errors.New("order already paid")
-	ErrOrderAlreadyCancelled error = errors.New("order already cancelled")
-	ErrOrderNotPending       error = errors.New("order is not pending")
-	ErrOrderNotFound         error = errors.New("order not found")
-	ErrOrderUpdate           error = errors.New("failed to update order")
-	ErrOrderSave             error = errors.New("failed to save order")
-	ErrOrderCancel           error = errors.New("failed to cancel order")
+	ErrInvalidOrderUserID    = errors.New("invalid order user id")
+	ErrOrderEmpty            = errors.New("order must contain items")
+	ErrOrderAlreadyPaid      = errors.New("order already paid")
+	ErrOrderAlreadyCancelled = errors.New("order already cancelled")
+	ErrOrderNotPending       = errors.New("order is not pending")
+	ErrOrderNotFound         = errors.New("order not found")
+	ErrOrderUpdate           = errors.New("failed to update order")
+	ErrOrderSave             = errors.New("failed to save order")
+	ErrOrderCancel           = errors.New("failed to cancel order")
 )
 
 // Order represents confirmed purchase intent.

@@ -13,12 +13,12 @@ const (
 )
 
 var (
-	ErrInvalidUserID      error = errors.New("invalid user id")
-	ErrCartNotActive      error = errors.New("cart is not active")
-	ErrItemNotFound       error = errors.New("item not found")
-	ErrItemAlreadyExists  error = errors.New("item already exists in cart")
-	ErrInvalidItemQuality error = errors.New("invalid item quantity")
-	ErrCartEmpty          error = errors.New("cart is empty")
+	ErrInvalidUserID      = errors.New("invalid user id")
+	ErrCartNotActive      = errors.New("cart is not active")
+	ErrItemNotFound       = errors.New("item not found")
+	ErrItemAlreadyExists  = errors.New("item already exists in cart")
+	ErrInvalidItemQuality = errors.New("invalid item quantity")
+	ErrCartEmpty          = errors.New("cart is empty")
 )
 
 // Cart represents user's shopping cart.

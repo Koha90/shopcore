@@ -13,7 +13,8 @@ var (
 	ErrBotIDEmpty               = errors.New("bot id is required")
 	ErrBotNameEmpty             = errors.New("bot name is required")
 	ErrBotTokenEmpty            = errors.New("bot token is required")
-	ErrBotStartScenario         = errors.New("bot start scenario is required")
+	ErrBotStartScenarioEmpty    = errors.New("bot start scenario is required")
+	ErrBotStartScenarioInvalid  = errors.New("bot start scenario is invalid")
 	ErrDatabaseIDEmpty          = errors.New("database id is required")
 	ErrDatabaseProfileIDEmpty   = errors.New("database profile id is required")
 	ErrDatabaseProfileNameEmpty = errors.New("database profile name is required")
@@ -118,7 +119,10 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 		return ErrDatabaseIDEmpty
 	}
 	if params.StartScenario == "" {
-		return ErrBotStartScenario
+		return ErrBotStartScenarioEmpty
+	}
+	if !isValidStartScenario(params.StartScenario) {
+		return ErrBotStartScenarioInvalid
 	}
 
 	dbProfile, err := s.dbs.ByID(ctx, params.DatabaseID)
@@ -151,7 +155,10 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 		return ErrDatabaseIDEmpty
 	}
 	if params.StartScenario == "" {
-		return ErrBotStartScenario
+		return ErrBotStartScenarioEmpty
+	}
+	if !isValidStartScenario(params.StartScenario) {
+		return ErrBotStartScenarioInvalid
 	}
 
 	bot, err := s.bots.ByID(ctx, params.ID)

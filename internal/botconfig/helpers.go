@@ -1,5 +1,7 @@
 package botconfig
 
+import "strings"
+
 func maskToken(token string) string {
 	if len(token) <= 8 {
 		return "********"
@@ -27,5 +29,14 @@ func toDatabaseProfileView(profile DatabaseProfile) DatabaseProfileView {
 		Driver:    profile.Driver,
 		IsEnabled: profile.IsEnabled,
 		UpdatedAt: profile.UpdatedAt,
+	}
+}
+
+func isValidStartScenario(v string) bool {
+	switch strings.TrimSpace(v) {
+	case "reply_welcome", "inline_catalog":
+		return true
+	default:
+		return false
 	}
 }

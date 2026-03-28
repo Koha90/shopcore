@@ -60,7 +60,7 @@ func TestService_CreateBot(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "123456:abcdef-token",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestService_CreateBot(t *testing.T) {
 	require.Equal(t, "Shop Main", got.Name)
 	require.Equal(t, "main-db", got.DatabaseID)
 	require.Equal(t, "Main DB", got.DatabaseName)
-	require.Equal(t, "Main Start Scenario", got.StartScenario)
+	require.Equal(t, "reply_welcome", got.StartScenario)
 	require.True(t, got.IsEnabled)
 	require.NotEmpty(t, got.TokenMasked)
 	require.NotEqual(t, "123456:abcdef-token", got.TokenMasked)
@@ -87,7 +87,7 @@ func TestService_CreateBot_ProfileNotFound(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "123456:abcdef-token",
 		DatabaseID:    "missing-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)
@@ -121,7 +121,7 @@ func TestService_UpdateBot(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "123456:abcdef-token",
 		DatabaseID:    "main-db",
-		StartScenario: "start scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -130,7 +130,7 @@ func TestService_UpdateBot(t *testing.T) {
 		ID:            "shop-main",
 		Name:          "Shop Main Updated",
 		DatabaseID:    "backup-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     false,
 	})
 	require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestService_UpdateBot(t *testing.T) {
 	require.Equal(t, "Shop Main Updated", got.Name)
 	require.Equal(t, "backup-db", got.DatabaseID)
 	require.Equal(t, "Backup DB", got.DatabaseName)
-	require.Equal(t, "Main Start Scenario", got.StartScenario)
+	require.Equal(t, "reply_welcome", got.StartScenario)
 	require.False(t, got.IsEnabled)
 }
 
@@ -163,7 +163,7 @@ func TestService_UpdateBot_ReplaceToken(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "old-token-123456",
 		DatabaseID:    "main-db",
-		StartScenario: "start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -174,7 +174,7 @@ func TestService_UpdateBot_ReplaceToken(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         &newToken,
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -203,7 +203,7 @@ func TestService_ListBots(t *testing.T) {
 		Name:          "Bot One",
 		Token:         "token-one-123",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestService_ListBots(t *testing.T) {
 		Name:          "Bot Two",
 		Token:         "token-two-456",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     false,
 	})
 	require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestService_BotByID(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "123456:abcdef-token",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -252,6 +252,7 @@ func TestService_BotByID(t *testing.T) {
 	require.Equal(t, "shop-main", got.ID)
 	require.Equal(t, "Shop Main", got.Name)
 	require.Equal(t, "Main DB", got.DatabaseName)
+	require.Equal(t, "reply_welcome", got.StartScenario)
 }
 
 func TestService_UpdateBot_BotNotFound(t *testing.T) {
@@ -272,7 +273,7 @@ func TestService_UpdateBot_BotNotFound(t *testing.T) {
 		ID:            "missing-bot",
 		Name:          "Missing Bot",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrBotNotFound)
@@ -297,7 +298,7 @@ func TestService_UpdateBot_ProfileNotFound(t *testing.T) {
 		Name:          "Shop Main",
 		Token:         "token-123456",
 		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.NoError(t, err)
@@ -306,7 +307,7 @@ func TestService_UpdateBot_ProfileNotFound(t *testing.T) {
 		ID:            "shop-main",
 		Name:          "Shop Main",
 		DatabaseID:    "missing-db",
-		StartScenario: "Main Start Scenario",
+		StartScenario: "reply_welcome",
 		IsEnabled:     true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)

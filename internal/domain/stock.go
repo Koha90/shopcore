@@ -4,12 +4,12 @@ import "errors"
 
 // Domain errors related to Stock aggregate.
 var (
-	ErrInvalidQuantity           error = errors.New("invalid quantity")
-	ErrInsufficientStock         error = errors.New("insufficient stock available")
-	ErrInvalidReleaseQuantity    error = errors.New("invalid release quantity")
-	ErrInsufficientReservedStock error = errors.New("insufficient reserved stock")
-	ErrInvalidWarehouseID        error = errors.New("invalid warehouse id")
-	ErrInvalidStockVariantID     error = errors.New("invalid variant id")
+	ErrInvalidQuantity           = errors.New("invalid quantity")
+	ErrInsufficientStock         = errors.New("insufficient stock available")
+	ErrInvalidReleaseQuantity    = errors.New("invalid release quantity")
+	ErrInsufficientReservedStock = errors.New("insufficient reserved stock")
+	ErrInvalidWarehouseID        = errors.New("invalid warehouse id")
+	ErrInvalidStockVariantID     = errors.New("invalid variant id")
 )
 
 // Stock represents physical inventory of a product variant

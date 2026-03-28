@@ -7,7 +7,7 @@ import (
 )
 
 // ErrUnknownAction is returned when flow cannot resolve an action.
-var ErrUnknownAction error = errors.New("unknown flow action")
+var ErrUnknownAction = errors.New("unknown flow action")
 
 const (
 	// DefaultCompactRootColumns defines the default column count for inline root

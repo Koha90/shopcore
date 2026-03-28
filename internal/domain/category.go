@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var ErrInvalidCategoryName error = errors.New("invalid category name")
+var ErrInvalidCategoryName = errors.New("invalid category name")
 
 // Category represent category of the product.
 type Category struct {

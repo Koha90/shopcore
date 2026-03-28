@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var ErrInvalidDistrictName error = errors.New("invalid district name")
+var ErrInvalidDistrictName = errors.New("invalid district name")
 
 // District represent the district of the city.
 type District struct {

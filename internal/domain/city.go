@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ErrInvalidCityName error = errors.New("invalid city name")
-	ErrInvalidCityID   error = errors.New("invalid city id")
+	ErrInvalidCityName = errors.New("invalid city name")
+	ErrInvalidCityID   = errors.New("invalid city id")
 )
 
 // City represent the city.

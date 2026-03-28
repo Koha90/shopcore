@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	ErrVariantNotFound          error = errors.New("product variant not found")
-	ErrInvalidProductPrice      error = errors.New("invalid product price")
-	ErrInvalidPackSize          error = errors.New("invalid pack size")
-	ErrInvalidDistrictID        error = errors.New("invalid district id")
-	ErrInvalidVariant           error = errors.New("invalid variant")
-	ErrInvalidVariantID         error = errors.New("invalid variant id")
-	ErrCannotArchiveLastVariant error = errors.New("cannot archive last variant")
-	ErrVariantAlreadyExists     error = errors.New("variant already exists")
-	ErrVariantAlreadyArchived   error = errors.New("variant already archived")
+	ErrVariantNotFound          = errors.New("product variant not found")
+	ErrInvalidProductPrice      = errors.New("invalid product price")
+	ErrInvalidPackSize          = errors.New("invalid pack size")
+	ErrInvalidDistrictID        = errors.New("invalid district id")
+	ErrInvalidVariant           = errors.New("invalid variant")
+	ErrInvalidVariantID         = errors.New("invalid variant id")
+	ErrCannotArchiveLastVariant = errors.New("cannot archive last variant")
+	ErrVariantAlreadyExists     = errors.New("variant already exists")
+	ErrVariantAlreadyArchived   = errors.New("variant already archived")
 )
 
 // ProductVariant repesent a specific purchasable packaging option
