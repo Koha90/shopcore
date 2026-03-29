@@ -3,6 +3,8 @@ package tui
 import (
 	"context"
 	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -21,6 +23,14 @@ type tickMsg time.Time
 type botConfigLoadMsg struct {
 	config botconfig.BotView
 	err    error
+}
+
+type clipboardPastedMsg struct {
+	text string
+}
+
+type clipboardPasteFailedMsg struct {
+	err error
 }
 
 func tickCmd() tea.Cmd {
@@ -176,6 +186,28 @@ func syncRuntimeSpecCmd(cfg BotConfigService, mgr BotManager, id string) tea.Cmd
 		return runtimeSpecSyncedMsg{
 			id:  id,
 			err: err,
+		}
+	}
+}
+
+func pasteClipboardCmd() tea.Cmd {
+	return func() tea.Msg {
+		commands := [][]string{
+			{"wl-paste", "-n"},
+			{"xclip", "-o", "-selection", "clipboard"},
+			{"xsel", "--clipboard", "--output"},
+			{"pbpaste"},
+			{"powershell", "-NoProfile", "-Command", "Get-Clipboard"},
+		}
+		for _, args := range commands {
+			out, err := exec.Command(args[0], args[1:]...).Output()
+			if err != nil {
+				text := strings.TrimRight(string(out), "\r\n")
+				return clipboardPastedMsg{text: text}
+			}
+		}
+		return clipboardPasteFailedMsg{
+			err: fmt.Errorf("clipboard provider not found"),
 		}
 	}
 }

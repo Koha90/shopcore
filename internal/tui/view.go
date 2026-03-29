@@ -549,7 +549,7 @@ func (m Model) renderEditBotToken() string {
 
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.theme.Border.GetBackground()).
+		BorderForeground(m.theme.Border.GetForeground()).
 		Padding(1, 2)
 
 	return box.Render(strings.Join(lines, "\n"))

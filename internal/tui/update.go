@@ -90,6 +90,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Shared text input flow or name/token editing.
 		if m.inputMode != InputModeNone {
+			if msg.String() == "ctrl+v" {
+				return m, pasteClipboardCmd()
+			}
+
 			var cmd tea.Cmd
 			m.textInput, cmd = m.textInput.Update(msg)
 
@@ -579,6 +583,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.lastErr = nil
 		m.message = "runtime synced"
+		return m, nil
+
+	case clipboardPastedMsg:
+		value := m.textInput.Value() + msg.text
+		m.textInput.SetValue(value)
+		m.lastErr = nil
+		m.message = "clipboard pasted"
+		return m, nil
+
+	case clipboardPasteFailedMsg:
+		m.lastErr = msg.err
+		m.message = "clipboard paste failed"
 		return m, nil
 	}
 
