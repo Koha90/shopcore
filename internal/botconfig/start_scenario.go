@@ -7,7 +7,7 @@ const (
 	StartScenarioInlineCatalog = "inline_catalog"
 )
 
-func isValidStartScenario(v string) bool {
+func IsValidStartScenario(v string) bool {
 	switch strings.TrimSpace(v) {
 	case StartScenarioReplyWelcome, StartScenarioInlineCatalog:
 		return true
@@ -16,7 +16,7 @@ func isValidStartScenario(v string) bool {
 	}
 }
 
-func NormilizeStartScenario(v string) string {
+func NormolizeStartScenario(v string) string {
 	switch strings.TrimSpace(v) {
 	case StartScenarioInlineCatalog:
 		return StartScenarioInlineCatalog

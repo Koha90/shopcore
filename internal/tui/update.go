@@ -544,29 +544,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		if err := m.manager.Rename(msg.id, msg.name); err != nil {
-			m.lastErr = err
-			m.message = "config saved, runtime name sync failed"
-			return m, loadBotConfigCmd(m.config, msg.id)
-		}
-
 		m.editDirty = false
 		m.lastErr = nil
-		m.message = "config saved"
+		m.message = "config saved, syncing runtime..."
 		m.screen = ScreenBotConfig
-		return m, loadBotConfigCmd(m.config, msg.id)
+
+		return m, tea.Batch(
+			loadBotConfigCmd(m.config, msg.id),
+			syncRuntimeSpecCmd(m.config, m.manager, msg.id),
+		)
 
 	case botTokenSavedMsg:
 		m.resetTextInput()
 		m.lastErr = nil
-		m.message = "token saved"
+		m.message = "token saved, syncing runtime..."
 		m.screen = ScreenBotConfig
 
-		return m, loadBotConfigCmd(m.config, msg.id)
+		return m, tea.Batch(
+			loadBotConfigCmd(m.config, msg.id),
+			syncRuntimeSpecCmd(m.config, m.manager, msg.id),
+		)
 
 	case botTokenSaveFailedMsg:
 		m.lastErr = msg.err
 		m.message = "token save failed"
+		return m, nil
+
+	case runtimeSpecSyncedMsg:
+		if msg.err != nil {
+			m.lastErr = msg.err
+			m.message = "runtime sync failed"
+			return m, nil
+		}
+
+		m.lastErr = nil
+		m.message = "runtime synced"
 		return m, nil
 	}
 

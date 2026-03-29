@@ -84,6 +84,7 @@ type BotManager interface {
 	Restart(ctx context.Context, id string) error
 	Info(id string) (manager.Info, error)
 	Rename(id string, name string) error
+	UpdateSpec(spec manager.BotSpec) error
 }
 
 // Summary contains aggregated runtime counters for bots.

@@ -220,6 +220,22 @@ func (m *Manager) Rename(id string, name string) error {
 	return nil
 }
 
+// UpdateSpec replace runtime spec for an already registered bot.
+//
+// If bot is running, new spec is applied on next restart.
+func (m *Manager) UpdateSpec(spec BotSpec) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	entry, ok := m.entries[spec.ID]
+	if !ok {
+		return ErrBotNotFound
+	}
+
+	entry.spec = spec
+	return nil
+}
+
 func infoFromEntry(entry *Entry) Info {
 	lastError := ""
 	if entry.lastError != nil {

@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/koha90/shopcore/internal/botconfig"
+	"github.com/koha90/shopcore/internal/manager"
 )
 
 type actionResultMsg struct {
@@ -131,5 +132,50 @@ func updateBotTokenCmd(cfg BotConfigService, id, token string) tea.Cmd {
 			return botTokenSaveFailedMsg{err: err}
 		}
 		return botTokenSavedMsg{id: id}
+	}
+}
+
+type runtimeSpecSyncedMsg struct {
+	id  string
+	err error
+}
+
+func syncRuntimeSpecCmd(cfg BotConfigService, mgr BotManager, id string) tea.Cmd {
+	return func() tea.Msg {
+		if cfg == nil || mgr == nil || id == "" {
+			return runtimeSpecSyncedMsg{
+				id:  id,
+				err: fmt.Errorf("runtime sync unavailable"),
+			}
+		}
+
+		view, err := cfg.BotByID(context.Background(), id)
+		if err != nil {
+			return runtimeSpecSyncedMsg{
+				id:  id,
+				err: err,
+			}
+		}
+
+		token, err := cfg.BotToken(context.Background(), id)
+		if err != nil {
+			return runtimeSpecSyncedMsg{
+				id:  id,
+				err: err,
+			}
+		}
+
+		err = mgr.UpdateSpec(manager.BotSpec{
+			ID:            view.ID,
+			Name:          view.Name,
+			Token:         token,
+			DatabaseID:    view.DatabaseID,
+			StartScenario: view.StartScenario,
+		})
+
+		return runtimeSpecSyncedMsg{
+			id:  id,
+			err: err,
+		}
 	}
 }

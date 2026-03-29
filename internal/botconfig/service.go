@@ -121,7 +121,7 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 	if params.StartScenario == "" {
 		return ErrBotStartScenarioEmpty
 	}
-	if !isValidStartScenario(params.StartScenario) {
+	if !IsValidStartScenario(params.StartScenario) {
 		return ErrBotStartScenarioInvalid
 	}
 
@@ -157,7 +157,7 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 	if params.StartScenario == "" {
 		return ErrBotStartScenarioEmpty
 	}
-	if !isValidStartScenario(params.StartScenario) {
+	if !IsValidStartScenario(params.StartScenario) {
 		return ErrBotStartScenarioInvalid
 	}
 

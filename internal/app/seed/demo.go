@@ -57,31 +57,34 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService) error {
 	}
 
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "shop-main",
-		Name:       "Shop Main",
-		Token:      "8046427793:AAEBRp4grScSfNrKNKVUlsXh22f6jf6N-Es",
-		DatabaseID: "main-db",
-		IsEnabled:  true,
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "8046427793:AAEBRp4grScSfNrKNKVUlsXh22f6jf6N-Es",
+		DatabaseID:    "main-db",
+		StartScenario: botconfig.StartScenarioInlineCatalog,
+		IsEnabled:     true,
 	}); err != nil {
 		return err
 	}
 
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "slow-bot",
-		Name:       "Slow Bot",
-		Token:      "7561451770:AAE1G-vwEcavrFdhJ2KP50J5nW2f4KdE1YQ",
-		DatabaseID: "analytics-db",
-		IsEnabled:  true,
+		ID:            "slow-bot",
+		Name:          "Slow Bot",
+		Token:         "7561451770:AAE1G-vwEcavrFdhJ2KP50J5nW2f4KdE1YQ",
+		DatabaseID:    "analytics-db",
+		StartScenario: botconfig.StartScenarioReplyWelcome,
+		IsEnabled:     true,
 	}); err != nil {
 		return err
 	}
 
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:         "broken-bot",
-		Name:       "Broken Bot",
-		Token:      "123456:demo-token-broken",
-		DatabaseID: "staging-db",
-		IsEnabled:  true,
+		ID:            "broken-bot",
+		Name:          "Broken Bot",
+		Token:         "123456:demo-token-broken",
+		DatabaseID:    "staging-db",
+		StartScenario: botconfig.StartScenarioInlineCatalog,
+		IsEnabled:     true,
 	}); err != nil {
 		return err
 	}

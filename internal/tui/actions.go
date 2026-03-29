@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 func (m Model) botActions() []string {
@@ -186,6 +188,19 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 			m.message = "validation error"
 			return m, nil
 		}
+
+		if strings.TrimSpace(m.editForm.StartScenario) == "" {
+			m.lastErr = fmt.Errorf("start scenario cannot be empty")
+			m.message = "validation error"
+			return m, nil
+		}
+
+		if !botconfig.IsValidStartScenario(m.editForm.StartScenario) {
+			m.lastErr = fmt.Errorf("start scenario is invalid")
+			m.message = "validation error"
+			return m, nil
+		}
+
 		m.message = "saving config..."
 		m.lastErr = nil
 		return m, saveBotConfigCmd(m.config, id, m.editForm)

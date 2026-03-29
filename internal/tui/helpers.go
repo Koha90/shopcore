@@ -2,6 +2,8 @@ package tui
 
 import (
 	"charm.land/bubbles/v2/textinput"
+
+	"github.com/koha90/shopcore/internal/botconfig"
 )
 
 func newTextInput() textinput.Model {
@@ -19,9 +21,9 @@ func (m *Model) resetTextInput() {
 
 func nextStartScenario(current string) string {
 	switch current {
-	case "inline_catalog":
-		return "reply_catalog"
+	case botconfig.StartScenarioInlineCatalog:
+		return botconfig.StartScenarioReplyWelcome
 	default:
-		return "inline_catalog"
+		return botconfig.StartScenarioInlineCatalog
 	}
 }
