@@ -116,6 +116,22 @@ func (m Model) handleEditToggleOrAction() (tea.Model, tea.Cmd) {
 	case EditFieldEnabled:
 		m.editForm.IsEnabled = !m.editForm.IsEnabled
 		m.editDirty = true
+		m.message = "enabled update"
+		m.lastErr = nil
+		return m, nil
+
+	case EditFieldDatabase:
+		m.screen = ScreenSelecteDatabaseProfile
+		m.databaseCursor = 0
+		m.message = ""
+		m.lastErr = nil
+		return m, loadDatabaseProfilesCmd(m.config)
+
+	case EditFieldStartScenario:
+		m.editForm.StartScenario = nextStartScenario(m.editForm.StartScenario)
+		m.editDirty = true
+		m.message = "scenario updated"
+		m.lastErr = nil
 		return m, nil
 
 	default:
@@ -132,6 +148,8 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 	case EditFieldEnabled:
 		m.editForm.IsEnabled = !m.editForm.IsEnabled
 		m.editDirty = true
+		m.message = "enabled update"
+		m.lastErr = nil
 		return m, nil
 
 	case EditFieldDatabase:
@@ -141,6 +159,13 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 		m.message = "loading database profiles..."
 		m.lastErr = nil
 		return m, loadDatabaseProfilesCmd(m.config)
+
+	case EditFieldStartScenario:
+		m.editForm.StartScenario = nextStartScenario(m.editForm.StartScenario)
+		m.editDirty = true
+		m.message = "scenario updated"
+		m.lastErr = nil
+		return m, nil
 
 	case EditFieldSave:
 		id := m.selectedID()

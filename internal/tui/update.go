@@ -237,7 +237,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case "enter":
 				if m.editCursor == EditFieldName {
-					m.textInput = newTexInput()
+					m.textInput = newTextInput()
 					m.inputMode = InputModeEditName
 					m.textInput.SetValue(m.editForm.Name)
 					m.textInput.Focus()
@@ -265,7 +265,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case "enter":
 				if m.inputMode != InputModeEditToken {
-					m.textInput = newTexInput()
 					m.inputMode = InputModeEditToken
 					m.textInput.SetValue("")
 					m.textInput.Focus()
@@ -513,9 +512,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.selectedBotConfigLoading = false
 
 		m.editForm = BotConfigEditForm{
-			Name:       cfg.Name,
-			IsEnabled:  cfg.IsEnabled,
-			DatabaseID: cfg.DatabaseID,
+			Name:          cfg.Name,
+			IsEnabled:     cfg.IsEnabled,
+			DatabaseID:    cfg.DatabaseID,
+			StartScenario: cfg.StartScenario,
 		}
 		m.editCursor = EditFieldName
 		m.editDirty = false

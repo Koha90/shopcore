@@ -173,7 +173,7 @@ func NewModel(mgr BotManager, cfg BotConfigService, theme Theme) Model {
 		layout:       LayoutDesktop,
 		statusFilter: StatusFilterAll,
 		screen:       ScreenList,
-		textInput:    newTexInput(),
+		textInput:    newTextInput(),
 		inputMode:    InputModeNone,
 	}
 
@@ -184,12 +184,4 @@ func NewModel(mgr BotManager, cfg BotConfigService, theme Theme) Model {
 // Init initializes TUI model.
 func (m Model) Init() tea.Cmd {
 	return tickCmd()
-}
-
-func newTexInput() textinput.Model {
-	ti := textinput.New()
-	ti.Placeholder = ""
-	ti.CharLimit = 512
-	ti.SetWidth(48)
-	return ti
 }

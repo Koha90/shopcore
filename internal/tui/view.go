@@ -295,6 +295,7 @@ func (m Model) renderDetails() string {
 			lines = append(lines, renderKeyValue(labelWidth, "Config name", cfg.Name))
 			lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
 			lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
+			lines = append(lines, renderKeyValue(labelWidth, "Scenario", cfg.StartScenario))
 			lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		}
 

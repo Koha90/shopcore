@@ -80,11 +80,12 @@ func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) t
 		}
 
 		err := cfg.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-			ID:         id,
-			Name:       form.Name,
-			Token:      nil,
-			DatabaseID: form.DatabaseID,
-			IsEnabled:  form.IsEnabled,
+			ID:            id,
+			Name:          form.Name,
+			Token:         nil,
+			DatabaseID:    form.DatabaseID,
+			StartScenario: form.StartScenario,
+			IsEnabled:     form.IsEnabled,
 		})
 
 		return botConfigSavedMsg{
