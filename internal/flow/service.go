@@ -237,7 +237,7 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 		return ScreenRootCompact, nil
 
 	case ActionRootCompact:
-		return ScreenRootExtended, nil
+		return ScreenRootCompact, nil
 
 	case ActionRootExtended:
 		return ScreenRootExtended, nil
