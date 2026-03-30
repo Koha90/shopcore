@@ -3,6 +3,8 @@ package flow
 import (
 	"context"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func testSessionKey(botID string) SessionKey {
@@ -358,4 +360,53 @@ func TestHandleAction_BackReturnsToPreviousScreen_InlineScenario(t *testing.T) {
 	if vm.Inline.Sections[1].Columns != 1 {
 		t.Fatalf("expected second section columns=1, got %d", vm.Inline.Sections[1].Columns)
 	}
+}
+
+func TestHandleAction_CatalogStart_ReplyWelcomeOpensCompactRoot(t *testing.T) {
+	svc := NewService(nil)
+	key := SessionKey{BotID: "bot-1", ChatID: 1, UserID: 1}
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "bot-1",
+		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "bot-1",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Equal(t, 1, vm.Inline.Sections[0].Columns)
+}
+
+func TestHandleAction_CatalogStart_InlineCatalogOpensExtendedRoot(t *testing.T) {
+	svc := NewService(nil)
+	key := SessionKey{BotID: "bot-2", ChatID: 2, UserID: 2}
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "bot-2",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "bot-2",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 2)
+	require.Equal(t, 2, vm.Inline.Sections[0].Columns)
+	require.Equal(t, 1, vm.Inline.Sections[1].Columns)
 }

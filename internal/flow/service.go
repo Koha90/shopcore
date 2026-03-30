@@ -82,6 +82,17 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(prev), nil
+
+	case ActionCatalogStart:
+		next := catalogRootForScenario(req.StartScenario)
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+			session.Current = next
+			s.store.Put(req.SessionKey, session)
+		}
+
+		return s.renderScreen(next), nil
 	}
 
 	next, err := resolveNextScreen(req.ActionID)
