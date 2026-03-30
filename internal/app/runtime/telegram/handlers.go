@@ -6,7 +6,6 @@ import (
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
-	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 )
 
@@ -16,12 +15,7 @@ func (r *Runner) startHandler(spec manager.BotSpec) func(context.Context, *tgbot
 			return
 		}
 
-		vm, err := r.flow.Start(ctx, flow.StartRequest{
-			BotID:         spec.ID,
-			BotName:       spec.Name,
-			StartScenario: spec.StartScenario,
-			SessionKey:    messageSessionKey(spec.ID, update.Message),
-		})
+		vm, err := r.flow.Start(ctx, buildStartRequest(spec, update.Message))
 		if err != nil {
 			r.log.Error(
 				"flow start failed",
@@ -58,13 +52,7 @@ func (r *Runner) callbackHandler(spec manager.BotSpec) func(context.Context, *tg
 			return
 		}
 
-		vm, err := r.flow.HandleAction(ctx, flow.ActionRequest{
-			BotID:         spec.ID,
-			BotName:       spec.Name,
-			StartScenario: spec.StartScenario,
-			ActionID:      actionID,
-			SessionKey:    callbackSessionKey(spec.ID, update.CallbackQuery),
-		})
+		vm, err := r.flow.HandleAction(ctx, buildCallbackActionRequest(spec, update.CallbackQuery, actionID))
 		if err != nil {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "action failed")
 			r.log.Error(
@@ -119,13 +107,7 @@ func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgb
 			return
 		}
 
-		vm, err := r.flow.HandleAction(ctx, flow.ActionRequest{
-			BotID:         spec.ID,
-			BotName:       spec.Name,
-			StartScenario: spec.StartScenario,
-			ActionID:      actionID,
-			SessionKey:    messageSessionKey(spec.ID, update.Message),
-		})
+		vm, err := r.flow.HandleAction(ctx, buildMessageActionRequest(spec, update.Message, actionID))
 		if err != nil {
 			r.log.Error(
 				"flow reply action failed",
