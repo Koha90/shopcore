@@ -42,11 +42,6 @@ const (
 	ActionBotsMine    ActionID = "bots:mine"
 	ActionOrderLast   ActionID = "order:last"
 
-	ActionEntity1 ActionID = "entity:1"
-	ActionEntity2 ActionID = "entity:2"
-	ActionEntity3 ActionID = "entity:3"
-	ActionEntity4 ActionID = "entity:4"
-
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
 

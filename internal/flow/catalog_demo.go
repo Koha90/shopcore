@@ -118,6 +118,9 @@ func (c Catalog) RootNodes() []CatalogNode {
 }
 
 // FindNode resolve one node by full catalog path.
+//
+// Path must start from root level and follow the tree in the same order
+// as configured by the catalog schema.
 func (c Catalog) FindNode(path CatalogPath) (CatalogNode, bool) {
 	if len(path) == 0 {
 		return CatalogNode{}, false

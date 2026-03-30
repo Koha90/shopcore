@@ -56,8 +56,10 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 	require.NotNil(t, rootVM.Inline)
 	require.True(t, rootVM.RemoveReply)
 
+	cityAction := flow.ActionID("catalog:select:city:moscow")
+
 	entityCQ := &models.CallbackQuery{
-		Data: encodeActionID(flow.ActionEntity1),
+		Data: encodeActionID(cityAction),
 		From: models.User{ID: 2001},
 		Message: models.MaybeInaccessibleMessage{
 			Type: models.MaybeInaccessibleMessageTypeMessage,
@@ -70,8 +72,8 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, entityCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, flow.ActionEntity1, actionID)
-	require.Equal(t, "Москва\n\nЗдесь будет следующий шаг сценария для выбранной сущности.", entityVM.Text)
+	require.Equal(t, cityAction, actionID)
+	require.Equal(t, "Москва\n\nВыберите категорию:", entityVM.Text)
 
 	backCQ := &models.CallbackQuery{
 		Data: encodeActionID(flow.ActionBack),
@@ -121,8 +123,10 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 	require.Equal(t, 2, startVM.Inline.Sections[0].Columns)
 	require.Equal(t, 1, startVM.Inline.Sections[1].Columns)
 
+	cityAction := flow.ActionID("catalog:select:city:moscow")
+
 	entityCQ := &models.CallbackQuery{
-		Data: encodeActionID(flow.ActionEntity1),
+		Data: encodeActionID(cityAction),
 		From: models.User{ID: 4001},
 		Message: models.MaybeInaccessibleMessage{
 			Type: models.MaybeInaccessibleMessageTypeMessage,
@@ -135,8 +139,8 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, entityCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, flow.ActionEntity1, actionID)
-	require.Equal(t, "Москва\n\nЗдесь будет следующий шаг сценария для выбранной сущности.", entityVM.Text)
+	require.Equal(t, cityAction, actionID)
+	require.Equal(t, "Москва\n\nВыберите категорию:", entityVM.Text)
 
 	backCQ := &models.CallbackQuery{
 		Data: encodeActionID(flow.ActionBack),

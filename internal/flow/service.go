@@ -35,18 +35,28 @@ const (
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
 type Service struct {
-	store Store
+	store   Store
+	catalog Catalog
 }
 
-// NewService construct a flow service.
+// NewService constructs transport-agnostic flow service.
+//
+// If store is nil, in-memory session storage is used.
+// Demo catalog is wired by default until persistent catalog source appears.
 func NewService(store Store) *Service {
 	if store == nil {
 		store = NewMemoryStore()
 	}
-	return &Service{store: store}
+	return &Service{
+		store:   store,
+		catalog: DemoCatalog(),
+	}
 }
 
 // Start resolves the initial bot view for /start.
+//
+// StartScenario controls whether the user sees reply welcome
+// or enters inline catalog immediately.
 func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
 	screen := startScreenForScenario(req.StartScenario)
 
@@ -58,9 +68,13 @@ func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) 
 	return s.renderScreen(screen), nil
 }
 
-// HandleAction resolve the next bot view for an action.
+// HandleAction resolve the next flow view for an action.
 //
-// ActionBack navigates to the previous screen stored in session history.
+// Resolution order:
+//   - ActionBack uses session history
+//   - ActionCatalogStart opens scenario-aware catalog root
+//   - generic catalog selection actions advance inside CatalogSchema
+//   - explicit non-catalog action open stable detail screen
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
 	session, ok := s.store.Get(req.SessionKey)
 	if !ok {
@@ -92,6 +106,15 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			s.store.Put(req.SessionKey, session)
 		}
 
+		return s.renderScreen(next), nil
+	}
+
+	if next, err := s.resolveCatalogScreen(session.Current, req.ActionID); err == nil {
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+			session.Current = next
+			s.store.Put(req.SessionKey, session)
+		}
 		return s.renderScreen(next), nil
 	}
 
@@ -150,30 +173,33 @@ func buildReplyWelcomeStart() ViewModel {
 	}
 }
 
-func buildCompactRootSelectionView() ViewModel {
-	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact)
+func buildCompactRootSelectionView(roots []CatalogNode) ViewModel {
+	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact, roots)
 }
 
-func buildExtendedRootSelectionView() ViewModel {
-	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended)
+func buildExtendedRootSelectionView(roots []CatalogNode) ViewModel {
+	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended, roots)
 }
 
 // buildRootSelectionView renders the root inline selection screen.
 //
 // The compact variant renders only the main selectable entities.
 // The extended variant renders the same entities plus utility action below.
-func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
+func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNode) ViewModel {
 	cols := normalizeColumns(columns)
+
+	actions := make([]ActionButton, 0, len(roots))
+	for _, node := range roots {
+		actions = append(actions, ActionButton{
+			ID:    catalogSelectAction(node.Level, node.ID),
+			Label: node.Label,
+		})
+	}
 
 	sections := []ActionSection{
 		{
 			Columns: cols,
-			Actions: []ActionButton{
-				{ID: ActionEntity1, Label: "Москва"},
-				{ID: ActionEntity2, Label: "СПб"},
-				{ID: ActionEntity3, Label: "Казань"},
-				{ID: ActionEntity4, Label: "Екатеринбург"},
-			},
+			Actions: actions,
 		},
 	}
 
@@ -192,23 +218,6 @@ func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
 		Text: "Каталог\n\nВыберите раздел:",
 		Inline: &InlineKeyboardView{
 			Sections: sections,
-		},
-		RemoveReply: true,
-	}
-}
-
-func buildEntityView(title string) ViewModel {
-	return ViewModel{
-		Text: title + "\n\nЗдесь будет следующий шаг сценария для выбранной сущности.",
-		Inline: &InlineKeyboardView{
-			Sections: []ActionSection{
-				{
-					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
-					},
-				},
-			},
 		},
 		RemoveReply: true,
 	}
@@ -242,6 +251,66 @@ func buildReplyDetailView(title, body string) ViewModel {
 	}
 }
 
+// resolveCatalogScreen resolves one generic catalog selection action
+// relative to the current screen state.
+//
+// It validates:
+//   - action payload format
+//   - current catalog path
+//   - expected next schema level
+//   - existence of target node in catalog tree
+func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (ScreenID, error) {
+	level, id, ok := parseCatalogSelectAction(actionID)
+	if !ok {
+		return "", ErrUnknownAction
+	}
+
+	var currentPath CatalogPath
+
+	switch current {
+	case ScreenRootCompact, ScreenRootExtended:
+		currentPath = nil
+
+	default:
+		path, ok := parseCatalogScreen(current)
+		if !ok {
+			return "", ErrUnknownAction
+		}
+		currentPath = path
+	}
+
+	expectedLevel, ok := s.expectedNextCatalogLevel(currentPath)
+	if !ok {
+		return "", ErrUnknownAction
+	}
+	if level != expectedLevel {
+		return "", ErrUnknownAction
+	}
+
+	nextPath := currentPath.Append(level, id)
+
+	if _, ok := s.catalog.FindNode(nextPath); !ok {
+		return "", ErrUnknownAction
+	}
+
+	return catalogScreen(nextPath), nil
+}
+
+// expectedNextCatalogLevel returns which catalog level may be selected next
+// for the provided path.
+func (s *Service) expectedNextCatalogLevel(path CatalogPath) (CatalogLevel, bool) {
+	if len(path) == 0 {
+		return s.catalog.RootLevel()
+	}
+
+	last, ok := path.Last()
+	if !ok {
+		return "", false
+	}
+
+	return s.catalog.Schema.Next(last.Level)
+}
+
 func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 	switch actionID {
 	case ActionCatalogStart:
@@ -255,51 +324,41 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 
 	case ActionCabinetOpen:
 		return ScreenCabinet, nil
+
 	case ActionSupportOpen:
 		return ScreenSupport, nil
+
 	case ActionReviewsOpen:
 		return ScreenReviews, nil
 
 	case ActionBalanceOpen:
 		return ScreenBalance, nil
+
 	case ActionBotsMine:
 		return ScreenBotsMine, nil
+
 	case ActionOrderLast:
 		return ScreenOrderLast, nil
-
-	case ActionEntity1:
-		return ScreenEntity1, nil
-	case ActionEntity2:
-		return ScreenEntity2, nil
-	case ActionEntity3:
-		return ScreenEntity3, nil
-	case ActionEntity4:
-		return ScreenEntity4, nil
 
 	default:
 		return "", ErrUnknownAction
 	}
 }
 
+// renderScreen converts logical screen identifiers into transport-agnostic view models.
+//
+// Stable root/detail screens are handled directly.
+// Dynamic catalog drill-down screen are rendered from CatalogPath.
 func (s *Service) renderScreen(screen ScreenID) ViewModel {
 	switch screen {
 	case ScreenReplyWelcome:
 		return buildReplyWelcomeStart()
 
 	case ScreenRootCompact:
-		return buildCompactRootSelectionView()
+		return buildCompactRootSelectionView(s.catalog.RootNodes())
 
 	case ScreenRootExtended:
-		return buildExtendedRootSelectionView()
-
-	case ScreenEntity1:
-		return buildEntityView("Москва")
-	case ScreenEntity2:
-		return buildEntityView("СПб")
-	case ScreenEntity3:
-		return buildEntityView("Казань")
-	case ScreenEntity4:
-		return buildEntityView("Екатеринбург")
+		return buildExtendedRootSelectionView(s.catalog.RootNodes())
 
 	case ScreenCabinet:
 		return buildReplyDetailView(
@@ -339,9 +398,21 @@ func (s *Service) renderScreen(screen ScreenID) ViewModel {
 			"Здесь будет карточка последнего заказа и повторное оформление.",
 			ActionBack,
 		)
-
-	default:
-		return buildReplyWelcomeStart()
-
 	}
+
+	path, ok := parseCatalogScreen(screen)
+	if !ok {
+		return buildReplyWelcomeStart()
+	}
+
+	node, found := s.catalog.FindNode(path)
+	if !found {
+		return buildReplyWelcomeStart()
+	}
+
+	if len(node.Children) > 0 {
+		return buildCatalogNodeView(node)
+	}
+
+	return buildCatalogLeafView(node)
 }

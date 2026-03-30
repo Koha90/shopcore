@@ -12,24 +12,25 @@ type SessionKey struct {
 }
 
 // ScreenID identifies current logical screen in flow.
+//
+// Root and detail screen use stable named identiriers.
+// Catalog drill-down screen are encoded dynamically from CatalogPath.
 type ScreenID string
 
 const (
 	ScreenReplyWelcome ScreenID = "reply_welcome"
 	ScreenRootCompact  ScreenID = "root_compact"
 	ScreenRootExtended ScreenID = "root_extended"
-	ScreenEntity1      ScreenID = "entity_1"
-	ScreenEntity2      ScreenID = "entity_2"
-	ScreenEntity3      ScreenID = "entity_3"
-	ScreenEntity4      ScreenID = "entity_4"
-	ScreenCabinet      ScreenID = "cabinet"
-	ScreenSupport      ScreenID = "support"
-	ScreenReviews      ScreenID = "reviews"
-	ScreenBalance      ScreenID = "balance"
-	ScreenBotsMine     ScreenID = "bots_mine"
-	ScreenOrderLast    ScreenID = "order_last"
+
+	ScreenCabinet   ScreenID = "cabinet"
+	ScreenSupport   ScreenID = "support"
+	ScreenReviews   ScreenID = "reviews"
+	ScreenBalance   ScreenID = "balance"
+	ScreenBotsMine  ScreenID = "bots_mine"
+	ScreenOrderLast ScreenID = "order_last"
 )
 
+// Session stores current screen and backward navigation history.
 type Session struct {
 	Current ScreenID
 	History []ScreenID

@@ -103,8 +103,10 @@ func TestResolveCallbackView_ValidPayload(t *testing.T) {
 		StartScenario: string(flow.StartScenarioInlineCatalog),
 	}
 
+	action := flow.ActionID("catalog:select:city:moscow")
+
 	startCQ := &models.CallbackQuery{
-		Data: encodeActionID(flow.ActionEntity1),
+		Data: encodeActionID(action),
 		From: models.User{ID: 301},
 		Message: models.MaybeInaccessibleMessage{
 			Type: models.MaybeInaccessibleMessageTypeMessage,
@@ -118,8 +120,8 @@ func TestResolveCallbackView_ValidPayload(t *testing.T) {
 
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, flow.ActionEntity1, actionID)
-	require.Equal(t, "Москва\n\nЗдесь будет следующий шаг сценария для выбранной сущности.", vm.Text)
+	require.Equal(t, action, actionID)
+	require.Equal(t, "Москва\n\nВыберите категорию:", vm.Text)
 	require.NotNil(t, vm.Inline)
 }
 
@@ -145,7 +147,9 @@ func TestResolveCallbackView_BackUsesHistory(t *testing.T) {
 		}
 	}
 
-	_, _, ok, err := r.resolveCallbackView(context.Background(), spec, keyedCQ(flow.ActionEntity1))
+	cityAction := flow.ActionID("catalog:select:city:moscow")
+
+	_, _, ok, err := r.resolveCallbackView(context.Background(), spec, keyedCQ(cityAction))
 	require.NoError(t, err)
 	require.True(t, ok)
 

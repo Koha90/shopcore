@@ -56,13 +56,15 @@ func TestBuildMessageActionRequest(t *testing.T) {
 		},
 	}
 
-	got := buildMessageActionRequest(spec, msg, flow.ActionCatalogStart)
+	action := flow.ActionID("catalog:select:city:moscow")
+
+	got := buildMessageActionRequest(spec, msg, action)
 
 	require.Equal(t, flow.ActionRequest{
 		BotID:         "bot-2",
 		BotName:       "Reply Bot",
 		StartScenario: "reply_welcome",
-		ActionID:      flow.ActionCatalogStart,
+		ActionID:      action,
 		SessionKey: flow.SessionKey{
 			BotID:  "bot-2",
 			ChatID: 303,
@@ -129,13 +131,15 @@ func TestBuildCallbackActionRequest_InaccessibleMessage(t *testing.T) {
 		},
 	}
 
-	got := buildCallbackActionRequest(spec, cq, flow.ActionEntity1)
+	action := flow.ActionID("catalog:select:city:moscow")
+
+	got := buildCallbackActionRequest(spec, cq, action)
 
 	require.Equal(t, flow.ActionRequest{
 		BotID:         "bot-4",
 		BotName:       "Inline Bot 2",
 		StartScenario: "inline_catalog",
-		ActionID:      flow.ActionEntity1,
+		ActionID:      action,
 		SessionKey: flow.SessionKey{
 			BotID:  "bot-4",
 			ChatID: 808,

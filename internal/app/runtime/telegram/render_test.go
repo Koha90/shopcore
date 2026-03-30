@@ -15,9 +15,9 @@ func TestBuildInlineKeyboard(t *testing.T) {
 			{
 				Columns: 2,
 				Actions: []flow.ActionButton{
-					{ID: flow.ActionEntity1, Label: "Москва"},
-					{ID: flow.ActionEntity2, Label: "СПб"},
-					{ID: flow.ActionEntity3, Label: "Казань"},
+					{ID: flow.ActionID("catalog:select:city:moscow"), Label: "Москва"},
+					{ID: flow.ActionID("catalog:select:city:spb"), Label: "СПб"},
+					{ID: flow.ActionID("catalog:select:city:kazan"), Label: "Казань"},
 				},
 			},
 			{
@@ -35,12 +35,12 @@ func TestBuildInlineKeyboard(t *testing.T) {
 
 	require.Len(t, got.InlineKeyboard[0], 2)
 	require.Equal(t, "Москва", got.InlineKeyboard[0][0].Text)
-	require.Equal(t, encodeActionID(flow.ActionEntity1), got.InlineKeyboard[0][0].CallbackData)
+	require.Equal(t, encodeActionID(flow.ActionID("catalog:select:city:moscow")), got.InlineKeyboard[0][0].CallbackData)
 	require.Equal(t, "СПб", got.InlineKeyboard[0][1].Text)
 
 	require.Len(t, got.InlineKeyboard[1], 1)
 	require.Equal(t, "Казань", got.InlineKeyboard[1][0].Text)
-	require.Equal(t, encodeActionID(flow.ActionEntity3), got.InlineKeyboard[1][0].CallbackData)
+	require.Equal(t, encodeActionID(flow.ActionID("catalog:select:city:kazan")), got.InlineKeyboard[1][0].CallbackData)
 
 	require.Len(t, got.InlineKeyboard[2], 1)
 	require.Equal(t, "Назад", got.InlineKeyboard[2][0].Text)
@@ -58,8 +58,8 @@ func TestBuildInlineKeyboard_NormalizesInvalidColumns(t *testing.T) {
 			{
 				Columns: 0,
 				Actions: []flow.ActionButton{
-					{ID: flow.ActionEntity1, Label: "Москва"},
-					{ID: flow.ActionEntity2, Label: "СПб"},
+					{ID: flow.ActionID("catalog:select:city:moscow"), Label: "Москва"},
+					{ID: flow.ActionID("catalog:select:city:spb"), Label: "СПб"},
 				},
 			},
 		},
@@ -111,7 +111,7 @@ func TestBuildReplyMarkup(t *testing.T) {
 					{
 						Columns: 1,
 						Actions: []flow.ActionButton{
-							{ID: flow.ActionEntity1, Label: "Москва"},
+							{ID: flow.ActionID("catalog:select:city:moscow"), Label: "Москва"},
 						},
 					},
 				},
@@ -174,18 +174,20 @@ func TestBuildReplyMarkup(t *testing.T) {
 }
 
 func TestEncodeDecodeActionID(t *testing.T) {
-	encoded := encodeActionID(flow.ActionEntity1)
-	require.Equal(t, callbackPrefix+string(flow.ActionEntity1), encoded)
+	action := flow.ActionID("catalog:select:city:moscow")
+
+	encoded := encodeActionID(action)
+	require.Equal(t, callbackPrefix+string(action), encoded)
 
 	decoded, ok := decodeActionID(encoded)
 	require.True(t, ok)
-	require.Equal(t, flow.ActionEntity1, decoded)
+	require.Equal(t, action, decoded)
 }
 
 func TestDecodeActionID_Invalid(t *testing.T) {
 	tests := []string{
 		"",
-		"x:entity:1",
+		"x:city:moscow",
 		callbackPrefix,
 	}
 
