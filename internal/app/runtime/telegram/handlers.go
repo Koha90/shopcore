@@ -41,24 +41,13 @@ func (r *Runner) callbackHandler(spec manager.BotSpec) func(context.Context, *tg
 			return
 		}
 
-		actionID, ok := decodeActionID(update.CallbackQuery.Data)
+		vm, actionID, ok, err := r.resolveCallbackView(ctx, spec, update.CallbackQuery)
 		if !ok {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "unknown action")
 			r.log.Error(
 				"telegram callback decode failed",
 				"bot_id", spec.ID,
 				"data", update.CallbackQuery.Data,
-			)
-			return
-		}
-
-		vm, err := r.flow.HandleAction(ctx, buildCallbackActionRequest(spec, update.CallbackQuery, actionID))
-		if err != nil {
-			r.answerCallback(ctx, b, update.CallbackQuery.ID, "action failed")
-			r.log.Error(
-				"flow action failed",
-				"bot_id", spec.ID,
-				"action_id", actionID,
 				"err", err,
 			)
 			return
@@ -96,7 +85,15 @@ func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgb
 			return
 		}
 
-		actionID, ok := r.flow.ResolveReplyAction(update.Message.Text)
+		vm, ok, err := r.resolveReplyView(ctx, spec, update.Message)
+		if err != nil {
+			r.log.Error(
+				"flow reply action failed",
+				"bot_id", spec.ID,
+				"text", update.Message.Text,
+				"err", err,
+			)
+		}
 		if !ok {
 			r.log.Info(
 				"telegram update received",
@@ -107,23 +104,12 @@ func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgb
 			return
 		}
 
-		vm, err := r.flow.HandleAction(ctx, buildMessageActionRequest(spec, update.Message, actionID))
-		if err != nil {
-			r.log.Error(
-				"flow reply action failed",
-				"bot_id", spec.ID,
-				"action_id", actionID,
-				"err", err,
-			)
-			return
-		}
-
 		if err := r.sendView(ctx, b, update.Message.Chat.ID, vm); err != nil {
 			r.log.Error(
 				"telegram send reply action view failed",
 				"bot_id", spec.ID,
-				"action_id", actionID,
-				"err", err)
+				"err", err,
+			)
 		}
 	}
 }
