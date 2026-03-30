@@ -49,6 +49,8 @@ const (
 
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
+
+	ActionBack ActionID = "nav:back"
 )
 
 // ViewModel describes a bot screen independent of concrete transport.
@@ -101,6 +103,7 @@ type StartRequest struct {
 	BotID         string
 	BotName       string
 	StartScenario string
+	SessionKey    SessionKey
 }
 
 // ActionRequest contains data required to resolve the next screen after action.
@@ -109,4 +112,5 @@ type ActionRequest struct {
 	BotName       string
 	StartScenario string
 	ActionID      ActionID
+	SessionKey    SessionKey
 }

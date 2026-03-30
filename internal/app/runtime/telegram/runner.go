@@ -30,7 +30,7 @@ func NewRunner(cfg Config, log *slog.Logger) *Runner {
 	return &Runner{
 		cfg:  cfg,
 		log:  log,
-		flow: flow.NewService(),
+		flow: flow.NewService(nil),
 	}
 }
 

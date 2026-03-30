@@ -20,6 +20,7 @@ func (r *Runner) startHandler(spec manager.BotSpec) func(context.Context, *tgbot
 			BotID:         spec.ID,
 			BotName:       spec.Name,
 			StartScenario: spec.StartScenario,
+			SessionKey:    messageSessionKey(spec.ID, update.Message),
 		})
 		if err != nil {
 			r.log.Error(
@@ -62,6 +63,7 @@ func (r *Runner) callbackHandler(spec manager.BotSpec) func(context.Context, *tg
 			BotName:       spec.Name,
 			StartScenario: spec.StartScenario,
 			ActionID:      actionID,
+			SessionKey:    callbackSessionKey(spec.ID, update.CallbackQuery),
 		})
 		if err != nil {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "action failed")
@@ -122,6 +124,7 @@ func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgb
 			BotName:       spec.Name,
 			StartScenario: spec.StartScenario,
 			ActionID:      actionID,
+			SessionKey:    messageSessionKey(spec.ID, update.Message),
 		})
 		if err != nil {
 			r.log.Error(

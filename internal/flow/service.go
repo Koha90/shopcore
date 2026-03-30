@@ -34,95 +34,68 @@ const (
 // Service builds initial and next-step views for bot flows.
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
-type Service struct{}
+type Service struct {
+	store Store
+}
 
 // NewService construct a flow service.
-func NewService() *Service {
-	return &Service{}
+func NewService(store Store) *Service {
+	if store == nil {
+		store = NewMemoryStore()
+	}
+	return &Service{store: store}
 }
 
 // Start resolves the initial bot view for /start.
 func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
-	switch NormalizeStartScenario(req.StartScenario) {
-	case StartScenarioInlineCatalog:
-		return buildExtendedRootSelectionView(), nil
+	screen := startScreenForScenario(req.StartScenario)
 
-	case StartScenarioReplyWelcome:
-		fallthrough
-	default:
-		return buildReplyWelcomeStart(), nil
-	}
+	s.store.Put(req.SessionKey, Session{
+		Current: screen,
+		History: nil,
+	})
+
+	return s.renderScreen(screen), nil
 }
 
-// HandleAction resolves the next bot view for an action.
+// HandleAction resolve the next bot view for an action.
 //
-// For nav:back always returns the root inline screen that matches the current
-// start scenario. Later it should become session/history-aware.
+// ActionBack navigates to the previous screen stored in session history.
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
-	switch req.ActionID {
-	case ActionRootCompact:
-		return buildCompactRootSelectionView(), nil
-
-	case ActionRootExtended:
-		return buildExtendedRootSelectionView(), nil
-
-	case ActionCatalogStart:
-		return buildCompactRootSelectionView(), nil
-
-	case ActionCabinetOpen:
-		return buildReplyDetailView(
-			"Мой кабинет",
-			"Здесь будут профиль, история, настройки и персональные данные пользователя.",
-		), nil
-
-	case ActionSupportOpen:
-		return buildReplyDetailView(
-			"Поддержка",
-			"Здесь будет связь с оператором, FAQ и обработка обращений.",
-		), nil
-
-	case ActionReviewsOpen:
-		return buildReplyDetailView(
-			"Отзывы",
-			"Здесь будут отзывы клиентов, рейтинг и публикация новых отзывов.",
-		), nil
-
-	case ActionBalanceOpen:
-		return buildDetailView(
-			"Баланс",
-			"Здесь будет баланс аккаунта, пополнение и история операций.",
-			ActionRootExtended,
-		), nil
-
-	case ActionBotsMine:
-		return buildDetailView(
-			"Мои боты",
-			"Здесь будет список пользовательских ботов и быстрые действия по ним.",
-			ActionRootExtended,
-		), nil
-
-	case ActionOrderLast:
-		return buildDetailView(
-			"Последний заказ",
-			"Здесь будет карточка последнего заказа и повторное оформление.",
-			ActionRootExtended,
-		), nil
-
-	case ActionEntity1:
-		return buildEntityView("Москва", backActionForScenario(req.StartScenario)), nil
-
-	case ActionEntity2:
-		return buildEntityView("СПб", backActionForScenario(req.StartScenario)), nil
-
-	case ActionEntity3:
-		return buildEntityView("Казань", backActionForScenario(req.StartScenario)), nil
-
-	case ActionEntity4:
-		return buildEntityView("Екатеринбург", backActionForScenario(req.StartScenario)), nil
-
-	default:
-		return ViewModel{}, ErrUnknownAction
+	session, ok := s.store.Get(req.SessionKey)
+	if !ok {
+		session = Session{
+			Current: startScreenForScenario(req.StartScenario),
+			History: nil,
+		}
 	}
+
+	switch req.ActionID {
+	case ActionBack:
+		if len(session.History) == 0 {
+			return s.renderScreen(session.Current), nil
+		}
+
+		prev := session.History[len(session.History)-1]
+		session.History = session.History[:len(session.History)-1]
+		session.Current = prev
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(prev), nil
+	}
+
+	next, err := resolveNextScreen(req.ActionID)
+	if err != nil {
+		return ViewModel{}, err
+	}
+
+	if next != session.Current {
+		session.History = append(session.History, session.Current)
+		session.Current = next
+		s.store.Put(req.SessionKey, session)
+	}
+
+	return s.renderScreen(next), nil
 }
 
 // ResolveReplyAction maps reply-button text to action identifiers.
@@ -213,15 +186,15 @@ func buildRootSelectionView(columns int, variant RootVariant) ViewModel {
 	}
 }
 
-func buildEntityView(title string, backAction ActionID) ViewModel {
+func buildEntityView(title string) ViewModel {
 	return ViewModel{
-		Text: title + "\n\nЗдесь будет следующий шаг сценартя для выбранной сущности.",
+		Text: title + "\n\nЗдесь будет следующий шаг сценария для выбранной сущности.",
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: backAction, Label: "Назад"},
+						{ID: ActionBack, Label: "Назад"},
 					},
 				},
 			},
@@ -258,20 +231,106 @@ func buildReplyDetailView(title, body string) ViewModel {
 	}
 }
 
-func backActionForScenario(startScenario string) ActionID {
-	switch NormalizeStartScenario(startScenario) {
-	case StartScenarioInlineCatalog:
-		return ActionRootExtended
-	case StartScenarioReplyWelcome:
-		fallthrough
+func resolveNextScreen(actionID ActionID) (ScreenID, error) {
+	switch actionID {
+	case ActionCatalogStart:
+		return ScreenRootCompact, nil
+
+	case ActionRootCompact:
+		return ScreenRootExtended, nil
+
+	case ActionRootExtended:
+		return ScreenRootExtended, nil
+
+	case ActionCabinetOpen:
+		return ScreenCabinet, nil
+	case ActionSupportOpen:
+		return ScreenSupport, nil
+	case ActionReviewsOpen:
+		return ScreenReviews, nil
+
+	case ActionBalanceOpen:
+		return ScreenBalance, nil
+	case ActionBotsMine:
+		return ScreenBotsMine, nil
+	case ActionOrderLast:
+		return ScreenOrderLast, nil
+
+	case ActionEntity1:
+		return ScreenEntity1, nil
+	case ActionEntity2:
+		return ScreenEntity2, nil
+	case ActionEntity3:
+		return ScreenEntity3, nil
+	case ActionEntity4:
+		return ScreenEntity4, nil
+
 	default:
-		return ActionRootCompact
+		return "", ErrUnknownAction
 	}
 }
 
-func normalizeColumns(v int) int {
-	if v <= 0 {
-		return 1
+func (s *Service) renderScreen(screen ScreenID) ViewModel {
+	switch screen {
+	case ScreenReplyWelcome:
+		return buildReplyWelcomeStart()
+
+	case ScreenRootCompact:
+		return buildCompactRootSelectionView()
+
+	case ScreenRootExtended:
+		return buildExtendedRootSelectionView()
+
+	case ScreenEntity1:
+		return buildEntityView("Москва")
+	case ScreenEntity2:
+		return buildEntityView("СПб")
+	case ScreenEntity3:
+		return buildEntityView("Казань")
+	case ScreenEntity4:
+		return buildEntityView("Екатеринбург")
+
+	case ScreenCabinet:
+		return buildReplyDetailView(
+			"Мой кабинет",
+			"Здесь будут профиль, история, настройки и персональные данные пользователя.",
+		)
+
+	case ScreenSupport:
+		return buildReplyDetailView(
+			"Поддержка",
+			"Здесь будет связь с оператором, FAQ и обработка обращений.",
+		)
+
+	case ScreenReviews:
+		return buildReplyDetailView(
+			"Отзывы",
+			"Здесь будут отзывы клиентов, рейтинг и публикация новых отзывов.",
+		)
+
+	case ScreenBalance:
+		return buildDetailView(
+			"Баланс",
+			"Здесь будет баланс аккаунта, пополнение и история операций.",
+			ActionBack,
+		)
+
+	case ScreenBotsMine:
+		return buildDetailView(
+			"Мои боты",
+			"Здесь будет список пользовательских ботов и быстрые действия по ним.",
+			ActionBack,
+		)
+
+	case ScreenOrderLast:
+		return buildDetailView(
+			"Последний заказ",
+			"Здесь будет карточка последнего заказа и повторное оформление.",
+			ActionBack,
+		)
+
+	default:
+		return buildReplyWelcomeStart()
+
 	}
-	return v
 }

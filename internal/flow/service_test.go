@@ -5,6 +5,14 @@ import (
 	"testing"
 )
 
+func testSessionKey(botID string) SessionKey {
+	return SessionKey{
+		BotID:  botID,
+		ChatID: 1,
+		UserID: 1,
+	}
+}
+
 func TestNormalizeStartScenario_Default(t *testing.T) {
 	t.Parallel()
 
@@ -17,12 +25,13 @@ func TestNormalizeStartScenario_Default(t *testing.T) {
 func TestStart_ReplyWelcome(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	vm, err := svc.Start(context.Background(), StartRequest{
 		BotID:         "shop-reply",
 		BotName:       "Reply Shop",
 		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    testSessionKey("shop-reply"),
 	})
 	if err != nil {
 		t.Fatalf("Start returned error: %v", err)
@@ -45,12 +54,13 @@ func TestStart_ReplyWelcome(t *testing.T) {
 func TestStart_InlineCatalog(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	vm, err := svc.Start(context.Background(), StartRequest{
 		BotID:         "shop-inline",
 		BotName:       "Inline Shop",
 		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    testSessionKey("shop-inline"),
 	})
 	if err != nil {
 		t.Fatalf("Start returned error: %v", err)
@@ -79,13 +89,14 @@ func TestStart_InlineCatalog(t *testing.T) {
 func TestHandleAction_CatalogStartReturnsCompactCatalog(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	vm, err := svc.HandleAction(context.Background(), ActionRequest{
 		BotID:         "shop-reply",
 		BotName:       "Reply Shop",
 		StartScenario: string(StartScenarioReplyWelcome),
 		ActionID:      ActionCatalogStart,
+		SessionKey:    testSessionKey("shop-reply"),
 	})
 	if err != nil {
 		t.Fatalf("HandleAction returned error: %v", err)
@@ -111,13 +122,14 @@ func TestHandleAction_CatalogStartReturnsCompactCatalog(t *testing.T) {
 func TestHandleAction_RootExtendedReturnsExtendedCatalog(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	vm, err := svc.HandleAction(context.Background(), ActionRequest{
 		BotID:         "shop-inline",
 		BotName:       "Inline Shop",
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionRootExtended,
+		SessionKey:    testSessionKey("shop-inline"),
 	})
 	if err != nil {
 		t.Fatalf("HandleAction returned error: %v", err)
@@ -140,70 +152,10 @@ func TestHandleAction_RootExtendedReturnsExtendedCatalog(t *testing.T) {
 	}
 }
 
-func TestHandleAction_EntityBackTargetDependsOnScenario(t *testing.T) {
-	t.Parallel()
-
-	svc := NewService()
-
-	t.Run("reply_welcome_goes_back_to_compact_root", func(t *testing.T) {
-		t.Parallel()
-
-		vm, err := svc.HandleAction(context.Background(), ActionRequest{
-			BotID:         "shop-reply",
-			BotName:       "Reply Shop",
-			StartScenario: string(StartScenarioReplyWelcome),
-			ActionID:      ActionEntity1,
-		})
-		if err != nil {
-			t.Fatalf("HandleAction returned error: %v", err)
-		}
-
-		if vm.Inline == nil {
-			t.Fatal("expected inline keyboard")
-		}
-		if len(vm.Inline.Sections) != 1 {
-			t.Fatalf("expected 1 inline section, got %d", len(vm.Inline.Sections))
-		}
-		if len(vm.Inline.Sections[0].Actions) != 1 {
-			t.Fatalf("expected 1 back action, got %d", len(vm.Inline.Sections[0].Actions))
-		}
-		if vm.Inline.Sections[0].Actions[0].ID != ActionRootCompact {
-			t.Fatalf("expected back action %q, got %q", ActionRootCompact, vm.Inline.Sections[0].Actions[0].ID)
-		}
-	})
-
-	t.Run("inline_catalog_goes_back_to_extended_root", func(t *testing.T) {
-		t.Parallel()
-
-		vm, err := svc.HandleAction(context.Background(), ActionRequest{
-			BotID:         "shop-inline",
-			BotName:       "Inline Shop",
-			StartScenario: string(StartScenarioInlineCatalog),
-			ActionID:      ActionEntity1,
-		})
-		if err != nil {
-			t.Fatalf("HandleAction returned error: %v", err)
-		}
-
-		if vm.Inline == nil {
-			t.Fatal("expected inline keyboard")
-		}
-		if len(vm.Inline.Sections) != 1 {
-			t.Fatalf("expected 1 inline section, got %d", len(vm.Inline.Sections))
-		}
-		if len(vm.Inline.Sections[0].Actions) != 1 {
-			t.Fatalf("expected 1 back action, got %d", len(vm.Inline.Sections[0].Actions))
-		}
-		if vm.Inline.Sections[0].Actions[0].ID != ActionRootExtended {
-			t.Fatalf("expected back action %q, got %q", ActionRootExtended, vm.Inline.Sections[0].Actions[0].ID)
-		}
-	})
-}
-
 func TestResolveReplyAction(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	tests := []struct {
 		name string
@@ -223,7 +175,6 @@ func TestResolveReplyAction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -241,18 +192,170 @@ func TestResolveReplyAction(t *testing.T) {
 func TestHandleAction_Unknown(t *testing.T) {
 	t.Parallel()
 
-	svc := NewService()
+	svc := NewService(nil)
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
 		BotID:         "shop-main",
 		BotName:       "Main Shop",
 		StartScenario: string(StartScenarioReplyWelcome),
 		ActionID:      ActionID("unknown:action"),
+		SessionKey:    testSessionKey("shop-reply"),
 	})
 	if err == nil {
 		t.Fatal("expected error for unknown action")
 	}
 	if err != ErrUnknownAction {
 		t.Fatalf("expected ErrUnknownAction, got %v", err)
+	}
+}
+
+func TestHandleAction_EntityRendersActionBack(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionEntity1,
+		SessionKey:    testSessionKey("shop-inline"),
+	})
+	if err != nil {
+		t.Fatalf("HandleAction returned error: %v", err)
+	}
+
+	if vm.Inline == nil {
+		t.Fatal("expected inline keyboard")
+	}
+	if len(vm.Inline.Sections) != 1 {
+		t.Fatalf("expected 1 inline section, got %d", len(vm.Inline.Sections))
+	}
+	if len(vm.Inline.Sections[0].Actions) != 1 {
+		t.Fatalf("expected 1 action, got %d", len(vm.Inline.Sections[0].Actions))
+	}
+	if vm.Inline.Sections[0].Actions[0].ID != ActionBack {
+		t.Fatalf("expected action %q, got %q", ActionBack, vm.Inline.Sections[0].Actions[0].ID)
+	}
+}
+
+func TestHandleAction_BackReturnsToPreviousScreen_ReplyScenario(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-reply")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Start returned error: %v", err)
+	}
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("CatalogStart returned error: %v", err)
+	}
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionEntity1,
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Entity1 returned error: %v", err)
+	}
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionBack,
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Back returned error: %v", err)
+	}
+
+	if vm.Text != "Каталог\n\nВыберите раздел:" {
+		t.Fatalf("expected compact catalog after back, got %q", vm.Text)
+	}
+	if vm.Inline == nil {
+		t.Fatal("expected inline keyboard")
+	}
+	if len(vm.Inline.Sections) != 1 {
+		t.Fatalf("expected 1 inline section, got %d", len(vm.Inline.Sections))
+	}
+}
+
+func TestHandleAction_BackReturnsToPreviousScreen_InlineScenario(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-inline")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Start returned error: %v", err)
+	}
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionEntity1,
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Entity1 returned error: %v", err)
+	}
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionBack,
+		SessionKey:    key,
+	})
+	if err != nil {
+		t.Fatalf("Back returned error: %v", err)
+	}
+
+	if vm.Text != "Каталог\n\nВыберите раздел:" {
+		t.Fatalf("expected extended catalog after back, got %q", vm.Text)
+	}
+	if vm.Inline == nil {
+		t.Fatal("expected inline keyboard")
+	}
+	if vm.Reply != nil {
+		t.Fatal("did not expect reply keyboard")
+	}
+	if !vm.RemoveReply {
+		t.Fatal("expected RemoveReply=true")
+	}
+	if len(vm.Inline.Sections) != 2 {
+		t.Fatalf("expected 2 inline sections, got %d", len(vm.Inline.Sections))
+	}
+	if vm.Inline.Sections[0].Columns != 2 {
+		t.Fatalf("expected first section columns=2, got %d", vm.Inline.Sections[0].Columns)
+	}
+	if vm.Inline.Sections[1].Columns != 1 {
+		t.Fatalf("expected second section columns=1, got %d", vm.Inline.Sections[1].Columns)
 	}
 }
