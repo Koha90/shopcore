@@ -35,8 +35,8 @@ const (
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
 type Service struct {
-	store   Store
-	catalog Catalog
+	store    Store
+	provider CatalogProvider
 }
 
 // NewService constructs transport-agnostic flow service.
@@ -44,12 +44,20 @@ type Service struct {
 // If store is nil, in-memory session storage is used.
 // Demo catalog is wired by default until persistent catalog source appears.
 func NewService(store Store) *Service {
+	return NewServiceWithCatalogProvider(store, NewStaticCatalogProvider(DemoCatalog()))
+}
+
+func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Service {
 	if store == nil {
 		store = NewMemoryStore()
 	}
+	if provider == nil {
+		provider = NewStaticCatalogProvider(DemoCatalog())
+	}
+
 	return &Service{
-		store:   store,
-		catalog: DemoCatalog(),
+		store:    store,
+		provider: provider,
 	}
 }
 
@@ -289,7 +297,8 @@ func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (Scr
 
 	nextPath := currentPath.Append(level, id)
 
-	if _, ok := s.catalog.FindNode(nextPath); !ok {
+	catalog := s.provider.Catalog()
+	if _, ok := catalog.FindNode(nextPath); !ok {
 		return "", ErrUnknownAction
 	}
 
@@ -299,8 +308,10 @@ func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (Scr
 // expectedNextCatalogLevel returns which catalog level may be selected next
 // for the provided path.
 func (s *Service) expectedNextCatalogLevel(path CatalogPath) (CatalogLevel, bool) {
+	catalog := s.provider.Catalog()
+
 	if len(path) == 0 {
-		return s.catalog.RootLevel()
+		return catalog.RootLevel()
 	}
 
 	last, ok := path.Last()
@@ -308,7 +319,7 @@ func (s *Service) expectedNextCatalogLevel(path CatalogPath) (CatalogLevel, bool
 		return "", false
 	}
 
-	return s.catalog.Schema.Next(last.Level)
+	return catalog.Schema.Next(last.Level)
 }
 
 func resolveNextScreen(actionID ActionID) (ScreenID, error) {
@@ -350,15 +361,17 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 // Stable root/detail screens are handled directly.
 // Dynamic catalog drill-down screen are rendered from CatalogPath.
 func (s *Service) renderScreen(screen ScreenID) ViewModel {
+	catalog := s.provider.Catalog()
+
 	switch screen {
 	case ScreenReplyWelcome:
 		return buildReplyWelcomeStart()
 
 	case ScreenRootCompact:
-		return buildCompactRootSelectionView(s.catalog.RootNodes())
+		return buildCompactRootSelectionView(catalog.RootNodes())
 
 	case ScreenRootExtended:
-		return buildExtendedRootSelectionView(s.catalog.RootNodes())
+		return buildExtendedRootSelectionView(catalog.RootNodes())
 
 	case ScreenCabinet:
 		return buildReplyDetailView(
@@ -405,7 +418,7 @@ func (s *Service) renderScreen(screen ScreenID) ViewModel {
 		return buildReplyWelcomeStart()
 	}
 
-	node, found := s.catalog.FindNode(path)
+	node, found := catalog.FindNode(path)
 	if !found {
 		return buildReplyWelcomeStart()
 	}

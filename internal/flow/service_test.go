@@ -397,3 +397,90 @@ func TestHandleAction_BackFromRoot_StaysOnRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
 }
+
+func TestStart_InlineCatalog_UsesProvidedCatalogRoot(t *testing.T) {
+	custom := Catalog{
+		Schema: CatalogSchema{
+			Levels: []CatalogLevel{LevelCity},
+		},
+		Roots: []CatalogNode{
+			{
+				Level: LevelCity,
+				ID:    "custom-city",
+				Label: "Кастомный город",
+			},
+		},
+	}
+
+	svc := NewServiceWithCatalogProvider(
+		nil,
+		NewStaticCatalogProvider(custom),
+	)
+
+	vm, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    testSessionKey("shop-inline"),
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 2)
+
+	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Equal(t, 2, vm.Inline.Sections[0].Columns)
+	require.Equal(t, "Кастомный город", vm.Inline.Sections[0].Actions[0].Label)
+	require.Equal(t, ActionID("catalog:select:city:custom-city"), vm.Inline.Sections[0].Actions[0].ID)
+
+	require.Equal(t, 1, vm.Inline.Sections[1].Columns)
+	require.Len(t, vm.Inline.Sections[1].Actions, 3)
+	require.Equal(t, ActionBalanceOpen, vm.Inline.Sections[1].Actions[0].ID)
+	require.Equal(t, ActionBotsMine, vm.Inline.Sections[1].Actions[1].ID)
+	require.Equal(t, ActionOrderLast, vm.Inline.Sections[1].Actions[2].ID)
+}
+
+func TestHandleAction_CatalogStart_UsesProvidedCatalogRootInCompactMode(t *testing.T) {
+	custom := Catalog{
+		Schema: CatalogSchema{
+			Levels: []CatalogLevel{LevelCity},
+		},
+		Roots: []CatalogNode{
+			{
+				Level: LevelCity,
+				ID:    "custom-city",
+				Label: "Кастомный город",
+			},
+		},
+	}
+
+	svc := NewServiceWithCatalogProvider(
+		nil,
+		NewStaticCatalogProvider(custom),
+	)
+
+	key := testSessionKey("shop-reply")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Equal(t, "Кастомный город", vm.Inline.Sections[0].Actions[0].Label)
+	require.Equal(t, ActionID("catalog:select:city:custom-city"), vm.Inline.Sections[0].Actions[0].ID)
+}
