@@ -10,7 +10,7 @@ import (
 )
 
 // MigratePostgres performs migrations for Postgresql.
-// The db URL should be: "postgres://user:pass@host:port/dbname?ssmode=disable"
+// The db URL should be: "postgres://user:pass@host:port/dbname?sslmode=disable"
 func MigratePostgres(dbURL string, migrationsPath string) error {
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsPath),
