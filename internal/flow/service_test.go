@@ -484,3 +484,36 @@ func TestHandleAction_CatalogStart_UsesProvidedCatalogRootInCompactMode(t *testi
 	require.Equal(t, "Кастомный город", vm.Inline.Sections[0].Actions[0].Label)
 	require.Equal(t, ActionID("catalog:select:city:custom-city"), vm.Inline.Sections[0].Actions[0].ID)
 }
+
+type failingCatalogProvider struct {
+	err error
+}
+
+func (p failingCatalogProvider) Catalog(ctx context.Context) (Catalog, error) {
+	return Catalog{}, p.err
+}
+
+func TestStart_ReturnsCatalogProviderError(t *testing.T) {
+	svc := NewServiceWithCatalogProvider(nil, failingCatalogProvider{err: ErrUnknownAction})
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    testSessionKey("shop-inline"),
+	})
+
+	require.ErrorIs(t, err, ErrUnknownAction)
+}
+
+func TestHandleAction_ReturnsCatalogProviderError(t *testing.T) {
+	svc := NewServiceWithCatalogProvider(nil, failingCatalogProvider{err: ErrUnknownAction})
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    testSessionKey("shop-inline"),
+	})
+
+	require.ErrorIs(t, err, ErrUnknownAction)
+}

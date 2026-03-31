@@ -47,6 +47,9 @@ func NewService(store Store) *Service {
 	return NewServiceWithCatalogProvider(store, NewStaticCatalogProvider(DemoCatalog()))
 }
 
+// NewServiceWithCatalogProvider constructs flow service with explicit catalog provider.
+//
+// The constructor is intended for test and future wiring with real catalog sources.
 func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -65,7 +68,12 @@ func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Servi
 //
 // StartScenario controls whether the user sees reply welcome
 // or enters inline catalog immediately.
-func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) {
+func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error) {
+	catalog, err := s.provider.Catalog(ctx)
+	if err != nil {
+		return ViewModel{}, err
+	}
+
 	screen := startScreenForScenario(req.StartScenario)
 
 	s.store.Put(req.SessionKey, Session{
@@ -73,7 +81,7 @@ func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) 
 		History: nil,
 	})
 
-	return s.renderScreen(screen), nil
+	return s.renderScreen(catalog, screen), nil
 }
 
 // HandleAction resolve the next flow view for an action.
@@ -84,6 +92,11 @@ func (s *Service) Start(_ context.Context, req StartRequest) (ViewModel, error) 
 //   - generic catalog selection actions advance inside CatalogSchema
 //   - explicit non-catalog action open stable detail screen
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
+	catalog, err := s.provider.Catalog(ctx)
+	if err != nil {
+		return ViewModel{}, err
+	}
+
 	session, ok := s.store.Get(req.SessionKey)
 	if !ok {
 		session = Session{
@@ -95,7 +108,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	switch req.ActionID {
 	case ActionBack:
 		if len(session.History) == 0 {
-			return s.renderScreen(session.Current), nil
+			return s.renderScreen(catalog, session.Current), nil
 		}
 
 		prev := session.History[len(session.History)-1]
@@ -103,7 +116,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Current = prev
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(prev), nil
+		return s.renderScreen(catalog, prev), nil
 
 	case ActionCatalogStart:
 		next := catalogRootForScenario(req.StartScenario)
@@ -114,16 +127,16 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			s.store.Put(req.SessionKey, session)
 		}
 
-		return s.renderScreen(next), nil
+		return s.renderScreen(catalog, next), nil
 	}
 
-	if next, err := s.resolveCatalogScreen(session.Current, req.ActionID); err == nil {
+	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
 		if next != session.Current {
 			session.History = append(session.History, session.Current)
 			session.Current = next
 			s.store.Put(req.SessionKey, session)
 		}
-		return s.renderScreen(next), nil
+		return s.renderScreen(catalog, next), nil
 	}
 
 	next, err := resolveNextScreen(req.ActionID)
@@ -137,7 +150,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 	}
 
-	return s.renderScreen(next), nil
+	return s.renderScreen(catalog, next), nil
 }
 
 // ResolveReplyAction maps reply-button text to action identifiers.
@@ -267,7 +280,7 @@ func buildReplyDetailView(title, body string) ViewModel {
 //   - current catalog path
 //   - expected next schema level
 //   - existence of target node in catalog tree
-func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (ScreenID, error) {
+func (s *Service) resolveCatalogScreen(catalog Catalog, current ScreenID, actionID ActionID) (ScreenID, error) {
 	level, id, ok := parseCatalogSelectAction(actionID)
 	if !ok {
 		return "", ErrUnknownAction
@@ -287,7 +300,7 @@ func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (Scr
 		currentPath = path
 	}
 
-	expectedLevel, ok := s.expectedNextCatalogLevel(currentPath)
+	expectedLevel, ok := s.expectedNextCatalogLevel(catalog, currentPath)
 	if !ok {
 		return "", ErrUnknownAction
 	}
@@ -297,7 +310,6 @@ func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (Scr
 
 	nextPath := currentPath.Append(level, id)
 
-	catalog := s.provider.Catalog()
 	if _, ok := catalog.FindNode(nextPath); !ok {
 		return "", ErrUnknownAction
 	}
@@ -307,9 +319,7 @@ func (s *Service) resolveCatalogScreen(current ScreenID, actionID ActionID) (Scr
 
 // expectedNextCatalogLevel returns which catalog level may be selected next
 // for the provided path.
-func (s *Service) expectedNextCatalogLevel(path CatalogPath) (CatalogLevel, bool) {
-	catalog := s.provider.Catalog()
-
+func (s *Service) expectedNextCatalogLevel(catalog Catalog, path CatalogPath) (CatalogLevel, bool) {
 	if len(path) == 0 {
 		return catalog.RootLevel()
 	}
@@ -360,9 +370,7 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 //
 // Stable root/detail screens are handled directly.
 // Dynamic catalog drill-down screen are rendered from CatalogPath.
-func (s *Service) renderScreen(screen ScreenID) ViewModel {
-	catalog := s.provider.Catalog()
-
+func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	switch screen {
 	case ScreenReplyWelcome:
 		return buildReplyWelcomeStart()

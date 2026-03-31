@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,8 +11,9 @@ func TestStaticCatalogProvider_Catalog(t *testing.T) {
 	catalog := DemoCatalog()
 	provider := NewStaticCatalogProvider(catalog)
 
-	got := provider.Catalog()
+	got, err := provider.Catalog(context.Background())
 
+	require.NoError(t, err)
 	require.Equal(t, catalog, got)
 }
 
@@ -42,6 +44,7 @@ func TestNewServiceWithCatalogProvider_UsesProvidedCatalog(t *testing.T) {
 		NewStaticCatalogProvider(custom),
 	)
 
-	got := svc.provider.Catalog()
+	got, err := svc.provider.Catalog(context.Background())
+	require.NoError(t, err)
 	require.Equal(t, custom, got)
 }
