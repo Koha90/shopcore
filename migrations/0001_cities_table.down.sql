@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS cities;
+drop table if exists cities;
