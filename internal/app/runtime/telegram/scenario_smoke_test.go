@@ -15,8 +15,7 @@ import (
 
 func newScenarioTestRunner() *Runner {
 	return &Runner{
-		log:  slog.New(slog.NewTextHandler(io.Discard, nil)),
-		flow: flow.NewService(nil),
+		log: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 }
 
@@ -36,7 +35,9 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 		Text: "/start",
 	}
 
-	startVM, err := r.flow.Start(ctx, buildStartRequest(spec, msg))
+	svc := flow.NewService(nil)
+
+	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg))
 	require.NoError(t, err)
 	require.Equal(t, "Добро пожаловать 👋\nВыберите раздел:", startVM.Text)
 	require.NotNil(t, startVM.Reply)
@@ -49,7 +50,7 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 		Text: "♻️ Каталог",
 	}
 
-	rootVM, ok, err := r.resolveReplyView(ctx, spec, replyMsg)
+	rootVM, ok, err := r.resolveReplyView(ctx, svc, spec, replyMsg)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, "Каталог\n\nВыберите раздел:", rootVM.Text)
@@ -69,7 +70,7 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 		},
 	}
 
-	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, entityCQ)
+	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, entityCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, cityAction, actionID)
@@ -86,7 +87,7 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 		},
 	}
 
-	backVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, backCQ)
+	backVM, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, backCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, flow.ActionBack, actionID)
@@ -113,7 +114,9 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 		Text: "/start",
 	}
 
-	startVM, err := r.flow.Start(ctx, buildStartRequest(spec, msg))
+	svc := flow.NewService(nil)
+
+	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg))
 	require.NoError(t, err)
 	require.Equal(t, "Каталог\n\nВыберите раздел:", startVM.Text)
 	require.NotNil(t, startVM.Inline)
@@ -136,7 +139,7 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 		},
 	}
 
-	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, entityCQ)
+	entityVM, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, entityCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, cityAction, actionID)
@@ -153,7 +156,7 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 		},
 	}
 
-	backVM, actionID, ok, err := r.resolveCallbackView(ctx, spec, backCQ)
+	backVM, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, backCQ)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, flow.ActionBack, actionID)

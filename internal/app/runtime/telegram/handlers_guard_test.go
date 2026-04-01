@@ -9,6 +9,7 @@ import (
 	"github.com/go-telegram/bot/models"
 	"github.com/stretchr/testify/require"
 
+	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 )
 
@@ -20,11 +21,12 @@ func newTestRunner() *Runner {
 
 func TestStartHandler_IgnoresNilMessage(t *testing.T) {
 	r := newTestRunner()
+	svc := flow.NewService(nil)
 	h := r.startHandler(manager.BotSpec{
 		ID:            "bot-1",
 		Name:          "Shop Bot",
 		StartScenario: "reply_welcome",
-	})
+	}, svc)
 
 	require.NotPanics(t, func() {
 		h(context.Background(), nil, &models.Update{})
@@ -33,11 +35,12 @@ func TestStartHandler_IgnoresNilMessage(t *testing.T) {
 
 func TestCallbackHandler_IgnoresNilCallbackQuery(t *testing.T) {
 	r := newTestRunner()
+	svc := flow.NewService(nil)
 	h := r.callbackHandler(manager.BotSpec{
 		ID:            "bot-2",
 		Name:          "Shop Bot",
 		StartScenario: "inline_catalog",
-	})
+	}, svc)
 
 	require.NotPanics(t, func() {
 		h(context.Background(), nil, &models.Update{})
@@ -46,11 +49,12 @@ func TestCallbackHandler_IgnoresNilCallbackQuery(t *testing.T) {
 
 func TestDefaultHandler_IgnoresNilMessage(t *testing.T) {
 	r := newTestRunner()
+	svc := flow.NewService(nil)
 	h := r.defaultHandler(manager.BotSpec{
 		ID:            "bot-3",
 		Name:          "Shop Bot",
 		StartScenario: "reply_welcome",
-	})
+	}, svc)
 
 	require.NotPanics(t, func() {
 		h(context.Background(), nil, &models.Update{})
@@ -59,11 +63,12 @@ func TestDefaultHandler_IgnoresNilMessage(t *testing.T) {
 
 func TestDefaultHandler_IgnoresUnknownReplyText(t *testing.T) {
 	r := newTestRunner()
+	svc := flow.NewService(nil)
 	h := r.defaultHandler(manager.BotSpec{
 		ID:            "bot-4",
 		Name:          "Shop Bot",
 		StartScenario: "reply_welcome",
-	})
+	}, svc)
 
 	update := &models.Update{
 		Message: &models.Message{

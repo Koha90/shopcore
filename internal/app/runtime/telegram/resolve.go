@@ -9,17 +9,27 @@ import (
 	"github.com/koha90/shopcore/internal/manager"
 )
 
+func (r *Runner) resolveStartView(
+	ctx context.Context,
+	svc *flow.Service,
+	spec manager.BotSpec,
+	msg *models.Message,
+) (flow.ViewModel, error) {
+	return svc.Start(ctx, buildStartRequest(spec, msg))
+}
+
 func (r *Runner) resolveReplyView(
 	ctx context.Context,
+	svc *flow.Service,
 	spec manager.BotSpec,
 	msg *models.Message,
 ) (flow.ViewModel, bool, error) {
-	actionID, ok := r.flow.ResolveReplyAction(msg.Text)
+	actionID, ok := svc.ResolveReplyAction(msg.Text)
 	if !ok {
 		return flow.ViewModel{}, false, nil
 	}
 
-	vm, err := r.flow.HandleAction(
+	vm, err := svc.HandleAction(
 		ctx,
 		buildMessageActionRequest(spec, msg, actionID),
 	)
@@ -32,6 +42,7 @@ func (r *Runner) resolveReplyView(
 
 func (r *Runner) resolveCallbackView(
 	ctx context.Context,
+	svc *flow.Service,
 	spec manager.BotSpec,
 	cq *models.CallbackQuery,
 ) (flow.ViewModel, flow.ActionID, bool, error) {
@@ -40,7 +51,7 @@ func (r *Runner) resolveCallbackView(
 		return flow.ViewModel{}, "", false, nil
 	}
 
-	vm, err := r.flow.HandleAction(
+	vm, err := svc.HandleAction(
 		ctx,
 		buildCallbackActionRequest(spec, cq, actionID),
 	)

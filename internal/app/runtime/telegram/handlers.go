@@ -6,16 +6,20 @@ import (
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
+	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 )
 
-func (r *Runner) startHandler(spec manager.BotSpec) func(context.Context, *tgbot.Bot, *models.Update) {
+func (r *Runner) startHandler(
+	spec manager.BotSpec,
+	svc *flow.Service,
+) func(context.Context, *tgbot.Bot, *models.Update) {
 	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 		if update.Message == nil {
 			return
 		}
 
-		vm, err := r.flow.Start(ctx, buildStartRequest(spec, update.Message))
+		vm, err := r.resolveStartView(ctx, svc, spec, update.Message)
 		if err != nil {
 			r.log.Error(
 				"flow start failed",
@@ -35,13 +39,16 @@ func (r *Runner) startHandler(spec manager.BotSpec) func(context.Context, *tgbot
 	}
 }
 
-func (r *Runner) callbackHandler(spec manager.BotSpec) func(context.Context, *tgbot.Bot, *models.Update) {
+func (r *Runner) callbackHandler(
+	spec manager.BotSpec,
+	svc *flow.Service,
+) func(context.Context, *tgbot.Bot, *models.Update) {
 	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 		if update.CallbackQuery == nil {
 			return
 		}
 
-		vm, actionID, ok, err := r.resolveCallbackView(ctx, spec, update.CallbackQuery)
+		vm, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, update.CallbackQuery)
 		if !ok {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "unknown action")
 			r.log.Error(
@@ -79,13 +86,16 @@ func (r *Runner) callbackHandler(spec manager.BotSpec) func(context.Context, *tg
 	}
 }
 
-func (r *Runner) defaultHandler(spec manager.BotSpec) func(context.Context, *tgbot.Bot, *models.Update) {
+func (r *Runner) defaultHandler(
+	spec manager.BotSpec,
+	svc *flow.Service,
+) func(context.Context, *tgbot.Bot, *models.Update) {
 	return func(ctx context.Context, b *tgbot.Bot, update *models.Update) {
 		if update.Message == nil {
 			return
 		}
 
-		vm, ok, err := r.resolveReplyView(ctx, spec, update.Message)
+		vm, ok, err := r.resolveReplyView(ctx, svc, spec, update.Message)
 		if err != nil {
 			r.log.Error(
 				"flow reply action failed",

@@ -13,10 +13,13 @@ import (
 	"github.com/koha90/shopcore/internal/manager"
 )
 
+func newFlowTestService() *flow.Service {
+	return flow.NewService(nil)
+}
+
 func newFlowTestRunner() *Runner {
 	return &Runner{
-		log:  slog.New(slog.NewTextHandler(io.Discard, nil)),
-		flow: flow.NewService(nil),
+		log: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 }
 
@@ -35,7 +38,8 @@ func TestResolveReplyView_UnknownText(t *testing.T) {
 		From: &models.User{ID: 200},
 	}
 
-	vm, ok, err := r.resolveReplyView(context.Background(), spec, msg)
+	svc := newFlowTestService()
+	vm, ok, err := r.resolveReplyView(context.Background(), svc, spec, msg)
 
 	require.NoError(t, err)
 	require.False(t, ok)
@@ -57,7 +61,8 @@ func TestResolveReplyView_KnownText(t *testing.T) {
 		From: &models.User{ID: 201},
 	}
 
-	vm, ok, err := r.resolveReplyView(context.Background(), spec, msg)
+	svc := newFlowTestService()
+	vm, ok, err := r.resolveReplyView(context.Background(), svc, spec, msg)
 
 	require.NoError(t, err)
 	require.True(t, ok)
@@ -86,7 +91,8 @@ func TestResolveCallbackView_InvalidPayload(t *testing.T) {
 		},
 	}
 
-	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), spec, cq)
+	svc := newFlowTestService()
+	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), svc, spec, cq)
 
 	require.NoError(t, err)
 	require.False(t, ok)
@@ -116,7 +122,8 @@ func TestResolveCallbackView_ValidPayload(t *testing.T) {
 		},
 	}
 
-	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), spec, startCQ)
+	svc := newFlowTestService()
+	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), svc, spec, startCQ)
 
 	require.NoError(t, err)
 	require.True(t, ok)
@@ -149,11 +156,12 @@ func TestResolveCallbackView_BackUsesHistory(t *testing.T) {
 
 	cityAction := flow.ActionID("catalog:select:city:moscow")
 
-	_, _, ok, err := r.resolveCallbackView(context.Background(), spec, keyedCQ(cityAction))
+	svc := newFlowTestService()
+	_, _, ok, err := r.resolveCallbackView(context.Background(), svc, spec, keyedCQ(cityAction))
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), spec, keyedCQ(flow.ActionBack))
+	vm, actionID, ok, err := r.resolveCallbackView(context.Background(), svc, spec, keyedCQ(flow.ActionBack))
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, flow.ActionBack, actionID)
