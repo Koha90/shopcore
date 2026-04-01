@@ -49,7 +49,7 @@ func NewService(store Store) *Service {
 
 // NewServiceWithCatalogProvider constructs flow service with explicit catalog provider.
 //
-// The constructor is intended for test and future wiring with real catalog sources.
+// This constructor is intended for tests and future wiring with real catalog sources.
 func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -334,9 +334,6 @@ func (s *Service) expectedNextCatalogLevel(catalog Catalog, path CatalogPath) (C
 
 func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 	switch actionID {
-	case ActionCatalogStart:
-		return ScreenRootCompact, nil
-
 	case ActionRootCompact:
 		return ScreenRootCompact, nil
 
@@ -369,7 +366,7 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 // renderScreen converts logical screen identifiers into transport-agnostic view models.
 //
 // Stable root/detail screens are handled directly.
-// Dynamic catalog drill-down screen are rendered from CatalogPath.
+// Dynamic catalog drill-down screens are rendered from CatalogPath.
 func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	switch screen {
 	case ScreenReplyWelcome:
