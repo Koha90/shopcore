@@ -7,5 +7,5 @@ create table if not exists catalog_categories (
   is_active boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );

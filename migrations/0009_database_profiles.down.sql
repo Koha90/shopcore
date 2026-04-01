@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS database_profiles;
+drop table if exists database_profiles;

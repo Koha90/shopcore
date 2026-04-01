@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS bot_configs;
+drop table if exists bot_configs;

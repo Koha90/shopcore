@@ -1,10 +1,10 @@
-CREATE TABLE IF NOT EXISTS database_profiles (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  driver TEXT NOT NULL,
-  dsn TEXT NOT NULL,
-  is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+create table if not exists database_profiles (
+  id text primary key,
+  name text not null unique,
+  driver text not null,
+  dsn text not null,
+  is_enabled boolean not null default true,
+  updated_at timestamptz not null default now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_database_profiles_is_enabled ON database_profiles(is_enabled);
+create index if not exists idx_database_profiles_is_enabled on database_profiles(is_enabled);
