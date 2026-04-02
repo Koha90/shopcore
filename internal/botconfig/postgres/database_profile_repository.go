@@ -15,6 +15,13 @@ type DatabaseProfileRepository struct {
 	pool *pgxpool.Pool
 }
 
+// NewDatabaseProfileRepository constructs PostgreSQL database profile repository.
+func NewDatabaseProfileRepository(pool *pgxpool.Pool) *DatabaseProfileRepository {
+	return &DatabaseProfileRepository{
+		pool: pool,
+	}
+}
+
 // Save create or updates database profile by ID.
 func (r *DatabaseProfileRepository) Save(ctx context.Context, profile *botconfig.DatabaseProfile) error {
 	if profile == nil {

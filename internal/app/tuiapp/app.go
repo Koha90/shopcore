@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/koha90/shopcore/internal/app/runtime/telegram"
 	"github.com/koha90/shopcore/internal/botconfig"
 	"github.com/koha90/shopcore/internal/manager"
 )
@@ -42,11 +43,18 @@ func (a *App) Close() error {
 func New(
 	ctx context.Context,
 	cfg Config,
-	runner manager.Runner,
+	tgCfg telegram.Config,
+	runtimeLog *slog.Logger,
 	log *slog.Logger,
 ) (*App, error) {
 	pool, err := openPool(ctx, cfg)
 	if err != nil {
+		return nil, err
+	}
+
+	runner, err := buildRunner(ctx, pool, tgCfg, runtimeLog)
+	if err != nil {
+		pool.Close()
 		return nil, err
 	}
 

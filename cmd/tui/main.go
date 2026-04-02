@@ -41,9 +41,14 @@ func main() {
 	}
 
 	tgCfg := telegram.LoadConfigFromEnv()
-	runner := telegram.NewRunner(tgCfg, runtimeLogger.Logger)
 
-	app, err := tuiapp.New(context.Background(), appCfg, runner, appLogger.Logger)
+	app, err := tuiapp.New(
+		context.Background(),
+		appCfg,
+		tgCfg,
+		runtimeLogger.Logger,
+		appLogger.Logger,
+	)
 	if err != nil {
 		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
