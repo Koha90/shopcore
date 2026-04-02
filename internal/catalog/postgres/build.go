@@ -6,6 +6,13 @@ import (
 	"github.com/koha90/shopcore/internal/flow"
 )
 
+// buildCatalog maps flat relational rows into flow.Catalog tree.
+//
+// Only valid branches are included:
+//   - product without variants is skipped
+//   - district without products is skipped
+//   - category without district/product branch is skipped
+//   - city without children is skipped
 func buildCatalog(
 	cities []cityRow,
 	categories []categoryRow,
@@ -128,6 +135,7 @@ func buildCatalog(
 	}
 }
 
+// formatPriceMinor formats integer price storage into display text.
 func formatPriceMinor(v int64, currency string) string {
 	switch currency {
 	case "RUB":

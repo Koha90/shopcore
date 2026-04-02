@@ -133,6 +133,34 @@ Catalog drill-down uses generic encoded actions and screens:
 
 This allows catalog order to evolve without rewriting transport logic.
 
+## Catalog storage
+
+Catalog data is stored in Postgres and loaded into `internal/flow` through `CatalogProvider`.
+
+Current relational model:
+
+- `cities`
+- `catalog_categories`
+- `catalog_city_categories`
+- `catalog_districts`
+- `catalog_products`
+- `catalog_variants`
+
+Runtime does not query catalog tables directly.
+
+Instead:
+
+- bot config provides `database_id`
+- runtime builds a per-bot flow service
+- flow service uses a catalog provider
+- Postgres catalog provider loads rows and builds `flow.Catalog`
+
+This keeps flow transport-agnostic and allows different bots to use different databases.
+
+Current catalog drill-down path:
+
+`city -> category -> district -> product -> variant`
+
 ---
 
 ## What already works
