@@ -17,7 +17,7 @@ import (
 // FlowServiceFactory builds one flow service for one bot runtime instance.
 //
 // The factory allows runtime wiring to choose catalog provider per bot spec.
-type FlowServiceFactory func(spec manager.BotSpec) *flow.Service
+type FlowServiceFactory func(spec manager.BotSpec) (*flow.Service, error)
 
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
@@ -41,8 +41,8 @@ func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceF
 		log = slog.Default()
 	}
 	if factory == nil {
-		factory = func(spec manager.BotSpec) *flow.Service {
-			return flow.NewService(nil)
+		factory = func(spec manager.BotSpec) (*flow.Service, error) {
+			return flow.NewService(nil), nil
 		}
 	}
 
@@ -62,7 +62,10 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		return errors.New("telegram token is required")
 	}
 
-	svc := r.flowFactory(spec)
+	svc, err := r.flowFactory(spec)
+	if err != nil {
+		return fmt.Errorf("build flow service: %w", err)
+	}
 	if svc == nil {
 		return fmt.Errorf("telegram flow service factory returned nil")
 	}
