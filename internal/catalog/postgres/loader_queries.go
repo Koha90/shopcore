@@ -34,7 +34,7 @@ func (l *Loader) loadCities(ctx context.Context) ([]cityRow, error) {
 
 func (l *Loader) loadCategories(ctx context.Context) ([]categoryRow, error) {
 	rows, err := l.pool.Query(ctx, `
-			select id, code, name, name_latin, descritption, sort_order
+			select id, code, name, name_latin, description, sort_order
 			from catalog_categories
 			where is_active = true
 			order by sort_order, id

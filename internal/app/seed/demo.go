@@ -2,6 +2,7 @@ package seed
 
 import (
 	"context"
+	"strings"
 
 	"github.com/koha90/shopcore/internal/botconfig"
 )
@@ -13,11 +14,24 @@ type BotConfigSeedService interface {
 	CreateDatabaseProfile(ctx context.Context, params botconfig.CreateDatabaseProfileParams) error
 }
 
-// EnsureDemoData populates storage with demo database profiles and bots.
+// DemoDataParams configures local demo seed.
+type DemoDataParams struct {
+	MainDSN  string
+	BotID    string
+	BotName  string
+	BotToken string
+}
+
+// EnsureDemoData populates storage with one local database profile and one demo bot.
 //
 // Seed is idempotent enough for local development:
 // if at least one bot already exists, demo data is not inserted again.
-func EnsureDemoData(ctx context.Context, svc BotConfigSeedService) error {
+//
+// Behavior:
+//   - database profile "main-db" is created with provided MainDSN
+//   - one demo bot is created and bound to "main-db"
+//   - if BotToken is empty, bot is seeded as disabled
+func EnsureDemoData(ctx context.Context, svc BotConfigSeedService, params DemoDataParams) error {
 	bots, err := svc.ListBots(ctx)
 	if err != nil {
 		return err
@@ -26,65 +40,41 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService) error {
 		return nil
 	}
 
+	mainDSN := strings.TrimSpace(params.MainDSN)
+	if mainDSN == "" {
+		mainDSN = "postgres://postgres:postgres@localhost:5432/shopcore?sslmode=disable"
+	}
+
+	botID := strings.TrimSpace(params.BotID)
+	if botID == "" {
+		botID = "shop-main"
+	}
+
+	botName := strings.TrimSpace(params.BotName)
+	if botName == "" {
+		botName = "Shop Main"
+	}
+
+	botToken := strings.TrimSpace(params.BotToken)
+	isEnabled := botToken != ""
+
 	if err := svc.CreateDatabaseProfile(ctx, botconfig.CreateDatabaseProfileParams{
 		ID:        "main-db",
 		Name:      "Main DB",
 		Driver:    "postgres",
-		DSN:       "postgres://demo-main",
-		IsEnabled: true,
-	}); err != nil {
-		return err
-	}
-
-	if err := svc.CreateDatabaseProfile(ctx, botconfig.CreateDatabaseProfileParams{
-		ID:        "analytics-db",
-		Name:      "Analytics DB",
-		Driver:    "postgres",
-		DSN:       "postgres://demo-analytics",
-		IsEnabled: true,
-	}); err != nil {
-		return err
-	}
-
-	if err := svc.CreateDatabaseProfile(ctx, botconfig.CreateDatabaseProfileParams{
-		ID:        "staging-db",
-		Name:      "Staging DB",
-		Driver:    "postgres",
-		DSN:       "postgres://demo-staging",
+		DSN:       mainDSN,
 		IsEnabled: true,
 	}); err != nil {
 		return err
 	}
 
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "8046427793:AAEBRp4grScSfNrKNKVUlsXh22f6jf6N-Es",
+		ID:            botID,
+		Name:          botName,
+		Token:         botToken,
 		DatabaseID:    "main-db",
 		StartScenario: botconfig.StartScenarioInlineCatalog,
-		IsEnabled:     true,
-	}); err != nil {
-		return err
-	}
-
-	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:            "slow-bot",
-		Name:          "Slow Bot",
-		Token:         "7561451770:AAE1G-vwEcavrFdhJ2KP50J5nW2f4KdE1YQ",
-		DatabaseID:    "analytics-db",
-		StartScenario: botconfig.StartScenarioReplyWelcome,
-		IsEnabled:     true,
-	}); err != nil {
-		return err
-	}
-
-	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:            "broken-bot",
-		Name:          "Broken Bot",
-		Token:         "123456:demo-token-broken",
-		DatabaseID:    "staging-db",
-		StartScenario: botconfig.StartScenarioInlineCatalog,
-		IsEnabled:     true,
+		IsEnabled:     isEnabled,
 	}); err != nil {
 		return err
 	}

@@ -42,13 +42,7 @@ func main() {
 
 	tgCfg := telegram.LoadConfigFromEnv()
 
-	app, err := tuiapp.New(
-		context.Background(),
-		appCfg,
-		tgCfg,
-		runtimeLogger.Logger,
-		appLogger.Logger,
-	)
+	app, err := tuiapp.New(context.Background(), appCfg, tgCfg, runtimeLogger.Logger, appLogger.Logger)
 	if err != nil {
 		appLogger.Error("build tui app", "err", err)
 		os.Exit(1)
@@ -59,11 +53,20 @@ func main() {
 		}
 	}()
 
-	if err := seed.EnsureDemoData(context.Background(), app.BotConfig); err != nil {
+	if err := seed.EnsureDemoData(context.Background(), app.BotConfig, seed.DemoDataParams{
+		MainDSN:  appCfg.Postgres.DSN(),
+		BotID:    "shop-main",
+		BotName:  "Shop Main",
+		BotToken: os.Getenv("BOT_TOKEN"),
+	}); err != nil {
 		appLogger.Error("failed to ensure demo", "err", err)
 		os.Exit(1)
 	}
 
+	if err := seed.EnsureCatalogDemoData(context.Background(), app.Pool); err != nil {
+		appLogger.Error("failed to ensure catalog demo data", "err", err)
+		os.Exit(1)
+	}
 	starter := bootstrap.NewStarter(app.BotConfig, app.Manager)
 
 	results, err := starter.StartEnabled(context.Background())

@@ -4,7 +4,7 @@ create table if not exists catalog_variants (
   code text not null,
   name text not null,
   name_latin text not null default '',
-  discription text not null default '',
+  description text not null default '',
   price_minor bigint not null,
   currency_code char(3) not null default 'RUB',
   is_active boolean not null default true,
