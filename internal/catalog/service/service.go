@@ -30,7 +30,7 @@ type CreateCategoryParams struct {
 	NameLatin   string
 	Description string
 	SortOrder   int
-	IsActive    bool
+	// IsActive    bool
 }
 
 // CreateCategory validates input and stores a new catalog category.

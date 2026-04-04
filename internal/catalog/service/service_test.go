@@ -29,7 +29,7 @@ func TestCreateCategory_Valid(t *testing.T) {
 		NameLatin:   " Flowers ",
 		Description: " Букеты и композиции ",
 		SortOrder:   10,
-		IsActive:    true,
+		// IsActive:    true,
 	})
 	require.NoError(t, err)
 
@@ -39,7 +39,7 @@ func TestCreateCategory_Valid(t *testing.T) {
 	require.Equal(t, "Flowers", writer.params.NameLatin)
 	require.Equal(t, "Букеты и композиции", writer.params.Description)
 	require.Equal(t, 10, writer.params.SortOrder)
-	require.True(t, writer.params.IsActive)
+	// require.True(t, writer.params.IsActive)
 }
 
 func TestCreateCategory_CodeEmpty(t *testing.T) {

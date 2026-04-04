@@ -27,13 +27,13 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 // CreateCategory inserts one catalog category row.
 func (r *Repository) CreateCategory(ctx context.Context, params catalogservice.CreateCategoryParams) error {
-	const op = "catalog postgres repository"
+	const op = "catalog postgres repository create category"
 
 	if r == nil {
-		return fmt.Errorf("%s is nil", op)
+		return fmt.Errorf("%s: repository is nil", op)
 	}
 	if r.pool == nil {
-		return fmt.Errorf("%s pool is nil", op)
+		return fmt.Errorf("%s: pool is nil", op)
 	}
 
 	const q = `
@@ -45,9 +45,9 @@ func (r *Repository) CreateCategory(ctx context.Context, params catalogservice.C
 			is_active,
 			sort_order,
 			created_at,
-			updated_at,
+			updated_at
 		)
-		values ($1, $2, $3, $4, $5, $6, now(), now())
+		values ($1, $2, $3, $4, true, $5, now(), now())
 	`
 
 	_, err := r.pool.Exec(
@@ -57,7 +57,7 @@ func (r *Repository) CreateCategory(ctx context.Context, params catalogservice.C
 		params.Name,
 		params.NameLatin,
 		params.Description,
-		params.IsActive,
+		// params.IsActive,
 		params.SortOrder,
 	)
 	if err != nil {
