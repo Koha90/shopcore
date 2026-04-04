@@ -57,7 +57,7 @@ func main() {
 		MainDSN:  appCfg.Postgres.DSN(),
 		BotID:    "shop-main",
 		BotName:  "Shop Main",
-		BotToken: os.Getenv("BOT_TOKEN"),
+		BotToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
 	}); err != nil {
 		appLogger.Error("failed to ensure demo", "err", err)
 		os.Exit(1)

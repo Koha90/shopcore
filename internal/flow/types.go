@@ -42,6 +42,10 @@ const (
 	ActionBotsMine    ActionID = "bots:mine"
 	ActionOrderLast   ActionID = "order:last"
 
+	ActionAdminOpen                ActionID = "admin:open"
+	ActionAdminCatalogOpen         ActionID = "admin:catalog:open"
+	ActionAdminCategoryCreateStart ActionID = "admin:category:create:start"
+
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
 
@@ -107,5 +111,14 @@ type ActionRequest struct {
 	BotName       string
 	StartScenario string
 	ActionID      ActionID
+	SessionKey    SessionKey
+}
+
+// TextRequest contains data required to resolve a text message in current flow.
+type TextRequest struct {
+	BotID         string
+	BotName       string
+	StartScenario string
+	Text          string
 	SessionKey    SessionKey
 }

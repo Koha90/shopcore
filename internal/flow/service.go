@@ -7,7 +7,10 @@ import (
 )
 
 // ErrUnknownAction is returned when flow cannot resolve an action.
-var ErrUnknownAction = errors.New("unknown flow action")
+var (
+	ErrUnknownAction       = errors.New("unknown flow action")
+	ErrUnknownPendingInput = errors.New("unknown pending input")
+)
 
 const (
 	// DefaultCompactRootColumns defines the default column count for inline root
@@ -79,6 +82,7 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 	s.store.Put(req.SessionKey, Session{
 		Current: screen,
 		History: nil,
+		Pending: PendingInput{},
 	})
 
 	return s.renderScreen(catalog, screen), nil
@@ -102,18 +106,24 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session = Session{
 			Current: startScreenForScenario(req.StartScenario),
 			History: nil,
+			Pending: PendingInput{},
 		}
 	}
 
 	switch req.ActionID {
 	case ActionBack:
 		if len(session.History) == 0 {
+			if session.Pending.Active() {
+				session.Pending = PendingInput{}
+				s.store.Put(req.SessionKey, session)
+			}
 			return s.renderScreen(catalog, session.Current), nil
 		}
 
 		prev := session.History[len(session.History)-1]
 		session.History = session.History[:len(session.History)-1]
 		session.Current = prev
+		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, prev), nil
@@ -124,8 +134,21 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		if next != session.Current {
 			session.History = append(session.History, session.Current)
 			session.Current = next
-			s.store.Put(req.SessionKey, session)
 		}
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next), nil
+
+	case ActionAdminCategoryCreateStart:
+		next := ScreenAdminCategoryCreate
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{Kind: PendingInputCategoryName}
+		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next), nil
 	}
@@ -134,8 +157,10 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		if next != session.Current {
 			session.History = append(session.History, session.Current)
 			session.Current = next
-			s.store.Put(req.SessionKey, session)
 		}
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
 		return s.renderScreen(catalog, next), nil
 	}
 
@@ -147,8 +172,9 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	if next != session.Current {
 		session.History = append(session.History, session.Current)
 		session.Current = next
-		s.store.Put(req.SessionKey, session)
 	}
+	session.Pending = PendingInput{}
+	s.store.Put(req.SessionKey, session)
 
 	return s.renderScreen(catalog, next), nil
 }
@@ -173,6 +199,47 @@ func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 
 	default:
 		return "", false
+	}
+}
+
+// HandleText resolves a plain text message relative to current session state.
+//
+// If no pending input exists, the current screen is rendered again.
+// If pending input exists, text is handled as a continuation of that flow step.
+func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, error) {
+	catalog, err := s.provider.Catalog(ctx)
+	if err != nil {
+		return ViewModel{}, err
+	}
+
+	session, ok := s.store.Get(req.SessionKey)
+	if !ok {
+		session = Session{
+			Current: startScreenForScenario(req.StartScenario),
+			History: nil,
+			Pending: PendingInput{},
+		}
+	}
+
+	if !session.Pending.Active() {
+		return s.renderScreen(catalog, session.Current), nil
+	}
+
+	switch session.Pending.Kind {
+	case PendingInputCategoryName:
+		text := strings.TrimSpace(req.Text)
+		if text == "" {
+			return buildAdminCategoryCreateInputView("Название категории не может быть пустым."), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminCategoryCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current), nil
+
+	default:
+		return ViewModel{}, ErrUnknownPendingInput
 	}
 }
 
@@ -358,6 +425,12 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 	case ActionOrderLast:
 		return ScreenOrderLast, nil
 
+	case ActionAdminOpen:
+		return ScreenAdminRoot, nil
+
+	case ActionAdminCatalogOpen:
+		return ScreenAdminCatalog, nil
+
 	default:
 		return "", ErrUnknownAction
 	}
@@ -416,6 +489,18 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 			"Здесь будет карточка последнего заказа и повторное оформление.",
 			ActionBack,
 		)
+
+	case ScreenAdminRoot:
+		return buildAdminRootView()
+
+	case ScreenAdminCatalog:
+		return buildAdminCatalogView()
+
+	case ScreenAdminCategoryCreate:
+		return buildAdminCategoryCreateInputView("")
+
+	case ScreenAdminCategoryCreateDone:
+		return buildAdminCategoryCreateInputDoneView()
 	}
 
 	path, ok := parseCatalogScreen(screen)
@@ -433,4 +518,78 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	}
 
 	return buildCatalogLeafView(node)
+}
+
+func buildAdminRootView() ViewModel {
+	return ViewModel{
+		Text: "Админка\n\nВыберите раздел:",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionAdminCatalogOpen, Label: "Каталог"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminCatalogView() ViewModel {
+	return ViewModel{
+		Text: "Админка · Каталог\n\nВыберите действие:",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminCategoryCreateInputView(validation string) ViewModel {
+	text := "Новая категория\n\nВведите название категории сообщением."
+	if validation != "" {
+		text = "Новая категория\n\n" + validation + "\n\nВведите название категории сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminCategoryCreateInputDoneView() ViewModel {
+	return ViewModel{
+		Text: "Новая категория\n\nНазвание получено.\n\nНа следующем шаге сюда подключим catalog service.",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
 }

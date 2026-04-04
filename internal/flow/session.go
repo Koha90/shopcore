@@ -28,12 +28,36 @@ const (
 	ScreenBalance   ScreenID = "balance"
 	ScreenBotsMine  ScreenID = "bots_mine"
 	ScreenOrderLast ScreenID = "order_last"
+
+	ScreenAdminRoot               ScreenID = "admin_root"
+	ScreenAdminCatalog            ScreenID = "admin_catalog"
+	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
+	ScreenAdminCategoryCreateDone ScreenID = "admin_category_create_done"
 )
 
-// Session stores current screen and backward navigation history.
+// PendingInputKind identifies which text input flow currently expects.
+type PendingInputKind string
+
+const (
+	PendingInputNone         PendingInputKind = ""
+	PendingInputCategoryName PendingInputKind = "category_name"
+)
+
+// PendingInput stores one active text-input state inside session.
+type PendingInput struct {
+	Kind PendingInputKind
+}
+
+// Active reports whether session currently expects text input.
+func (p PendingInput) Active() bool {
+	return p.Kind != PendingInputNone
+}
+
+// Session stores current screen, backward navigation history and pending input state.
 type Session struct {
 	Current ScreenID
 	History []ScreenID
+	Pending PendingInput
 }
 
 // Store defines session storage required by flow.

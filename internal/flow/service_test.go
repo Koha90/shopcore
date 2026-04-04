@@ -517,3 +517,227 @@ func TestHandleAction_ReturnsCatalogProviderError(t *testing.T) {
 
 	require.ErrorIs(t, err, ErrUnknownAction)
 }
+
+func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
+	store := NewMemoryStore()
+	svc := NewService(store)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          " Цветы ",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНазвание получено.\n\nНа следующем шаге сюда подключим catalog service.", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreateDone, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+
+	backVM, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionBack,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Админка · Каталог\n\nВыберите действие:", backVM.Text)
+}
+
+func TestHandleText_WithoutPending_RendersCurrentScreen(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-inline")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "какой-то текст",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.Nil(t, vm.Reply)
+}
+
+func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewService(store)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "   ",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНазвание категории не может быть пустым.\n\nВведите название категории сообщением.", vm.Text)
+	require.NotNil(t, vm.Inline)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreate, session.Current)
+	require.Equal(t, PendingInputCategoryName, session.Pending.Kind)
+}
+
+func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewService(store)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, PendingInputCategoryName, session.Pending.Kind)
+	require.Equal(t, ScreenAdminCategoryCreate, session.Current)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Админка\n\nВыберите раздел:", vm.Text)
+
+	session, ok = store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminRoot, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
+
+func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewService(store)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionBack,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Админка · Каталог\n\nВыберите действие:", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCatalog, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
