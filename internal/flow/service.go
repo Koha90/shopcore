@@ -346,6 +346,7 @@ func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNod
 				{ID: ActionBalanceOpen, Label: "Баланс"},
 				{ID: ActionBotsMine, Label: "Мои боты"},
 				{ID: ActionOrderLast, Label: "Последний заказ"},
+				{ID: ActionAdminOpen, Label: "Админка"},
 			},
 		})
 	}
