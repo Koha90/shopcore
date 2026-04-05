@@ -38,8 +38,9 @@ const (
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
 type Service struct {
-	store    Store
-	provider CatalogProvider
+	store      Store
+	provider   CatalogProvider
+	categories CategoryCreator
 }
 
 // NewService constructs transport-agnostic flow service.
@@ -64,6 +65,21 @@ func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Servi
 	return &Service{
 		store:    store,
 		provider: provider,
+	}
+}
+
+func NewServiceWithDeps(store Store, provider CatalogProvider, categories CategoryCreator) *Service {
+	if store == nil {
+		store = NewMemoryStore()
+	}
+	if provider == nil {
+		provider = NewStaticCatalogProvider(DemoCatalog())
+	}
+
+	return &Service{
+		store:      store,
+		provider:   provider,
+		categories: categories,
 	}
 }
 
@@ -227,9 +243,21 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 	switch session.Pending.Kind {
 	case PendingInputCategoryName:
-		text := strings.TrimSpace(req.Text)
-		if text == "" {
+		name := strings.TrimSpace(req.Text)
+		if name == "" {
 			return buildAdminCategoryCreateInputView("Название категории не может быть пустым."), nil
+		}
+
+		if s.categories == nil {
+			return ViewModel{}, errors.New("flow category creator is nil")
+		}
+
+		err := s.categories.CreateCategory(ctx, CreateCategoryParams{
+			Code: name,
+			Name: name,
+		})
+		if err != nil {
+			return buildAdminCategoryCreateInputView("Не удалось создать категорию. Попробуйте другое название."), nil
 		}
 
 		session.Pending = PendingInput{}
@@ -579,7 +607,7 @@ func buildAdminCategoryCreateInputView(validation string) ViewModel {
 
 func buildAdminCategoryCreateInputDoneView() ViewModel {
 	return ViewModel{
-		Text: "Новая категория\n\nНазвание получено.\n\nНа следующем шаге сюда подключим catalog service.",
+		Text: "Новая категория\n\nКатегория создана.",
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{

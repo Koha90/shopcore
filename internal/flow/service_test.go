@@ -2,10 +2,23 @@ package flow
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+type categoryCreatorStub struct {
+	called bool
+	params CreateCategoryParams
+	err    error
+}
+
+func (s *categoryCreatorStub) CreateCategory(ctx context.Context, params CreateCategoryParams) error {
+	s.called = true
+	s.params = params
+	return s.err
+}
 
 func testSessionKey(botID string) SessionKey {
 	return SessionKey{
@@ -520,7 +533,8 @@ func TestHandleAction_ReturnsCatalogProviderError(t *testing.T) {
 
 func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 	store := NewMemoryStore()
-	svc := NewService(store)
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -554,7 +568,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		SessionKey:    key,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Новая категория\n\nНазвание получено.\n\nНа следующем шаге сюда подключим catalog service.", vm.Text)
+	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
@@ -602,7 +616,8 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewService(store)
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -649,7 +664,8 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewService(store)
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -700,7 +716,8 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewService(store)
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -740,4 +757,144 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, ScreenAdminCatalog, session.Current)
 	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
+
+func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          " Цветы ",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
+
+	require.True(t, creator.called)
+	require.Equal(t, "Цветы", creator.params.Code)
+	require.Equal(t, "Цветы", creator.params.Name)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreateDone, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
+
+func TestHandleText_AdminCategoryCreate_CreateError_KeepsPending(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{
+		err: errors.New("create category failed"),
+	}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "Цветы",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНе удалось создать категорию. Попробуйте другое название.\n\nВведите название категории сообщением.", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreate, session.Current)
+	require.Equal(t, PendingInputCategoryName, session.Pending.Kind)
+}
+
+func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewServiceWithDeps(store, nil, nil)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "Цветы",
+		SessionKey:    key,
+	})
+	require.EqualError(t, err, "flow category creator is nil")
 }
