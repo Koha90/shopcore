@@ -898,3 +898,103 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 	})
 	require.EqualError(t, err, "flow category creator is nil")
 }
+
+func TestHandleAction_AdminCategoryCreateStart_InitializesPendingPayload(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreate, session.Current)
+	require.Equal(t, PendingInputCategoryName, session.Pending.Kind)
+	require.Nil(t, session.Pending.Payload)
+	require.Equal(t, "", session.Pending.Value(PendingValueName))
+}
+
+func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          " Цветы ",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	require.True(t, creator.called)
+	require.Equal(t, "Цветы", creator.params.Code)
+	require.Equal(t, "Цветы", creator.params.Name)
+}
+
+func TestPendingInput_SetValueAndValue(t *testing.T) {
+	t.Parallel()
+
+	var pending PendingInput
+
+	require.False(t, pending.Active())
+	require.Equal(t, "", pending.Value(PendingValueName))
+
+	pending.Kind = PendingInputCategoryName
+	pending.SetValue(PendingValueName, "Цветы")
+
+	require.True(t, pending.Active())
+	require.Equal(t, "Цветы", pending.Value(PendingValueName))
+}

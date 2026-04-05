@@ -118,6 +118,7 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 // Resolution order:
 //   - ActionBack uses session history
 //   - ActionCatalogStart opens scenario-aware catalog root
+//   - admin actions open stable admin screen or start pending text input
 //   - generic catalog selection actions advance inside CatalogSchema
 //   - explicit non-catalog action open stable detail screen
 //
@@ -174,7 +175,10 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			session.History = append(session.History, session.Current)
 		}
 		session.Current = next
-		session.Pending = PendingInput{Kind: PendingInputCategoryName}
+		session.Pending = PendingInput{
+			Kind:    PendingInputCategoryName,
+			Payload: nil,
+		}
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next), nil
@@ -234,8 +238,8 @@ func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 // If no pending input exists, the current screen is rendered again.
 // If pending input exists, text is handled as a continuation of that flow step.
 //
-// Cureent E3.2 behavior supports admin category creation and delegates the
-// write operation through CategoryCreator.
+// Current E3.3 behavior uses pending input state with with continuation payload.
+// Current E3.2 behavior supports admin category creation through CategoryCreator.
 func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, error) {
 	catalog, err := s.provider.Catalog(ctx)
 	if err != nil {
@@ -262,13 +266,15 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			return buildAdminCategoryCreateInputView("Название категории не может быть пустым."), nil
 		}
 
+		session.Pending.SetValue(PendingValueName, name)
+
 		if s.categories == nil {
 			return ViewModel{}, errors.New("flow category creator is nil")
 		}
 
 		err := s.categories.CreateCategory(ctx, CreateCategoryParams{
-			Code: name,
-			Name: name,
+			Code: session.Pending.Value(PendingValueName),
+			Name: session.Pending.Value(PendingValueName),
 		})
 		if err != nil {
 			return buildAdminCategoryCreateInputView("Не удалось создать категорию. Попробуйте другое название."), nil

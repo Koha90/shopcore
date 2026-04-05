@@ -43,14 +43,39 @@ const (
 	PendingInputCategoryName PendingInputKind = "category_name"
 )
 
+const (
+	// PendingValueName stores one entered name value inside pending input payload.
+	PendingValueName = "name"
+)
+
+// PendingInputPayload stores small flow-local continuation data for pending text input.
+type PendingInputPayload map[string]string
+
 // PendingInput stores one active text-input state inside session.
 type PendingInput struct {
-	Kind PendingInputKind
+	Kind    PendingInputKind
+	Payload PendingInputPayload
 }
 
 // Active reports whether session currently expects text input.
 func (p PendingInput) Active() bool {
 	return p.Kind != PendingInputNone
+}
+
+// Value returns one payload value by key.
+func (p PendingInput) Value(key string) string {
+	if p.Payload == nil {
+		return ""
+	}
+	return p.Payload[key]
+}
+
+// SetValue stores one payload value by key.
+func (p *PendingInput) SetValue(key, value string) {
+	if p.Payload == nil {
+		p.Payload = make(PendingInputPayload)
+	}
+	p.Payload[key] = value
 }
 
 // Session stores current screen, backward navigation history and pending input state.
