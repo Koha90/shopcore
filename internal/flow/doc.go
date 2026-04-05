@@ -1,16 +1,6 @@
-// Package flow contains transport-agnostic bot view and action models.
+// Package flow implements transport-agnostic user navigation and admin input flow.
 //
-// The package defines:
-//   - start scenarios
-//   - action identifiers
-//   - view models for inline and reply keyboards
-//   - session/history based navigation
-//   - schema-driven catalog navigation
-//   - catalog provider abstraction
-//
-// Catalog navigation is split into two concerns:
-//   - StartScenario controls how user enters catalog
-//   - CatalogSchema controls level order inside catalog
-//
-// Flow operates on flow.Catalog and does not depend on SQL or transport code.
+// The package owns screen resolution, session-aware back navigation, catalog
+// drill-down and pending text input handling. It depends on narrow ports for
+// catalog loading and admin write use cases.
 package flow

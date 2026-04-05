@@ -6,9 +6,11 @@ import (
 	"strings"
 )
 
-// ErrUnknownAction is returned when flow cannot resolve an action.
 var (
-	ErrUnknownAction       = errors.New("unknown flow action")
+	// ErrUnknownAction is returned when flow cannot resolve an action.
+	ErrUnknownAction = errors.New("unknown flow action")
+
+	// ErrUnknownPendingInput is returned when flow cannot resolve active pending input state.
 	ErrUnknownPendingInput = errors.New("unknown pending input")
 )
 
@@ -37,6 +39,7 @@ const (
 // Service builds initial and next-step views for bot flows.
 //
 // The service is transport-agnostic and contains no Telegram-specific code.
+// It resolves navigation screens, session-aware text input and admin flow actions.
 type Service struct {
 	store      Store
 	provider   CatalogProvider
@@ -47,13 +50,15 @@ type Service struct {
 //
 // If store is nil, in-memory session storage is used.
 // Demo catalog is wired by default until persistent catalog source appears.
+// Admin category creator is disabled in this constructor.
 func NewService(store Store) *Service {
 	return NewServiceWithCatalogProvider(store, NewStaticCatalogProvider(DemoCatalog()))
 }
 
 // NewServiceWithCatalogProvider constructs flow service with explicit catalog provider.
 //
-// This constructor is intended for tests and future wiring with real catalog sources.
+// This constructor is intended for tests and runtime wiring that only need
+// catalog navigation. Admin category creator remains disabled.
 func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -68,6 +73,10 @@ func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Servi
 	}
 }
 
+// NewServiceWithDeps constructs flow service with explicit dependencies.
+//
+// It allows wiring a custom catalog provider and optional admin category creator.
+// This constructor is intended for application wiring and tests.
 func NewServiceWithDeps(store Store, provider CatalogProvider, categories CategoryCreator) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -111,6 +120,8 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 //   - ActionCatalogStart opens scenario-aware catalog root
 //   - generic catalog selection actions advance inside CatalogSchema
 //   - explicit non-catalog action open stable detail screen
+//
+// Any non-pending action transition clears active pending text input state.
 func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewModel, error) {
 	catalog, err := s.provider.Catalog(ctx)
 	if err != nil {
@@ -222,6 +233,9 @@ func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 //
 // If no pending input exists, the current screen is rendered again.
 // If pending input exists, text is handled as a continuation of that flow step.
+//
+// Cureent E3.2 behavior supports admin category creation and delegates the
+// write operation through CategoryCreator.
 func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, error) {
 	catalog, err := s.provider.Catalog(ctx)
 	if err != nil {
@@ -528,7 +542,7 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 		return buildAdminCategoryCreateInputView("")
 
 	case ScreenAdminCategoryCreateDone:
-		return buildAdminCategoryCreateInputDoneView()
+		return buildAdminCategoryCreateDoneView()
 	}
 
 	path, ok := parseCatalogScreen(screen)
@@ -605,7 +619,7 @@ func buildAdminCategoryCreateInputView(validation string) ViewModel {
 	}
 }
 
-func buildAdminCategoryCreateInputDoneView() ViewModel {
+func buildAdminCategoryCreateDoneView() ViewModel {
 	return ViewModel{
 		Text: "Новая категория\n\nКатегория создана.",
 		Inline: &InlineKeyboardView{
