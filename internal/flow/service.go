@@ -107,9 +107,10 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 	screen := startScreenForScenario(req.StartScenario)
 
 	s.store.Put(req.SessionKey, Session{
-		Current: screen,
-		History: nil,
-		Pending: PendingInput{},
+		Current:  screen,
+		History:  nil,
+		Pending:  PendingInput{},
+		CanAdmin: req.CanAdmin,
 	})
 
 	return s.renderScreen(catalog, screen), nil
@@ -134,10 +135,13 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	session, ok := s.store.Get(req.SessionKey)
 	if !ok {
 		session = Session{
-			Current: startScreenForScenario(req.StartScenario),
-			History: nil,
-			Pending: PendingInput{},
+			Current:  startScreenForScenario(req.StartScenario),
+			History:  nil,
+			Pending:  PendingInput{},
+			CanAdmin: req.CanAdmin,
 		}
+	} else {
+		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin)
 	}
 
 	switch req.ActionID {
@@ -251,10 +255,13 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 	session, ok := s.store.Get(req.SessionKey)
 	if !ok {
 		session = Session{
-			Current: startScreenForScenario(req.StartScenario),
-			History: nil,
-			Pending: PendingInput{},
+			Current:  startScreenForScenario(req.StartScenario),
+			History:  nil,
+			Pending:  PendingInput{},
+			CanAdmin: req.CanAdmin,
 		}
+	} else {
+		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin)
 	}
 
 	if !session.Pending.Active() {
@@ -624,6 +631,17 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	}
 
 	return buildCatalogLeafView(node)
+}
+
+func (s *Service) syncSessionAccess(key SessionKey, session Session, canAdmin bool) Session {
+	if session.CanAdmin == canAdmin {
+		return session
+	}
+
+	session.CanAdmin = canAdmin
+	s.store.Put(key, session)
+
+	return session
 }
 
 func buildAdminRootView() ViewModel {

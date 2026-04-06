@@ -83,11 +83,13 @@ func (p *PendingInput) SetValue(key, value string) {
 	p.Payload[key] = value
 }
 
-// Session stores current screen, backward navigation history and pending input state.
+// Session stores current screen, backward navigation history,
+// pending input state and explicit admin access flag.
 type Session struct {
-	Current ScreenID
-	History []ScreenID
-	Pending PendingInput
+	Current  ScreenID
+	History  []ScreenID
+	Pending  PendingInput
+	CanAdmin bool
 }
 
 // Store defines session storage required by flow.
