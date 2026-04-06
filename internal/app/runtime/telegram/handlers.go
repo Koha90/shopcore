@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"errors"
 
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -116,6 +117,32 @@ func (r *Runner) defaultHandler(
 			return
 		}
 
+		if update.Message.From == nil {
+			r.log.Info(
+				"telegram update received",
+				"bot_id", spec.ID,
+				"chat_id", update.Message.Chat.ID,
+				"text", update.Message.Text,
+			)
+			return
+		}
+
+		key := flow.SessionKey{
+			BotID:  spec.ID,
+			ChatID: update.Message.Chat.ID,
+			UserID: update.Message.From.ID,
+		}
+
+		if !svc.HasPendingInput(key) {
+			r.log.Info(
+				"telegram update received",
+				"bot_id", spec.ID,
+				"chat_id", update.Message.Chat.ID,
+				"text", update.Message.Text,
+			)
+			return
+		}
+
 		vm, err = r.resolveTextView(ctx, svc, spec, update.Message)
 		if err != nil {
 			r.log.Error(
@@ -164,6 +191,12 @@ func (r *Runner) resolveTextView(
 	spec manager.BotSpec,
 	msg *models.Message,
 ) (flow.ViewModel, error) {
+	if msg == nil {
+		return flow.ViewModel{}, errors.New("telegram message is nil")
+	}
+	if msg.From == nil {
+		return flow.ViewModel{}, errors.New("telegram message sender is nil")
+	}
 	return svc.HandleText(ctx, flow.TextRequest{
 		BotID:         spec.ID,
 		BotName:       spec.Name,

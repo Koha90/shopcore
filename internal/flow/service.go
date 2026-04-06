@@ -724,3 +724,17 @@ func buildAdminCategoryCreateDoneView() ViewModel {
 		RemoveReply: true,
 	}
 }
+
+// HasPendingInput reports whether the session currently expects plain text input.
+func (s *Service) HasPendingInput(key SessionKey) bool {
+	if s == nil || s.store == nil {
+		return false
+	}
+
+	session, ok := s.store.Get(key)
+	if !ok {
+		return false
+	}
+
+	return session.Pending.Active()
+}
