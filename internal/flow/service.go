@@ -113,7 +113,7 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 		CanAdmin: req.CanAdmin,
 	})
 
-	return s.renderScreen(catalog, screen), nil
+	return s.renderScreen(catalog, screen, req.CanAdmin), nil
 }
 
 // HandleAction resolve the next flow view for an action.
@@ -141,7 +141,10 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			CanAdmin: req.CanAdmin,
 		}
 	} else {
-		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin)
+		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin, req.StartScenario)
+	}
+	if isAdminAction(req.ActionID) && !session.CanAdmin {
+		return ViewModel{}, ErrUnknownAction
 	}
 
 	switch req.ActionID {
@@ -151,7 +154,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				session.Pending = PendingInput{}
 				s.store.Put(req.SessionKey, session)
 			}
-			return s.renderScreen(catalog, session.Current), nil
+			return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 		}
 
 		prev := session.History[len(session.History)-1]
@@ -160,7 +163,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, prev), nil
+		return s.renderScreen(catalog, prev, req.CanAdmin), nil
 
 	case ActionCatalogStart:
 		next := catalogRootForScenario(req.StartScenario)
@@ -172,7 +175,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next), nil
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 
 	case ActionAdminCategoryCreateStart:
 		next := ScreenAdminCategoryCreate
@@ -187,7 +190,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next), nil
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
@@ -198,7 +201,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next), nil
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	next, err := resolveNextScreen(req.ActionID)
@@ -213,7 +216,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	session.Pending = PendingInput{}
 	s.store.Put(req.SessionKey, session)
 
-	return s.renderScreen(catalog, next), nil
+	return s.renderScreen(catalog, next, req.CanAdmin), nil
 }
 
 // ResolveReplyAction maps reply-button text to action identifiers.
@@ -261,11 +264,15 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			CanAdmin: req.CanAdmin,
 		}
 	} else {
-		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin)
+		session = s.syncSessionAccess(req.SessionKey, session, req.CanAdmin, req.StartScenario)
+	}
+
+	if !session.CanAdmin && isAdminPending(session.Pending.Kind) {
+		return ViewModel{}, ErrUnknownAction
 	}
 
 	if !session.Pending.Active() {
-		return s.renderScreen(catalog, session.Current), nil
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 	}
 
 	switch session.Pending.Kind {
@@ -314,7 +321,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCategoryCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current), nil
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
 	case PendingInputCategoryCode:
 		code := strings.TrimSpace(req.Text)
@@ -345,7 +352,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCategoryCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current), nil
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
@@ -371,18 +378,18 @@ func buildReplyWelcomeStart() ViewModel {
 }
 
 func buildCompactRootSelectionView(roots []CatalogNode) ViewModel {
-	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact, roots)
+	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact, roots, false)
 }
 
-func buildExtendedRootSelectionView(roots []CatalogNode) ViewModel {
-	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended, roots)
+func buildExtendedRootSelectionView(roots []CatalogNode, canAdmin bool) ViewModel {
+	return buildRootSelectionView(DefaultExtendedRootColumns, RootVariantExtended, roots, canAdmin)
 }
 
 // buildRootSelectionView renders the root inline selection screen.
 //
 // The compact variant renders only the main selectable entities.
 // The extended variant renders the same entities plus utility action below.
-func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNode) ViewModel {
+func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNode, canAdmin bool) ViewModel {
 	cols := normalizeColumns(columns)
 
 	actions := make([]ActionButton, 0, len(roots))
@@ -401,14 +408,20 @@ func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNod
 	}
 
 	if variant == RootVariantExtended {
+		utilityActions := []ActionButton{
+			{ID: ActionBalanceOpen, Label: "Баланс"},
+			{ID: ActionBotsMine, Label: "Мои боты"},
+			{ID: ActionOrderLast, Label: "Последний заказ"},
+		}
+		if canAdmin {
+			utilityActions = append(utilityActions, ActionButton{
+				ID:    ActionAdminOpen,
+				Label: "Админка",
+			})
+		}
 		sections = append(sections, ActionSection{
 			Columns: 1,
-			Actions: []ActionButton{
-				{ID: ActionBalanceOpen, Label: "Баланс"},
-				{ID: ActionBotsMine, Label: "Мои боты"},
-				{ID: ActionOrderLast, Label: "Последний заказ"},
-				{ID: ActionAdminOpen, Label: "Админка"},
-			},
+			Actions: utilityActions,
 		})
 	}
 
@@ -550,7 +563,7 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 //
 // Stable root/detail screens are handled directly.
 // Dynamic catalog drill-down screens are rendered from CatalogPath.
-func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
+func (s *Service) renderScreen(catalog Catalog, screen ScreenID, canAdmin bool) ViewModel {
 	switch screen {
 	case ScreenReplyWelcome:
 		return buildReplyWelcomeStart()
@@ -559,7 +572,7 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 		return buildCompactRootSelectionView(catalog.RootNodes())
 
 	case ScreenRootExtended:
-		return buildExtendedRootSelectionView(catalog.RootNodes())
+		return buildExtendedRootSelectionView(catalog.RootNodes(), canAdmin)
 
 	case ScreenCabinet:
 		return buildReplyDetailView(
@@ -633,13 +646,28 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	return buildCatalogLeafView(node)
 }
 
-func (s *Service) syncSessionAccess(key SessionKey, session Session, canAdmin bool) Session {
+func (s *Service) syncSessionAccess(
+	key SessionKey,
+	session Session,
+	canAdmin bool,
+	startScenario string,
+) Session {
+	changed := false
+
 	if session.CanAdmin == canAdmin {
-		return session
+		session.CanAdmin = canAdmin
+		changed = true
 	}
 
-	session.CanAdmin = canAdmin
-	s.store.Put(key, session)
+	if !session.CanAdmin && (isAdminScreen(session.Current) || isAdminPending(session.Pending.Kind)) {
+		session.Current = catalogRootForScenario(startScenario)
+		session.History = nil
+		session.Pending = PendingInput{}
+	}
+
+	if changed {
+		s.store.Put(key, session)
+	}
 
 	return session
 }
@@ -658,6 +686,33 @@ func buildAdminRootView() ViewModel {
 			},
 		},
 		RemoveReply: true,
+	}
+}
+
+func isAdminAction(actionID ActionID) bool {
+	switch actionID {
+	case ActionAdminOpen, ActionAdminCatalogOpen, ActionAdminCategoryCreateStart:
+		return true
+	default:
+		return false
+	}
+}
+
+func isAdminScreen(screen ScreenID) bool {
+	switch screen {
+	case ScreenAdminRoot, ScreenAdminCatalog, ScreenAdminCategoryCreate, ScreenAdminCategoryCode, ScreenAdminCategoryCreateDone:
+		return true
+	default:
+		return false
+	}
+}
+
+func isAdminPending(kind PendingInputKind) bool {
+	switch kind {
+	case PendingInputCategoryName, PendingInputCategoryCode:
+		return true
+	default:
+		return false
 	}
 }
 

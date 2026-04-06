@@ -435,6 +435,7 @@ func TestStart_InlineCatalog_UsesProvidedCatalogRoot(t *testing.T) {
 		BotName:       "Inline Shop",
 		StartScenario: string(StartScenarioInlineCatalog),
 		SessionKey:    testSessionKey("shop-inline"),
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -543,6 +544,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -551,6 +553,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -559,6 +562,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -567,6 +571,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          " Цветы ",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
@@ -581,6 +586,7 @@ func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionBack,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Админка · Каталог\n\nВыберите действие:", backVM.Text)
@@ -626,6 +632,7 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -634,6 +641,7 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -642,6 +650,7 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -650,6 +659,7 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "   ",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nНазвание категории не может быть пустым.\n\nВведите название категории сообщением.", vm.Text)
@@ -674,6 +684,7 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -682,6 +693,7 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -690,6 +702,7 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -703,6 +716,7 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Админка\n\nВыберите раздел:", vm.Text)
@@ -726,6 +740,7 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -734,6 +749,7 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -742,6 +758,7 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -750,6 +767,7 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionBack,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Админка · Каталог\n\nВыберите действие:", vm.Text)
@@ -773,6 +791,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -781,6 +800,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -789,6 +809,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -797,6 +818,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          " Цветы ",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
@@ -826,6 +848,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *te
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -834,6 +857,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *te
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -842,6 +866,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *te
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -850,6 +875,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *te
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "Цветы",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nНе удалось создать категорию с автоматическим code.\n\nВведите code категории сообщением.", vm.Text)
@@ -874,6 +900,7 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -882,6 +909,7 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -890,6 +918,7 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -898,6 +927,7 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "Цветы",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.EqualError(t, err, "flow category creator is nil")
 }
@@ -915,6 +945,7 @@ func TestHandleAction_AdminCategoryCreateStart_InitializesPendingPayload(t *test
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -923,6 +954,7 @@ func TestHandleAction_AdminCategoryCreateStart_InitializesPendingPayload(t *test
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -931,6 +963,7 @@ func TestHandleAction_AdminCategoryCreateStart_InitializesPendingPayload(t *test
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -955,6 +988,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -963,6 +997,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -971,6 +1006,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -979,6 +1015,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          " Цветы ",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -1010,6 +1047,7 @@ func openAdminCategoryCreate(t *testing.T, svc *Service, key SessionKey) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -1018,6 +1056,7 @@ func openAdminCategoryCreate(t *testing.T, svc *Service, key SessionKey) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCatalogOpen,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 
@@ -1026,6 +1065,7 @@ func openAdminCategoryCreate(t *testing.T, svc *Service, key SessionKey) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		ActionID:      ActionAdminCategoryCreateStart,
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 }
@@ -1045,6 +1085,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeSuccess(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "Цветы",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
@@ -1076,6 +1117,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeFailure_OpensManualCodeInput(t *
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "Тестовая категория",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nНе удалось создать категорию с автоматическим code.\n\nВведите code категории сообщением.", vm.Text)
@@ -1103,6 +1145,7 @@ func TestHandleText_AdminCategoryCreate_EmptySuggestedCode_OpensManualCodeInput(
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "!!!",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nНе удалось автоматически подобрать code.\n\nВведите code категории сообщением.", vm.Text)
@@ -1126,8 +1169,9 @@ func TestHandleText_AdminCategoryCode_EmptyTextKeepsPending(t *testing.T) {
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{
-		Current: ScreenAdminCategoryCode,
-		History: []ScreenID{ScreenAdminCatalog},
+		Current:  ScreenAdminCategoryCode,
+		History:  []ScreenID{ScreenAdminCatalog},
+		CanAdmin: true,
 		Pending: PendingInput{
 			Kind: PendingInputCategoryCode,
 			Payload: PendingInputPayload{
@@ -1141,6 +1185,7 @@ func TestHandleText_AdminCategoryCode_EmptyTextKeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "   ",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nCode категории не может быть пустым.\n\nВведите code категории сообщением.", vm.Text)
@@ -1161,8 +1206,9 @@ func TestHandleText_AdminCategoryCode_Success_UsesManualCode(t *testing.T) {
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{
-		Current: ScreenAdminCategoryCode,
-		History: []ScreenID{ScreenAdminCatalog},
+		Current:  ScreenAdminCategoryCode,
+		History:  []ScreenID{ScreenAdminCatalog},
+		CanAdmin: true,
 		Pending: PendingInput{
 			Kind: PendingInputCategoryCode,
 			Payload: PendingInputPayload{
@@ -1176,6 +1222,7 @@ func TestHandleText_AdminCategoryCode_Success_UsesManualCode(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "flowers-manual",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
@@ -1201,8 +1248,9 @@ func TestHandleText_AdminCategoryCode_CreateError_KeepsPending(t *testing.T) {
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{
-		Current: ScreenAdminCategoryCode,
-		History: []ScreenID{ScreenAdminCatalog},
+		Current:  ScreenAdminCategoryCode,
+		History:  []ScreenID{ScreenAdminCatalog},
+		CanAdmin: true,
 		Pending: PendingInput{
 			Kind: PendingInputCategoryCode,
 			Payload: PendingInputPayload{
@@ -1216,6 +1264,7 @@ func TestHandleText_AdminCategoryCode_CreateError_KeepsPending(t *testing.T) {
 		StartScenario: string(StartScenarioInlineCatalog),
 		Text:          "flowers-manual",
 		SessionKey:    key,
+		CanAdmin:      true,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "Новая категория\n\nНе удалось создать категорию. Попробуйте другой code.\n\nВведите code категории сообщением.", vm.Text)
@@ -1226,4 +1275,61 @@ func TestHandleText_AdminCategoryCode_CreateError_KeepsPending(t *testing.T) {
 	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
 	require.Equal(t, "Цветы", session.Pending.Value(PendingValueName))
 	require.Equal(t, "flowers-manual", session.Pending.Value(PendingValueCode))
+}
+
+func TestStart_InlineCatalog_NonAdmin_HidesAdminButton(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+
+	vm, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    testSessionKey("shop-inline"),
+		CanAdmin:      false,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 2)
+	require.Len(t, vm.Inline.Sections[1].Actions, 3)
+	require.Equal(t, ActionBalanceOpen, vm.Inline.Sections[1].Actions[0].ID)
+	require.Equal(t, ActionBotsMine, vm.Inline.Sections[1].Actions[1].ID)
+	require.Equal(t, ActionOrderLast, vm.Inline.Sections[1].Actions[2].ID)
+}
+
+func TestStart_InlineCatalog_Admin_ShowsAdminButton(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+
+	vm, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    testSessionKey("shop-inline-admin"),
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 2)
+	require.Len(t, vm.Inline.Sections[1].Actions, 4)
+	require.Equal(t, ActionAdminOpen, vm.Inline.Sections[1].Actions[3].ID)
+}
+
+func TestHandleAction_AdminOpen_NonAdmin_ReturnsUnknownAction(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    testSessionKey("shop-inline"),
+		CanAdmin:      false,
+	})
+	require.ErrorIs(t, err, ErrUnknownAction)
 }
