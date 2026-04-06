@@ -103,13 +103,26 @@ func (r *Runner) defaultHandler(
 				"text", update.Message.Text,
 				"err", err,
 			)
+			return
 		}
-		if !ok {
-			r.log.Info(
-				"telegram update received",
+		if ok {
+			if err := r.sendView(ctx, b, update.Message.Chat.ID, vm); err != nil {
+				r.log.Error(
+					"telegram send reply action view failed",
+					"bot_id", spec.ID,
+					"err", err,
+				)
+			}
+			return
+		}
+
+		vm, err = r.resolveTextView(ctx, svc, spec, update.Message)
+		if err != nil {
+			r.log.Error(
+				"flow text input failed",
 				"bot_id", spec.ID,
-				"chat_id", update.Message.Chat.ID,
 				"text", update.Message.Text,
+				"err", err,
 			)
 			return
 		}
@@ -143,6 +156,25 @@ func (r *Runner) answerCallback(ctx context.Context, b *tgbot.Bot, callbackID, t
 	if _, err := b.AnswerCallbackQuery(ctx, params); err != nil {
 		r.log.Error("telegram answer callback failed", "err", err)
 	}
+}
+
+func (r *Runner) resolveTextView(
+	ctx context.Context,
+	svc *flow.Service,
+	spec manager.BotSpec,
+	msg *models.Message,
+) (flow.ViewModel, error) {
+	return svc.HandleText(ctx, flow.TextRequest{
+		BotID:         spec.ID,
+		BotName:       spec.Name,
+		StartScenario: spec.StartScenario,
+		Text:          msg.Text,
+		SessionKey: flow.SessionKey{
+			BotID:  spec.ID,
+			ChatID: msg.Chat.ID,
+			UserID: msg.From.ID,
+		},
+	})
 }
 
 // callbackMessageContext extracts editable message coordinates from callback query.

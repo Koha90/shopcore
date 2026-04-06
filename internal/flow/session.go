@@ -32,6 +32,7 @@ const (
 	ScreenAdminRoot               ScreenID = "admin_root"
 	ScreenAdminCatalog            ScreenID = "admin_catalog"
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
+	ScreenAdminCategoryCode       ScreenID = "admin_category_code"
 	ScreenAdminCategoryCreateDone ScreenID = "admin_category_create_done"
 )
 
@@ -41,11 +42,15 @@ type PendingInputKind string
 const (
 	PendingInputNone         PendingInputKind = ""
 	PendingInputCategoryName PendingInputKind = "category_name"
+	PendingInputCategoryCode PendingInputKind = "category_code"
 )
 
 const (
 	// PendingValueName stores one entered name value inside pending input payload.
 	PendingValueName = "name"
+
+	// PendingValueCode stores one entered code value inside pending input payload.
+	PendingValueCode = "code"
 )
 
 // PendingInputPayload stores small flow-local continuation data for pending text input.

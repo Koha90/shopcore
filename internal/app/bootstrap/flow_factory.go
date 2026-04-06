@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	catalogpg "github.com/koha90/shopcore/internal/catalog/postgres"
+	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 )
@@ -19,23 +20,31 @@ type PoolResolver interface {
 //
 // Wiring path:
 //
-//	bot spec -> database_id -> pg pool -> postgres catalog provider -> flow service
+//	bot spec -> database_id -> pg pool ->
+//	postgres catalog provider -> flow service
 func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*flow.Service, error) {
 	return func(spec manager.BotSpec) (*flow.Service, error) {
-		const op = "build flow service"
+		const op = "new telegram flow factory"
 
 		if resolver == nil {
 			return nil, fmt.Errorf("%s: pool resolver is nil", op)
 		}
 
 		pool, err := resolver.Resolve(spec.DatabaseID)
-		if err != nil || pool == nil {
-			return nil, fmt.Errorf("%s: resolve fatabase %q: %w", op, spec.DatabaseID, err)
+		if err != nil {
+			return nil, fmt.Errorf("%s: resolve database %q: %w", op, spec.DatabaseID, err)
+		}
+		if pool == nil {
+			return nil, fmt.Errorf("%s: resolved pool is nil for database %q", op, spec.DatabaseID)
 		}
 
 		loader := catalogpg.NewLoader(pool)
 		provider := catalogpg.NewCatalogProvider(loader)
 
-		return flow.NewServiceWithCatalogProvider(nil, provider), nil
+		repo := catalogpg.NewRepository(pool)
+		categories := catalogservice.New(repo)
+		creator := newFlowCategoryCreator(categories)
+
+		return flow.NewServiceWithDeps(nil, provider, creator), nil
 	}
 }

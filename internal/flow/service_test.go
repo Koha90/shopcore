@@ -447,10 +447,11 @@ func TestStart_InlineCatalog_UsesProvidedCatalogRoot(t *testing.T) {
 	require.Equal(t, ActionID("catalog:select:city:custom-city"), vm.Inline.Sections[0].Actions[0].ID)
 
 	require.Equal(t, 1, vm.Inline.Sections[1].Columns)
-	require.Len(t, vm.Inline.Sections[1].Actions, 3)
+	require.Len(t, vm.Inline.Sections[1].Actions, 4)
 	require.Equal(t, ActionBalanceOpen, vm.Inline.Sections[1].Actions[0].ID)
 	require.Equal(t, ActionBotsMine, vm.Inline.Sections[1].Actions[1].ID)
 	require.Equal(t, ActionOrderLast, vm.Inline.Sections[1].Actions[2].ID)
+	require.Equal(t, ActionAdminOpen, vm.Inline.Sections[1].Actions[3].ID)
 }
 
 func TestHandleAction_CatalogStart_UsesProvidedCatalogRootInCompactMode(t *testing.T) {
@@ -801,7 +802,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
 
 	require.True(t, creator.called)
-	require.Equal(t, "Цветы", creator.params.Code)
+	require.Equal(t, "tsvety", creator.params.Code)
 	require.Equal(t, "Цветы", creator.params.Name)
 
 	session, ok := store.Get(key)
@@ -810,7 +811,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 	require.Equal(t, PendingInputNone, session.Pending.Kind)
 }
 
-func TestHandleText_AdminCategoryCreate_CreateError_KeepsPending(t *testing.T) {
+func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
@@ -851,12 +852,14 @@ func TestHandleText_AdminCategoryCreate_CreateError_KeepsPending(t *testing.T) {
 		SessionKey:    key,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Новая категория\n\nНе удалось создать категорию. Попробуйте другое название.\n\nВведите название категории сообщением.", vm.Text)
+	require.Equal(t, "Новая категория\n\nНе удалось создать категорию с автоматическим code.\n\nВведите code категории сообщением.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
-	require.Equal(t, ScreenAdminCategoryCreate, session.Current)
-	require.Equal(t, PendingInputCategoryName, session.Pending.Kind)
+	require.Equal(t, ScreenAdminCategoryCode, session.Current)
+	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
+	require.Equal(t, "Цветы", session.Pending.Value(PendingValueName))
+	require.Equal(t, "tsvety", session.Pending.Value(PendingValueCode))
 }
 
 func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
@@ -980,7 +983,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 	require.NoError(t, err)
 
 	require.True(t, creator.called)
-	require.Equal(t, "Цветы", creator.params.Code)
+	require.Equal(t, "tsvety", creator.params.Code)
 	require.Equal(t, "Цветы", creator.params.Name)
 }
 
@@ -997,4 +1000,230 @@ func TestPendingInput_SetValueAndValue(t *testing.T) {
 
 	require.True(t, pending.Active())
 	require.Equal(t, "Цветы", pending.Value(PendingValueName))
+}
+
+func openAdminCategoryCreate(t *testing.T, svc *Service, key SessionKey) {
+	t.Helper()
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCatalogOpen,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminCategoryCreateStart,
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+}
+
+func TestHandleText_AdminCategoryCreate_AutoCodeSuccess(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	openAdminCategoryCreate(t, svc, key)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "Цветы",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
+
+	require.True(t, creator.called)
+	require.Equal(t, "tsvety", creator.params.Code)
+	require.Equal(t, "Цветы", creator.params.Name)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreateDone, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
+
+func TestHandleText_AdminCategoryCreate_AutoCodeFailure_OpensManualCodeInput(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{
+		err: errors.New("duplicate category code"),
+	}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	openAdminCategoryCreate(t, svc, key)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "Тестовая категория",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНе удалось создать категорию с автоматическим code.\n\nВведите code категории сообщением.", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCode, session.Current)
+	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
+	require.Equal(t, "Тестовая категория", session.Pending.Value(PendingValueName))
+	require.Equal(t, "testovaya-kategoriya", session.Pending.Value(PendingValueCode))
+}
+
+func TestHandleText_AdminCategoryCreate_EmptySuggestedCode_OpensManualCodeInput(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	openAdminCategoryCreate(t, svc, key)
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "!!!",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНе удалось автоматически подобрать code.\n\nВведите code категории сообщением.", vm.Text)
+
+	require.False(t, creator.called)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCode, session.Current)
+	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
+	require.Equal(t, "!!!", session.Pending.Value(PendingValueName))
+	require.Equal(t, "", session.Pending.Value(PendingValueCode))
+}
+
+func TestHandleText_AdminCategoryCode_EmptyTextKeepsPending(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	store.Put(key, Session{
+		Current: ScreenAdminCategoryCode,
+		History: []ScreenID{ScreenAdminCatalog},
+		Pending: PendingInput{
+			Kind: PendingInputCategoryCode,
+			Payload: PendingInputPayload{
+				PendingValueName: "Цветы",
+			},
+		},
+	})
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "   ",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nCode категории не может быть пустым.\n\nВведите code категории сообщением.", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCode, session.Current)
+	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
+	require.Equal(t, "Цветы", session.Pending.Value(PendingValueName))
+}
+
+func TestHandleText_AdminCategoryCode_Success_UsesManualCode(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	store.Put(key, Session{
+		Current: ScreenAdminCategoryCode,
+		History: []ScreenID{ScreenAdminCatalog},
+		Pending: PendingInput{
+			Kind: PendingInputCategoryCode,
+			Payload: PendingInputPayload{
+				PendingValueName: "Цветы",
+			},
+		},
+	})
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "flowers-manual",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
+
+	require.True(t, creator.called)
+	require.Equal(t, "flowers-manual", creator.params.Code)
+	require.Equal(t, "Цветы", creator.params.Name)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCreateDone, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+}
+
+func TestHandleText_AdminCategoryCode_CreateError_KeepsPending(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	creator := &categoryCreatorStub{
+		err: errors.New("duplicate category code"),
+	}
+	svc := NewServiceWithDeps(store, nil, creator)
+	key := testSessionKey("shop-admin")
+
+	store.Put(key, Session{
+		Current: ScreenAdminCategoryCode,
+		History: []ScreenID{ScreenAdminCatalog},
+		Pending: PendingInput{
+			Kind: PendingInputCategoryCode,
+			Payload: PendingInputPayload{
+				PendingValueName: "Цветы",
+			},
+		},
+	})
+
+	vm, err := svc.HandleText(context.Background(), TextRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		Text:          "flowers-manual",
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Новая категория\n\nНе удалось создать категорию. Попробуйте другой code.\n\nВведите code категории сообщением.", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminCategoryCode, session.Current)
+	require.Equal(t, PendingInputCategoryCode, session.Pending.Kind)
+	require.Equal(t, "Цветы", session.Pending.Value(PendingValueName))
+	require.Equal(t, "flowers-manual", session.Pending.Value(PendingValueCode))
 }

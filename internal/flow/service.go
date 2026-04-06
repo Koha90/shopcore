@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"strings"
+
+	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 )
 
 var (
@@ -238,8 +240,8 @@ func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 // If no pending input exists, the current screen is rendered again.
 // If pending input exists, text is handled as a continuation of that flow step.
 //
-// Current E3.3 behavior uses pending input state with with continuation payload.
-// Current E3.2 behavior supports admin category creation through CategoryCreator.
+// Current behavior supports admin category creation with automatic code
+// suggestion and manual code fallback.
 func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, error) {
 	catalog, err := s.provider.Catalog(ctx)
 	if err != nil {
@@ -268,16 +270,68 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		session.Pending.SetValue(PendingValueName, name)
 
+		suggestedCode := catalogservice.SuggestCategoryCode(name)
+		if suggestedCode == "" {
+			session.Current = ScreenAdminCategoryCode
+			session.Pending.Kind = PendingInputCategoryCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminCategoryCodeInputView(
+				"Не удалось автоматически подобрать code.",
+				"",
+			), nil
+		}
+
+		session.Pending.SetValue(PendingValueCode, suggestedCode)
+
 		if s.categories == nil {
 			return ViewModel{}, errors.New("flow category creator is nil")
 		}
 
 		err := s.categories.CreateCategory(ctx, CreateCategoryParams{
-			Code: session.Pending.Value(PendingValueName),
-			Name: session.Pending.Value(PendingValueName),
+			Code: suggestedCode,
+			Name: name,
 		})
 		if err != nil {
-			return buildAdminCategoryCreateInputView("Не удалось создать категорию. Попробуйте другое название."), nil
+			session.Current = ScreenAdminCategoryCode
+			session.Pending.Kind = PendingInputCategoryCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminCategoryCodeInputView(
+				"Не удалось создать категорию с автоматическим code.",
+				"",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminCategoryCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current), nil
+
+	case PendingInputCategoryCode:
+		code := strings.TrimSpace(req.Text)
+		if code == "" {
+			return buildAdminCategoryCodeInputView("Code категории не может быть пустым.", ""), nil
+		}
+
+		name := strings.TrimSpace(session.Pending.Value(PendingValueName))
+		if name == "" {
+			return ViewModel{}, errors.New("pending category name is empty")
+		}
+
+		session.Pending.SetValue(PendingValueCode, code)
+
+		if s.categories == nil {
+			return ViewModel{}, errors.New("flow category creator is nil")
+		}
+
+		err := s.categories.CreateCategory(ctx, CreateCategoryParams{
+			Code: session.Pending.Value(PendingValueCode),
+			Name: name,
+		})
+		if err != nil {
+			return buildAdminCategoryCodeInputView("Не удалось создать категорию. Попробуйте другой code.", code), nil
 		}
 
 		session.Pending = PendingInput{}
@@ -548,6 +602,9 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID) ViewModel {
 	case ScreenAdminCategoryCreate:
 		return buildAdminCategoryCreateInputView("")
 
+	case ScreenAdminCategoryCode:
+		return buildAdminCategoryCodeInputView("", "")
+
 	case ScreenAdminCategoryCreateDone:
 		return buildAdminCategoryCreateDoneView()
 	}
@@ -608,6 +665,31 @@ func buildAdminCategoryCreateInputView(validation string) ViewModel {
 	text := "Новая категория\n\nВведите название категории сообщением."
 	if validation != "" {
 		text = "Новая категория\n\n" + validation + "\n\nВведите название категории сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminCategoryCodeInputView(validation, suggested string) ViewModel {
+	text := "Новая категория\n\nВведите code категрии сообщением."
+	if suggested != "" {
+		text = "Новая категория\n\nАвто-код: " + suggested + "\n\nВведите code категории сообщением."
+	}
+	if validation != "" {
+		text = "Новая категория\n\n" + validation + "\n\nВведите code категории сообщением."
 	}
 
 	return ViewModel{
