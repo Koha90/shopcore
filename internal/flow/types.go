@@ -103,6 +103,7 @@ type StartRequest struct {
 	BotName       string
 	StartScenario string
 	SessionKey    SessionKey
+	CanAdmin      bool
 }
 
 // ActionRequest contains data required to resolve the next screen after action.
@@ -112,6 +113,7 @@ type ActionRequest struct {
 	StartScenario string
 	ActionID      ActionID
 	SessionKey    SessionKey
+	CanAdmin      bool
 }
 
 // TextRequest contains data required to resolve a text message in current flow.
@@ -121,4 +123,5 @@ type TextRequest struct {
 	StartScenario string
 	Text          string
 	SessionKey    SessionKey
+	CanAdmin      bool
 }
