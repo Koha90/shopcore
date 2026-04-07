@@ -42,10 +42,18 @@ func buildRunner(
 
 	flowFactory := bootstrap.NewTelegramFlowFactory(poolRegistry)
 
-	runner := telegram.NewRunnerWithFlowFactory(
+	adminAccess := telegram.StaticAdminAccessResolver{
+		Allow: map[string]map[int64]struct{}{
+			"shop-main": {
+				311485249: {},
+			},
+		},
+	}
+	runner := telegram.NewRunnerWithDeps(
 		tgCfg,
 		runtimeLog,
 		flowFactory,
+		adminAccess,
 	)
 
 	return runner, nil
