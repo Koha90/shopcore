@@ -134,6 +134,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					token := value
 					m.resetTextInput()
 					return m, updateBotTokenCmd(m.config, m.selectedID(), token)
+
+				case InputModeEditTelegramAdminUserIDs:
+					m.editForm.TelegramAdminUserIDs = value
+					m.editDirty = true
+					m.resetTextInput()
+					m.message = "telegram admin user ids updated"
+					m.lastErr = nil
+					return m, nil
 				}
 			}
 
@@ -246,6 +254,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.SetValue(m.editForm.Name)
 					m.textInput.Focus()
 					m.message = "editing name (enter to apply, esc to cancel)"
+					m.lastErr = nil
+					return m, nil
+				}
+				if m.editCursor == EditFieldTelegramAdminUserIDs {
+					m.textInput = newTextInput()
+					m.inputMode = InputModeEditTelegramAdminUserIDs
+					m.textInput.SetValue(m.editForm.TelegramAdminUserIDs)
+					m.textInput.Focus()
+					m.message = "editing telegram admin user ids (enter to apply, esc to cancel)"
 					m.lastErr = nil
 					return m, nil
 				}
@@ -516,10 +533,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.selectedBotConfigLoading = false
 
 		m.editForm = BotConfigEditForm{
-			Name:          cfg.Name,
-			IsEnabled:     cfg.IsEnabled,
-			DatabaseID:    cfg.DatabaseID,
-			StartScenario: cfg.StartScenario,
+			Name:                 cfg.Name,
+			IsEnabled:            cfg.IsEnabled,
+			DatabaseID:           cfg.DatabaseID,
+			StartScenario:        cfg.StartScenario,
+			TelegramAdminUserIDs: formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs),
 		}
 		m.editCursor = EditFieldName
 		m.editDirty = false

@@ -90,13 +90,22 @@ func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) t
 			}
 		}
 
-		err := cfg.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-			ID:            id,
-			Name:          form.Name,
-			Token:         nil,
-			DatabaseID:    form.DatabaseID,
-			StartScenario: form.StartScenario,
-			IsEnabled:     form.IsEnabled,
+		ids, err := parseTelegramAdminUserIDs(form.TelegramAdminUserIDs)
+		if err != nil {
+			return botConfigSavedMsg{
+				id:  id,
+				err: err,
+			}
+		}
+
+		err = cfg.UpdateBot(context.Background(), botconfig.UpdateBotParams{
+			ID:                   id,
+			Name:                 form.Name,
+			Token:                nil,
+			DatabaseID:           form.DatabaseID,
+			StartScenario:        form.StartScenario,
+			TelegramAdminUserIDs: ids,
+			IsEnabled:            form.IsEnabled,
 		})
 
 		return botConfigSavedMsg{
@@ -176,11 +185,12 @@ func syncRuntimeSpecCmd(cfg BotConfigService, mgr BotManager, id string) tea.Cmd
 		}
 
 		err = mgr.UpdateSpec(manager.BotSpec{
-			ID:            view.ID,
-			Name:          view.Name,
-			Token:         token,
-			DatabaseID:    view.DatabaseID,
-			StartScenario: view.StartScenario,
+			ID:                   view.ID,
+			Name:                 view.Name,
+			Token:                token,
+			DatabaseID:           view.DatabaseID,
+			StartScenario:        view.StartScenario,
+			TelegramAdminUserIDs: view.TelegramAdminUserIDs,
 		})
 
 		return runtimeSpecSyncedMsg{

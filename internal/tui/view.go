@@ -296,6 +296,7 @@ func (m Model) renderDetails() string {
 			lines = append(lines, renderKeyValue(labelWidth, "Token", cfg.TokenMasked))
 			lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
 			lines = append(lines, renderKeyValue(labelWidth, "Scenario", cfg.StartScenario))
+			lines = append(lines, renderKeyValue(labelWidth, "Admin IDs", formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs)))
 			lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		}
 
@@ -370,6 +371,7 @@ func (m Model) renderBotConfig() string {
 		lines = append(lines, renderKeyValue(labelWidth, "Database ID", cfg.DatabaseID))
 		lines = append(lines, renderKeyValue(labelWidth, "Database", cfg.DatabaseName))
 		lines = append(lines, renderKeyValue(labelWidth, "Start Scenario", cfg.StartScenario))
+		lines = append(lines, renderKeyValue(labelWidth, "Admin IDs", formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs)))
 		lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		lines = append(lines, renderKeyValue(labelWidth, "Updated", cfg.UpdatedAt.Format(time.DateTime)))
 	}
@@ -401,6 +403,7 @@ func (m Model) renderEditBotConfig() string {
 		{EditFieldEnabled, "Enabled", fmt.Sprintf("%t", m.editForm.IsEnabled)},
 		{EditFieldDatabase, "Database ID", m.editForm.DatabaseID},
 		{EditFieldStartScenario, "Start Scenario", m.editForm.StartScenario},
+		{EditFieldTelegramAdminUserIDs, "Admin IDs", m.editForm.TelegramAdminUserIDs},
 		{EditFieldSave, "Save", ""},
 		{EditFieldCancel, "Cancel", ""},
 	}
@@ -411,6 +414,9 @@ func (m Model) renderEditBotConfig() string {
 		value := row.value
 
 		if row.field == EditFieldName && m.inputMode == InputModeEditName {
+			value = m.textInput.View()
+		}
+		if row.field == EditFieldTelegramAdminUserIDs && m.inputMode == InputModeEditTelegramAdminUserIDs {
 			value = m.textInput.View()
 		}
 

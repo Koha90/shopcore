@@ -51,6 +51,7 @@ const (
 	InputModeNone InputMode = iota
 	InputModeEditName
 	InputModeEditToken
+	InputModeEditTelegramAdminUserIDs
 )
 
 type BotRow struct {
@@ -100,10 +101,11 @@ type Summary struct {
 
 // BotConfigEditForm represents editable bot configuration fields in TUI.
 type BotConfigEditForm struct {
-	Name          string
-	IsEnabled     bool
-	DatabaseID    string
-	StartScenario string
+	Name                 string
+	IsEnabled            bool
+	DatabaseID           string
+	StartScenario        string
+	TelegramAdminUserIDs string
 }
 
 // EditField identifies currently selected field in bot config edit screen.
@@ -114,6 +116,7 @@ const (
 	EditFieldEnabled
 	EditFieldDatabase
 	EditFieldStartScenario
+	EditFieldTelegramAdminUserIDs
 	EditFieldSave
 	EditFieldCancel
 )
