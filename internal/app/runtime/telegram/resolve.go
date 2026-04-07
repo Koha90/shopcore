@@ -23,7 +23,7 @@ func (r *Runner) resolveStartView(
 		return flow.ViewModel{}, errors.New("telegram message sender is nil")
 	}
 
-	canAdmin := r.canAdminTelegram(spec.ID, msg.From.ID)
+	canAdmin := r.canAdminTelegram(spec, msg.From.ID)
 
 	return svc.Start(ctx, buildStartRequest(spec, msg, canAdmin))
 }
@@ -46,7 +46,7 @@ func (r *Runner) resolveReplyView(
 		return flow.ViewModel{}, false, nil
 	}
 
-	canAdmin := r.canAdminTelegram(spec.ID, msg.From.ID)
+	canAdmin := r.canAdminTelegram(spec, msg.From.ID)
 
 	vm, err := svc.HandleAction(
 		ctx,
@@ -74,7 +74,7 @@ func (r *Runner) resolveCallbackView(
 		return flow.ViewModel{}, "", false, nil
 	}
 
-	canAdmin := r.canAdminTelegram(spec.ID, cq.From.ID)
+	canAdmin := r.canAdminTelegram(spec, cq.From.ID)
 
 	vm, err := svc.HandleAction(
 		ctx,
