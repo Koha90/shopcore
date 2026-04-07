@@ -24,11 +24,12 @@ type Runner struct {
 	cfg         Config
 	log         *slog.Logger
 	flowFactory FlowServiceFactory
+	adminAccess AdminAccessResolver
 }
 
 // NewRunner cunstructs Telegram runtime runner with default flow wiring.
 func NewRunner(cfg Config, log *slog.Logger) *Runner {
-	return NewRunnerWithFlowFactory(cfg, log, nil)
+	return NewRunnerWithDeps(cfg, log, nil, nil)
 }
 
 // NewRunnerWithFlowFactory constructs Telegram runtime runner
@@ -37,6 +38,18 @@ func NewRunner(cfg Config, log *slog.Logger) *Runner {
 // This constructor is intended for tests and future wiring with
 // per-bot catalog providers.
 func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceFactory) *Runner {
+	return NewRunnerWithDeps(cfg, log, factory, nil)
+}
+
+// NewRunnerWithDeps constructs Telegram runtime runner with explicit runtime dependecies.
+//
+// It allows wiring a custom flow factory and Telegram admin access resolver.
+func NewRunnerWithDeps(
+	cfg Config,
+	log *slog.Logger,
+	factory FlowServiceFactory,
+	adminAccess AdminAccessResolver,
+) *Runner {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -50,6 +63,7 @@ func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceF
 		cfg:         cfg,
 		log:         log,
 		flowFactory: factory,
+		adminAccess: normalizeAdminAccessResolver(adminAccess),
 	}
 }
 

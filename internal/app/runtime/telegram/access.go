@@ -17,3 +17,19 @@ type DenyAllAdminAccessResolver struct{}
 func (DenyAllAdminAccessResolver) CanAdminTelegram(botID string, userID int64) bool {
 	return false
 }
+
+func normalizeAdminAccessResolver(r AdminAccessResolver) AdminAccessResolver {
+	if r == nil {
+		return DenyAllAdminAccessResolver{}
+	}
+
+	return r
+}
+
+func (r *Runner) canAdminTelegram(botID string, userID int64) bool {
+	if r == nil || r.adminAccess == nil {
+		return false
+	}
+
+	return r.adminAccess.CanAdminTelegram(botID, userID)
+}
