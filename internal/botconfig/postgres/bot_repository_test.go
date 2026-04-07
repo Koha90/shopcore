@@ -99,13 +99,18 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	err = repo.Save(ctx, bot)
 	require.NoError(t, err)
 
+	firstSaved, err := repo.ByID(ctx, bot.ID)
+	require.NoError(t, err)
+	require.NotNil(t, firstSaved)
+
+	firstUpdatedAt := firstSaved.UpdatedAt
+
 	// Update the same entity and save again.
 	bot.Name = "Shop Main Renamed"
 	bot.Token = "123456:demo-token-updated"
 	bot.DatabaseID = "analytics-db"
 	bot.StartScenario = "Updated Start Scenario"
 	bot.IsEnabled = false
-	bot.UpdatedAt = now.Add(time.Minute)
 
 	err = repo.Save(ctx, bot)
 	require.NoError(t, err)
@@ -119,7 +124,7 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	require.Equal(t, "analytics-db", got.DatabaseID)
 	require.Equal(t, "Updated Start Scenario", got.StartScenario)
 	require.False(t, got.IsEnabled)
-	require.WithinDuration(t, bot.UpdatedAt, got.UpdatedAt, time.Second)
+	require.True(t, got.UpdatedAt.After(firstUpdatedAt) || got.UpdatedAt.Equal(firstUpdatedAt))
 }
 
 // TestBotRepository_List verifies that repository returns all bots

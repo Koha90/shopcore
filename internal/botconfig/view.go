@@ -4,14 +4,15 @@ import "time"
 
 // BotView is safe bot configuration view for operator interfaces.
 type BotView struct {
-	ID            string
-	Name          string
-	TokenMasked   string
-	DatabaseID    string
-	DatabaseName  string
-	StartScenario string
-	IsEnabled     bool
-	UpdatedAt     time.Time
+	ID                   string
+	Name                 string
+	TokenMasked          string
+	DatabaseID           string
+	DatabaseName         string
+	StartScenario        string
+	TelegramAdminUserIDs []int64
+	IsEnabled            bool
+	UpdatedAt            time.Time
 }
 
 // DatabaseProfileView is safe database profile view for operator interfaces.

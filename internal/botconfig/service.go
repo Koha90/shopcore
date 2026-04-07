@@ -131,13 +131,14 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 	}
 
 	bot := &BotConfig{
-		ID:            params.ID,
-		Name:          params.Name,
-		Token:         params.Token,
-		DatabaseID:    params.DatabaseID,
-		StartScenario: params.StartScenario,
-		IsEnabled:     params.IsEnabled,
-		UpdatedAt:     time.Now(),
+		ID:                   params.ID,
+		Name:                 params.Name,
+		Token:                params.Token,
+		DatabaseID:           params.DatabaseID,
+		StartScenario:        params.StartScenario,
+		TelegramAdminUserIDs: params.TelegramAdminUserIDs,
+		IsEnabled:            params.IsEnabled,
+		UpdatedAt:            time.Now(),
 	}
 
 	return s.bots.Save(ctx, bot)
@@ -175,6 +176,7 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 	bot.DatabaseID = params.DatabaseID
 	bot.StartScenario = params.StartScenario
 	bot.IsEnabled = params.IsEnabled
+	bot.TelegramAdminUserIDs = params.TelegramAdminUserIDs
 	bot.UpdatedAt = time.Now()
 
 	if params.Token != nil {

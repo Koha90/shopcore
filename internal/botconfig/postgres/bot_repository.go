@@ -19,17 +19,23 @@ type BotRepository struct {
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
 		INSERT INTO bot_configs (
-			id, name, token, database_id, start_scenario, is_enabled, updated_at
+			id, name, token, database_id, start_scenario, telegram_admin_user_ids, is_enabled, updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp())
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			token = EXCLUDED.token,
 			database_id = EXCLUDED.database_id,
 			start_scenario = EXCLUDED.start_scenario,
+			telegram_admin_user_ids = EXCLUDED.telegram_admin_user_ids,
 			is_enabled = EXCLUDED.is_enabled,
-			updated_at = EXCLUDED.updated_at
+			updated_at = clock_timestamp()
 	`
+
+	adminUserIDs := cfg.TelegramAdminUserIDs
+	if adminUserIDs == nil {
+		adminUserIDs = []int64{}
+	}
 
 	_, err := r.pool.Exec(
 		ctx,
@@ -39,8 +45,8 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 		cfg.Token,
 		cfg.DatabaseID,
 		cfg.StartScenario,
+		adminUserIDs,
 		cfg.IsEnabled,
-		cfg.UpdatedAt,
 	)
 	return err
 }
@@ -48,7 +54,15 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 // ByID returns bot config by ID.
 func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConfig, error) {
 	const q = `
-		SELECT id, name, token, database_id, start_scenario, is_enabled, updated_at
+		SELECT
+			id,
+			name,
+			token,
+			database_id,
+			start_scenario,
+			telegram_admin_user_ids,
+			is_enabled,
+			updated_at
 		FROM bot_configs
 		WHERE id = $1
 	`
@@ -60,6 +74,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 		&bot.Token,
 		&bot.DatabaseID,
 		&bot.StartScenario,
+		&bot.TelegramAdminUserIDs,
 		&bot.IsEnabled,
 		&bot.UpdatedAt,
 	)
@@ -76,7 +91,15 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 // List returns all bot configs sorted by ID.
 func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error) {
 	const q = `
-		SELECT id, name, token, database_id, start_scenario, is_enabled, updated_at
+		SELECT 
+			id,
+			name,
+			token,
+			database_id,
+			start_scenario,
+			telegram_admin_user_ids,
+			is_enabled,
+			updated_at
 		FROM bot_configs
 		ORDER BY id
 	`
@@ -96,6 +119,7 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			&bot.Token,
 			&bot.DatabaseID,
 			&bot.StartScenario,
+			&bot.TelegramAdminUserIDs,
 			&bot.IsEnabled,
 			&bot.UpdatedAt,
 		); err != nil {

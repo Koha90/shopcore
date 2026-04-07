@@ -7,6 +7,7 @@ create table if not exists bot_configs (
     on update restrict
     on delete restrict,
   start_scenario text not null default 'reply_welcome',
+  telegram_admin_user_ids bigint[] not null default '{}',
   is_enabled boolean not null default true,
   updated_at timestamptz not null default now()
 );

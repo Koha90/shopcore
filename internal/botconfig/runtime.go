@@ -10,12 +10,13 @@ import (
 // This model is internal-facing. Unlike BotView, it includes raw token becouse
 // runtime bootstrap mus be able to start real bot processes.
 type RuntimeBot struct {
-	ID            string
-	Name          string
-	Token         string
-	DatabaseID    string
-	StartScenario string
-	IsEnabled     bool
+	ID                   string
+	Name                 string
+	Token                string
+	DatabaseID           string
+	TelegramAdminUserIDs []int64
+	StartScenario        string
+	IsEnabled            bool
 }
 
 // RuntimePort defines internal bot runtime bootstrap use cases.
@@ -43,12 +44,13 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 		}
 
 		result = append(result, RuntimeBot{
-			ID:            bot.ID,
-			Name:          bot.Name,
-			Token:         bot.Token,
-			StartScenario: bot.StartScenario,
-			DatabaseID:    bot.DatabaseID,
-			IsEnabled:     bot.IsEnabled,
+			ID:                   bot.ID,
+			Name:                 bot.Name,
+			Token:                bot.Token,
+			StartScenario:        bot.StartScenario,
+			DatabaseID:           bot.DatabaseID,
+			TelegramAdminUserIDs: bot.TelegramAdminUserIDs,
+			IsEnabled:            bot.IsEnabled,
 		})
 	}
 
