@@ -20,6 +20,10 @@ func messageSessionKey(botID string, msg *models.Message) flow.SessionKey {
 }
 
 func callbackSessionKey(botID string, cq *models.CallbackQuery) flow.SessionKey {
+	if cq == nil {
+		return flow.SessionKey{BotID: botID}
+	}
+
 	var chatID int64
 
 	switch cq.Message.Type {

@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-telegram/bot/models"
 
@@ -15,7 +16,16 @@ func (r *Runner) resolveStartView(
 	spec manager.BotSpec,
 	msg *models.Message,
 ) (flow.ViewModel, error) {
-	return svc.Start(ctx, buildStartRequest(spec, msg))
+	if msg == nil {
+		return flow.ViewModel{}, errors.New("telegram message is nil")
+	}
+	if msg.From == nil {
+		return flow.ViewModel{}, errors.New("telegram message sender is nil")
+	}
+
+	canAdmin := r.canAdminTelegram(spec.ID, msg.From.ID)
+
+	return svc.Start(ctx, buildStartRequest(spec, msg, canAdmin))
 }
 
 func (r *Runner) resolveReplyView(
@@ -24,14 +34,23 @@ func (r *Runner) resolveReplyView(
 	spec manager.BotSpec,
 	msg *models.Message,
 ) (flow.ViewModel, bool, error) {
+	if msg == nil {
+		return flow.ViewModel{}, false, errors.New("telegram message is nil")
+	}
+	if msg.From == nil {
+		return flow.ViewModel{}, false, errors.New("telegram message sender is nil")
+	}
+
 	actionID, ok := svc.ResolveReplyAction(msg.Text)
 	if !ok {
 		return flow.ViewModel{}, false, nil
 	}
 
+	canAdmin := r.canAdminTelegram(spec.ID, msg.From.ID)
+
 	vm, err := svc.HandleAction(
 		ctx,
-		buildMessageActionRequest(spec, msg, actionID),
+		buildMessageActionRequest(spec, msg, actionID, canAdmin),
 	)
 	if err != nil {
 		return flow.ViewModel{}, true, err
@@ -46,18 +65,40 @@ func (r *Runner) resolveCallbackView(
 	spec manager.BotSpec,
 	cq *models.CallbackQuery,
 ) (flow.ViewModel, flow.ActionID, bool, error) {
+	if cq == nil {
+		return flow.ViewModel{}, "", false, errors.New("telegram callback query is nil")
+	}
+
 	actionID, ok := decodeActionID(cq.Data)
 	if !ok {
 		return flow.ViewModel{}, "", false, nil
 	}
 
+	canAdmin := r.canAdminTelegram(spec.ID, cq.From.ID)
+
 	vm, err := svc.HandleAction(
 		ctx,
-		buildCallbackActionRequest(spec, cq, actionID),
+		buildCallbackActionRequest(spec, cq, actionID, canAdmin),
 	)
 	if err != nil {
 		return flow.ViewModel{}, actionID, true, err
 	}
 
 	return vm, actionID, true, nil
+}
+
+func messageUserID(msg *models.Message) (int64, bool) {
+	if msg == nil || msg.From == nil {
+		return 0, false
+	}
+
+	return msg.From.ID, true
+}
+
+func callbackUserID(cq *models.CallbackQuery) (int64, bool) {
+	if cq == nil {
+		return 0, false
+	}
+
+	return cq.From.ID, true
 }

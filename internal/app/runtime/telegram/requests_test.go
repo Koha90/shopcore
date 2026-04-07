@@ -26,7 +26,7 @@ func TestBuildStartRequest(t *testing.T) {
 		},
 	}
 
-	got := buildStartRequest(spec, msg)
+	got := buildStartRequest(spec, msg, false)
 
 	require.Equal(t, flow.StartRequest{
 		BotID:         "bot-1",
@@ -58,7 +58,7 @@ func TestBuildMessageActionRequest(t *testing.T) {
 
 	action := flow.ActionID("catalog:select:city:moscow")
 
-	got := buildMessageActionRequest(spec, msg, action)
+	got := buildMessageActionRequest(spec, msg, action, false)
 
 	require.Equal(t, flow.ActionRequest{
 		BotID:         "bot-2",
@@ -94,7 +94,7 @@ func TestBuildCallbackActionRequest_AccessibleMessage(t *testing.T) {
 		},
 	}
 
-	got := buildCallbackActionRequest(spec, cq, flow.ActionBack)
+	got := buildCallbackActionRequest(spec, cq, flow.ActionBack, false)
 
 	require.Equal(t, flow.ActionRequest{
 		BotID:         "bot-3",
@@ -133,7 +133,7 @@ func TestBuildCallbackActionRequest_InaccessibleMessage(t *testing.T) {
 
 	action := flow.ActionID("catalog:select:city:moscow")
 
-	got := buildCallbackActionRequest(spec, cq, action)
+	got := buildCallbackActionRequest(spec, cq, action, false)
 
 	require.Equal(t, flow.ActionRequest{
 		BotID:         "bot-4",

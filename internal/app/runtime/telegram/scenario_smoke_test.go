@@ -37,7 +37,7 @@ func TestScenarioReplyWelcome_HistoryBack(t *testing.T) {
 
 	svc := flow.NewService(nil)
 
-	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg))
+	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg, false))
 	require.NoError(t, err)
 	require.Equal(t, "Добро пожаловать 👋\nВыберите раздел:", startVM.Text)
 	require.NotNil(t, startVM.Reply)
@@ -116,7 +116,7 @@ func TestScenarioInlineCatalog_HistoryBack(t *testing.T) {
 
 	svc := flow.NewService(nil)
 
-	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg))
+	startVM, err := svc.Start(ctx, buildStartRequest(spec, msg, false))
 	require.NoError(t, err)
 	require.Equal(t, "Каталог\n\nВыберите раздел:", startVM.Text)
 	require.NotNil(t, startVM.Inline)
