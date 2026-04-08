@@ -34,6 +34,9 @@ const (
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
 	ScreenAdminCategoryCode       ScreenID = "admin_category_code"
 	ScreenAdminCategoryCreateDone ScreenID = "admin_category_create_done"
+	ScreenAdminCityCreate         ScreenID = "admin_city_create"
+	ScreenAdminCityCode           ScreenID = "admin_city_code"
+	ScreenAdminCityCreateDone     ScreenID = "admin_city_create_done"
 )
 
 // PendingInputKind identifies which text input flow currently expects.
@@ -43,6 +46,8 @@ const (
 	PendingInputNone         PendingInputKind = ""
 	PendingInputCategoryName PendingInputKind = "category_name"
 	PendingInputCategoryCode PendingInputKind = "category_code"
+	PendingInputCityName     PendingInputKind = "city_name"
+	PendingInputCityCode     PendingInputKind = "city_code"
 )
 
 const (

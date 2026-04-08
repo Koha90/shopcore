@@ -9,7 +9,7 @@ import (
 //
 // The function uses a small built-in Cyrillic transliteration table and
 // converts separators into dash-delimited ASCII slug form.
-func SuggestCategoryCode(name string) string {
+func SuggestCode(name string) string {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return ""

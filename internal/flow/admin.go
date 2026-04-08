@@ -17,3 +17,14 @@ type CreateCategoryParams struct {
 	Code string
 	Name string
 }
+
+// CityCreator defines the admin write use case required by flow.
+type CityCreator interface {
+	CreateCity(ctx context.Context, params CreateCityParams) error
+}
+
+// CreateCityParams contains data required by flow admin city creation.
+type CreateCityParams struct {
+	Code string
+	Name string
+}

@@ -45,6 +45,7 @@ const (
 	ActionAdminOpen                ActionID = "admin:open"
 	ActionAdminCatalogOpen         ActionID = "admin:catalog:open"
 	ActionAdminCategoryCreateStart ActionID = "admin:category:create:start"
+	ActionAdminCityCreateStart     ActionID = "admin:city:create:start"
 
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"

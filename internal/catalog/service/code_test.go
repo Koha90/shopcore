@@ -55,7 +55,7 @@ func TestSuggestCategoryCode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := SuggestCategoryCode(tt.in)
+			got := SuggestCode(tt.in)
 			require.Equal(t, tt.want, got)
 		})
 	}
