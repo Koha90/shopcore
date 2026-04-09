@@ -28,3 +28,16 @@ type CreateCityParams struct {
 	Code string
 	Name string
 }
+
+// CityListItem contains one city option for admin selection flows.
+type CityListItem struct {
+	ID    int
+	Code  string
+	Label string
+}
+
+// CityLister defines the admin read use case required by flow
+// to select an existing city before nested catalog creation steps.
+type CityLister interface {
+	ListCities(ctx context.Context) ([]CityListItem, error)
+}

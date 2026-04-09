@@ -9,15 +9,22 @@ import (
 
 // flowCatalogAdminAdapter adapts catalog application service to flow admin ports.
 type flowCatalogAdminAdapter struct {
-	svc *catalogservice.Service
+	svc    *catalogservice.Service
+	cities flow.CityLister
 }
 
-func newFlowCatalogAdminAdapter(svc *catalogservice.Service) *flowCatalogAdminAdapter {
-	if svc == nil {
+func newFlowCatalogAdminAdapter(
+	svc *catalogservice.Service,
+	cities flow.CityLister,
+) *flowCatalogAdminAdapter {
+	if svc == nil && cities == nil {
 		return nil
 	}
 
-	return &flowCatalogAdminAdapter{svc: svc}
+	return &flowCatalogAdminAdapter{
+		svc:    svc,
+		cities: cities,
+	}
 }
 
 func (a *flowCatalogAdminAdapter) CreateCategory(ctx context.Context, params flow.CreateCategoryParams) error {
@@ -32,4 +39,12 @@ func (a *flowCatalogAdminAdapter) CreateCity(ctx context.Context, params flow.Cr
 		Code: params.Code,
 		Name: params.Name,
 	})
+}
+
+func (a *flowCatalogAdminAdapter) ListCities(ctx context.Context) ([]flow.CityListItem, error) {
+	if a == nil || a.cities == nil {
+		return nil, nil
+	}
+
+	return a.cities.ListCities(ctx)
 }
