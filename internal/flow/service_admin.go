@@ -359,6 +359,7 @@ func isAdminPending(kind PendingInputKind) bool {
 	switch kind {
 	case PendingInputCategoryName,
 		PendingInputCategoryCode,
+		PendingInputCityName,
 		PendingInputCityCode,
 		PendingInputDistrictName,
 		PendingInputDistrictCode:

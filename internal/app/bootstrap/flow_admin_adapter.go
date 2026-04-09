@@ -48,3 +48,11 @@ func (a *flowCatalogAdminAdapter) ListCities(ctx context.Context) ([]flow.CityLi
 
 	return a.cities.ListCities(ctx)
 }
+
+func (a *flowCatalogAdminAdapter) CreateDistrict(ctx context.Context, params flow.CreateDistrictParams) error {
+	return a.svc.CreateDistrict(ctx, catalogservice.CreateDistrictParams{
+		CityID: params.CityID,
+		Code:   params.Code,
+		Name:   params.Name,
+	})
+}
