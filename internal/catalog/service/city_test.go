@@ -21,7 +21,7 @@ func (s *cityWriterStub) CreateCity(ctx context.Context, params CreateCityParams
 
 func TestCreateCity_Valid(t *testing.T) {
 	writer := &cityWriterStub{}
-	svc := New(nil, writer)
+	svc := New(nil, writer, nil)
 
 	err := svc.CreateCity(context.Background(), CreateCityParams{
 		Code:      " Moscow ",
@@ -42,7 +42,7 @@ func TestCreateCity_Valid(t *testing.T) {
 
 func TestCreateCity_CodeEmpty(t *testing.T) {
 	writer := &cityWriterStub{}
-	svc := New(nil, writer)
+	svc := New(nil, writer, nil)
 
 	err := svc.CreateCity(context.Background(), CreateCityParams{
 		Code: "",
@@ -54,7 +54,7 @@ func TestCreateCity_CodeEmpty(t *testing.T) {
 
 func TestCreateCity_NameEmpty(t *testing.T) {
 	writer := &cityWriterStub{}
-	svc := New(nil, writer)
+	svc := New(nil, writer, nil)
 
 	err := svc.CreateCity(context.Background(), CreateCityParams{
 		Code: "moskva",
@@ -65,7 +65,7 @@ func TestCreateCity_NameEmpty(t *testing.T) {
 }
 
 func TestCreateCity_NilWriter(t *testing.T) {
-	svc := New(nil, nil)
+	svc := New(nil, nil, nil)
 
 	err := svc.CreateCity(context.Background(), CreateCityParams{
 		Code: "moskva",
