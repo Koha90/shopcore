@@ -34,9 +34,15 @@ const (
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
 	ScreenAdminCategoryCode       ScreenID = "admin_category_code"
 	ScreenAdminCategoryCreateDone ScreenID = "admin_category_create_done"
-	ScreenAdminCityCreate         ScreenID = "admin_city_create"
-	ScreenAdminCityCode           ScreenID = "admin_city_code"
-	ScreenAdminCityCreateDone     ScreenID = "admin_city_create_done"
+
+	ScreenAdminCityCreate     ScreenID = "admin_city_create"
+	ScreenAdminCityCode       ScreenID = "admin_city_code"
+	ScreenAdminCityCreateDone ScreenID = "admin_city_create_done"
+
+	ScreenAdminDistrictCitySelect ScreenID = "admin_district_city_select"
+	ScreenAdminDistrictCreate     ScreenID = "admin_district_create"
+	ScreenAdminDistrictCode       ScreenID = "admin_district_code"
+	ScreenAdminDistrictCreateDone ScreenID = "admin_district_create_done"
 )
 
 // PendingInputKind identifies which text input flow currently expects.
@@ -48,6 +54,8 @@ const (
 	PendingInputCategoryCode PendingInputKind = "category_code"
 	PendingInputCityName     PendingInputKind = "city_name"
 	PendingInputCityCode     PendingInputKind = "city_code"
+	PendingInputDistrictName PendingInputKind = "district_name"
+	PendingInputDistrictCode PendingInputKind = "district_code"
 )
 
 const (
@@ -56,6 +64,12 @@ const (
 
 	// PendingValueCode stores one entered code value inside pending input payload.
 	PendingValueCode = "code"
+
+	// PendingValueCityID stores selected city id inside pending input payload.
+	PendingValueCityID = "city_id"
+
+	// PendingValueCityName = "city_name"
+	PendingValueCityName = "city_name"
 )
 
 // PendingInputPayload stores small flow-local continuation data for pending text input.

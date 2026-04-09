@@ -77,6 +77,18 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID, canAdmin bool) 
 
 	case ScreenAdminCityCreateDone:
 		return buildAdminCityCreateDoneView()
+
+	case ScreenAdminDistrictCitySelect:
+		return s.buildAdminDistrictCitySelectScreen()
+
+	case ScreenAdminDistrictCreate:
+		return buildAdminDistrictCreateInputView("", "")
+
+	case ScreenAdminDistrictCode:
+		return buildAdminDistrictCodeInputView("", "", "")
+
+	case ScreenAdminDistrictCreateDone:
+		return buildAdminDistrictCreateDoneView()
 	}
 
 	path, ok := parseCatalogScreen(screen)
@@ -159,6 +171,7 @@ func (s *Service) syncSessionAccess(
 		session.Current = catalogRootForScenario(startScenario)
 		session.History = nil
 		session.Pending = PendingInput{}
+		changed = true
 	}
 
 	if changed {

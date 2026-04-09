@@ -1,6 +1,10 @@
 package flow
 
-import "context"
+import (
+	"context"
+	"errors"
+	"strconv"
+)
 
 // HandleAction resolve the next flow view for an action.
 //
@@ -92,6 +96,62 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next, req.CanAdmin), nil
+
+	case ActionAdminDistrictCreateStart:
+		if s.cityLister == nil {
+			return ViewModel{}, errors.New("flow city lister is nil")
+		}
+		next := ScreenAdminDistrictCitySelect
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
+	}
+
+	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.cityLister == nil {
+			return ViewModel{}, errors.New("flow city lister is nil")
+		}
+
+		cities, err := s.cityLister.ListCities(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *CityListItem
+		for i := range cities {
+			if cities[i].ID == cityID {
+				selected = &cities[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictCreate
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputDistrictName,
+			Payload: PendingInputPayload{
+				PendingValueCityID:   strconv.Itoa(selected.ID),
+				PendingValueCityName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminDistrictCreateInputView(selected.Label, ""), nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {

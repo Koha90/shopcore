@@ -41,3 +41,15 @@ type CityListItem struct {
 type CityLister interface {
 	ListCities(ctx context.Context) ([]CityListItem, error)
 }
+
+// DistrictCreator defines the admin write use case required by flow.
+type DistrictCreator interface {
+	CreateDistrict(ctx context.Context, params CreateDistrictParams) error
+}
+
+// CreateDistrictParams contains data required by flow admin district creation.
+type CreateDistrictParams struct {
+	CityID int
+	Code   string
+	Name   string
+}

@@ -198,6 +198,110 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
+	case PendingInputDistrictName:
+		name := strings.TrimSpace(req.Text)
+		if name == "" {
+			return buildAdminDistrictCreateInputView(
+				session.Pending.Value(PendingValueCityName),
+				"Название района не может быть пустым.",
+			), nil
+		}
+
+		cityID, ok := pendingCityID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district city id is invalid")
+		}
+
+		cityName := session.Pending.Value(PendingValueCityName)
+		session.Pending.SetValue(PendingValueName, name)
+
+		suggestedCode := catalogservice.SuggestCode(name)
+		if suggestedCode == "" {
+			session.Current = ScreenAdminDistrictCode
+			session.Pending.Kind = PendingInputDistrictCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminDistrictCodeInputView(
+				cityName,
+				"Не удалось автоматически подобрать code.",
+				""), nil
+		}
+
+		session.Pending.SetValue(PendingValueCode, suggestedCode)
+
+		if s.districts == nil {
+			return ViewModel{}, errors.New("flow district creator is nil")
+		}
+
+		err := s.districts.CreateDistrict(ctx, CreateDistrictParams{
+			CityID: cityID,
+			Code:   suggestedCode,
+			Name:   name,
+		})
+		if err != nil {
+			session.Current = ScreenAdminDistrictCode
+			session.Pending.Kind = PendingInputDistrictCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminDistrictCodeInputView(
+				cityName,
+				"Не удалось создать район с автоматическим code.",
+				"",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminDistrictCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
+	case PendingInputDistrictCode:
+		code := strings.TrimSpace(req.Text)
+		if code == "" {
+			return buildAdminDistrictCodeInputView(
+				session.Pending.Value(PendingValueCityName),
+				"Code района не может быть пустым.",
+				"",
+			), nil
+		}
+
+		cityID, ok := pendingCityID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district city id is invalid")
+		}
+
+		name := strings.TrimSpace(session.Pending.Value(PendingValueName))
+		if name == "" {
+			return ViewModel{}, errors.New("pending district name is empty")
+		}
+
+		cityName := session.Pending.Value(PendingValueCityName)
+		session.Pending.SetValue(PendingValueCode, code)
+
+		if s.districts == nil {
+			return ViewModel{}, errors.New("flow district creator is nil")
+		}
+
+		err := s.districts.CreateDistrict(ctx, CreateDistrictParams{
+			CityID: cityID,
+			Code:   session.Pending.Value(PendingValueCode),
+			Name:   name,
+		})
+		if err != nil {
+			return buildAdminDistrictCodeInputView(
+				cityName,
+				"Не удалось создать район. Попробуйте другой code.",
+				code,
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminDistrictCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

@@ -46,12 +46,22 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 
 		var categoryCreator flow.CategoryCreator
 		var cityCreator flow.CityCreator
+		var cityLister flow.CityLister
+		var districtCreator flow.DistrictCreator
 
 		if admin := newFlowCatalogAdminAdapter(catalog, repo); admin != nil {
 			categoryCreator = admin
 			cityCreator = admin
+			cityLister = admin
 		}
 
-		return flow.NewServiceWithDeps(nil, provider, categoryCreator, cityCreator), nil
+		return flow.NewServiceWithDeps(
+			nil,
+			provider,
+			categoryCreator,
+			cityCreator,
+			cityLister,
+			districtCreator,
+		), nil
 	}
 }
