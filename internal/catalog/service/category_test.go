@@ -21,7 +21,7 @@ func (s *categoryWriterStub) CreateCategory(ctx context.Context, params CreateCa
 
 func TestCreateCategory_Valid(t *testing.T) {
 	writer := &categoryWriterStub{}
-	svc := New(writer, nil, nil, nil)
+	svc := New(writer, nil, nil, nil, nil)
 
 	err := svc.CreateCategory(context.Background(), CreateCategoryParams{
 		Code:        " Flowers ",
@@ -44,7 +44,7 @@ func TestCreateCategory_Valid(t *testing.T) {
 
 func TestCreateCategory_CodeEmpty(t *testing.T) {
 	writer := &categoryWriterStub{}
-	svc := New(writer, nil, nil, nil)
+	svc := New(writer, nil, nil, nil, nil)
 
 	err := svc.CreateCategory(context.Background(), CreateCategoryParams{
 		Code: "",
@@ -56,7 +56,7 @@ func TestCreateCategory_CodeEmpty(t *testing.T) {
 
 func TestCreateCategory_NameEmpty(t *testing.T) {
 	writer := &categoryWriterStub{}
-	svc := New(writer, nil, nil, nil)
+	svc := New(writer, nil, nil, nil, nil)
 
 	err := svc.CreateCategory(context.Background(), CreateCategoryParams{
 		Code: "flowers",
@@ -67,7 +67,7 @@ func TestCreateCategory_NameEmpty(t *testing.T) {
 }
 
 func TestCreateCategory_NilWriter(t *testing.T) {
-	svc := New(nil, nil, nil, nil)
+	svc := New(nil, nil, nil, nil, nil)
 
 	err := svc.CreateCategory(context.Background(), CreateCategoryParams{
 		Code: "flowers",

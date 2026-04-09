@@ -21,7 +21,7 @@ func (s *productWriterStub) CreateProduct(ctx context.Context, params CreateProd
 
 func TestCreateProduct_Valid(t *testing.T) {
 	writer := &productWriterStub{}
-	svc := New(nil, nil, nil, writer)
+	svc := New(nil, nil, nil, writer, nil)
 
 	err := svc.CreateProduct(context.Background(), CreateProductParams{
 		CategoryID:  7,
@@ -44,7 +44,7 @@ func TestCreateProduct_Valid(t *testing.T) {
 
 func TestCreateProduct_CategoryIDInvalid(t *testing.T) {
 	writer := &productWriterStub{}
-	svc := New(nil, nil, nil, writer)
+	svc := New(nil, nil, nil, writer, nil)
 
 	err := svc.CreateProduct(context.Background(), CreateProductParams{
 		CategoryID: 0,
@@ -57,7 +57,7 @@ func TestCreateProduct_CategoryIDInvalid(t *testing.T) {
 
 func TestCreateProduct_CodeEmpty(t *testing.T) {
 	writer := &productWriterStub{}
-	svc := New(nil, nil, nil, writer)
+	svc := New(nil, nil, nil, writer, nil)
 
 	err := svc.CreateProduct(context.Background(), CreateProductParams{
 		CategoryID: 1,
@@ -70,7 +70,7 @@ func TestCreateProduct_CodeEmpty(t *testing.T) {
 
 func TestCreateProduct_NameEmpty(t *testing.T) {
 	writer := &productWriterStub{}
-	svc := New(nil, nil, nil, writer)
+	svc := New(nil, nil, nil, writer, nil)
 
 	err := svc.CreateProduct(context.Background(), CreateProductParams{
 		CategoryID: 1,
@@ -82,7 +82,7 @@ func TestCreateProduct_NameEmpty(t *testing.T) {
 }
 
 func TestCreateProduct_NilWriter(t *testing.T) {
-	svc := New(nil, nil, nil, nil)
+	svc := New(nil, nil, nil, nil, nil)
 
 	err := svc.CreateProduct(context.Background(), CreateProductParams{
 		CategoryID: 1,

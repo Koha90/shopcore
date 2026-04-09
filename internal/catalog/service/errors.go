@@ -16,4 +16,8 @@ var (
 	ErrProductCategoryIDInvalid = errors.New("catalog product category id is invalid")
 	ErrProductCodeEmpty         = errors.New("catalog product code is empty")
 	ErrProductNameEmpty         = errors.New("catalog product name is empty")
+
+	ErrVariantProductIDInvalid = errors.New("catalog variant product id is invalid")
+	ErrVariantCodeEmpty        = errors.New("catalog variant code is empty")
+	ErrVariantNameEmpty        = errors.New("catalog variant name is empty")
 )

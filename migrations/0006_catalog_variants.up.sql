@@ -5,13 +5,12 @@ create table if not exists catalog_variants (
   name text not null,
   name_latin text not null default '',
   description text not null default '',
-  price_minor bigint not null,
-  currency_code char(3) not null default 'RUB',
   is_active boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (product_id, code)
+  unique (product_id, code),
+  unique (product_id, name)
 );
 
 create index if not exists idx_catalog_variants_product_id
