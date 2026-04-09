@@ -14,6 +14,7 @@ func buildAdminRootView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionAdminCatalogOpen, Label: "Каталог"},
+						{ID: ActionBack, Label: "Назад"},
 					},
 				},
 			},
