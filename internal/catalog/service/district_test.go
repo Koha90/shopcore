@@ -21,7 +21,7 @@ func (s *districtWriterStub) CreateDistrict(ctx context.Context, params CreateDi
 
 func TestCreateDistrict_Valid(t *testing.T) {
 	writer := &districtWriterStub{}
-	svc := New(nil, nil, writer)
+	svc := New(nil, nil, writer, nil)
 
 	err := svc.CreateDistrict(context.Background(), CreateDistrictParams{
 		CityID:    7,
@@ -42,7 +42,7 @@ func TestCreateDistrict_Valid(t *testing.T) {
 
 func TestCreateDistrict_CityIDInvalid(t *testing.T) {
 	writer := &districtWriterStub{}
-	svc := New(nil, nil, writer)
+	svc := New(nil, nil, writer, nil)
 
 	err := svc.CreateDistrict(context.Background(), CreateDistrictParams{
 		CityID: 0,
@@ -55,7 +55,7 @@ func TestCreateDistrict_CityIDInvalid(t *testing.T) {
 
 func TestCreateDistrict_CodeEmpty(t *testing.T) {
 	writer := &districtWriterStub{}
-	svc := New(nil, nil, writer)
+	svc := New(nil, nil, writer, nil)
 
 	err := svc.CreateDistrict(context.Background(), CreateDistrictParams{
 		CityID: 1,
@@ -68,7 +68,7 @@ func TestCreateDistrict_CodeEmpty(t *testing.T) {
 
 func TestCreateDistrict_NameEmpty(t *testing.T) {
 	writer := &districtWriterStub{}
-	svc := New(nil, nil, writer)
+	svc := New(nil, nil, writer, nil)
 
 	err := svc.CreateDistrict(context.Background(), CreateDistrictParams{
 		CityID: 1,
@@ -80,7 +80,7 @@ func TestCreateDistrict_NameEmpty(t *testing.T) {
 }
 
 func TestCreateDistrict_NilWriter(t *testing.T) {
-	svc := New(nil, nil, nil)
+	svc := New(nil, nil, nil, nil)
 
 	err := svc.CreateDistrict(context.Background(), CreateDistrictParams{
 		CityID: 1,
