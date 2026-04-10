@@ -9,7 +9,7 @@ import (
 	"github.com/koha90/shopcore/internal/flow"
 )
 
-// Loader reads catalog data from Postgres and build flow.Catalog.
+// Loader reads catalog data from Postgres and builds flow.Catalog.
 type Loader struct {
 	pool *pgxpool.Pool
 }
@@ -21,6 +21,7 @@ func NewLoader(pool *pgxpool.Pool) *Loader {
 	}
 }
 
+// LoadCatalog loads relational catalog rows and maps them into flow.Catalog.
 func (l *Loader) LoadCatalog(ctx context.Context) (flow.Catalog, error) {
 	cities, err := l.loadCities(ctx)
 	if err != nil {
@@ -30,11 +31,6 @@ func (l *Loader) LoadCatalog(ctx context.Context) (flow.Catalog, error) {
 	categories, err := l.loadCategories(ctx)
 	if err != nil {
 		return flow.Catalog{}, fmt.Errorf("load categories: %w", err)
-	}
-
-	cityCategories, err := l.loadCityCategories(ctx)
-	if err != nil {
-		return flow.Catalog{}, fmt.Errorf("load city categories: %w", err)
 	}
 
 	districts, err := l.loadDistricts(ctx)
@@ -52,13 +48,18 @@ func (l *Loader) LoadCatalog(ctx context.Context) (flow.Catalog, error) {
 		return flow.Catalog{}, fmt.Errorf("load variants: %w", err)
 	}
 
+	districtVariants, err := l.loadDistrictVariants(ctx)
+	if err != nil {
+		return flow.Catalog{}, fmt.Errorf("load district variants: %w", err)
+	}
+
 	catalog := buildCatalog(
 		cities,
 		categories,
-		cityCategories,
 		districts,
 		products,
 		variants,
+		districtVariants,
 	)
 
 	return catalog, nil

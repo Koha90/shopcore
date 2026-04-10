@@ -4,10 +4,10 @@ import "context"
 
 func (l *Loader) loadCities(ctx context.Context) ([]cityRow, error) {
 	rows, err := l.pool.Query(ctx, `
-			select id, code, name, name_latin, sort_order
-			from cities
-			where is_active = true
-			order by sort_order, id
+		select id, code, name, name_latin, sort_order
+		from cities
+		where is_active = true
+		order by sort_order, id
 	`)
 	if err != nil {
 		return nil, err
@@ -34,10 +34,10 @@ func (l *Loader) loadCities(ctx context.Context) ([]cityRow, error) {
 
 func (l *Loader) loadCategories(ctx context.Context) ([]categoryRow, error) {
 	rows, err := l.pool.Query(ctx, `
-			select id, code, name, name_latin, description, sort_order
-			from catalog_categories
-			where is_active = true
-			order by sort_order, id
+		select id, code, name, name_latin, description, sort_order
+		from catalog_categories
+		where is_active = true
+		order by sort_order, id
 	`)
 	if err != nil {
 		return nil, err
@@ -53,33 +53,6 @@ func (l *Loader) loadCategories(ctx context.Context) ([]categoryRow, error) {
 			&v.Name,
 			&v.NameLatin,
 			&v.Description,
-			&v.SortOrder,
-		); err != nil {
-			return nil, err
-		}
-		out = append(out, v)
-	}
-
-	return out, nil
-}
-
-func (l *Loader) loadCityCategories(ctx context.Context) ([]cityCategoryRow, error) {
-	rows, err := l.pool.Query(ctx, `
-		select city_id, category_id, sort_order
-		from catalog_city_categories
-		order by sort_order, city_id, category_id
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []cityCategoryRow
-	for rows.Next() {
-		var v cityCategoryRow
-		if err := rows.Scan(
-			&v.CityID,
-			&v.CategoryID,
 			&v.SortOrder,
 		); err != nil {
 			return nil, err
@@ -121,9 +94,37 @@ func (l *Loader) loadDistricts(ctx context.Context) ([]districtRow, error) {
 	return out, rows.Err()
 }
 
+func (l *Loader) loadDistrictVariants(ctx context.Context) ([]districtVariantRow, error) {
+	rows, err := l.pool.Query(ctx, `
+		select district_id, variant_id, price
+		from catalog_district_variants
+		where is_active = true
+		order by district_id, variant_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []districtVariantRow
+	for rows.Next() {
+		var v districtVariantRow
+		if err := rows.Scan(
+			&v.DistrictID,
+			&v.VariantID,
+			&v.Price,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+
+	return out, rows.Err()
+}
+
 func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 	rows, err := l.pool.Query(ctx, `
-		select id, category_id, district_id, code, name, name_latin, description, sort_order
+		select id, category_id, code, name, name_latin, description, sort_order
 		from catalog_products
 		where is_active = true
 		order by sort_order, id
@@ -139,7 +140,6 @@ func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 		if err := rows.Scan(
 			&v.ID,
 			&v.CategoryID,
-			&v.DistrictID,
 			&v.Code,
 			&v.Name,
 			&v.NameLatin,
@@ -156,7 +156,7 @@ func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 
 func (l *Loader) loadVariants(ctx context.Context) ([]variantRow, error) {
 	rows, err := l.pool.Query(ctx, `
-		select id, product_id, code, name, name_latin, description, price_minor, currency_code, sort_order
+		select id, product_id, code, name, name_latin, description, sort_order
 		from catalog_variants
 		where is_active = true
 		order by sort_order, id
@@ -176,8 +176,6 @@ func (l *Loader) loadVariants(ctx context.Context) ([]variantRow, error) {
 			&v.Name,
 			&v.NameLatin,
 			&v.Description,
-			&v.PriceMinor,
-			&v.CurrencyCode,
 			&v.SortOrder,
 		); err != nil {
 			return nil, err

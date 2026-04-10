@@ -17,12 +17,6 @@ type categoryRow struct {
 	SortOrder   int
 }
 
-type cityCategoryRow struct {
-	CityID     int
-	CategoryID int
-	SortOrder  int
-}
-
 type districtRow struct {
 	ID        int
 	CityID    int
@@ -35,7 +29,6 @@ type districtRow struct {
 type productRow struct {
 	ID          int
 	CategoryID  int
-	DistrictID  int
 	Code        string
 	Name        string
 	NameLatin   string
@@ -44,13 +37,17 @@ type productRow struct {
 }
 
 type variantRow struct {
-	ID           int
-	ProductID    int
-	Code         string
-	Name         string
-	NameLatin    string
-	Description  string
-	PriceMinor   int64
-	CurrencyCode string
-	SortOrder    int
+	ID          int
+	ProductID   int
+	Code        string
+	Name        string
+	NameLatin   string
+	Description string
+	SortOrder   int
+}
+
+type districtVariantRow struct {
+	DistrictID int
+	VariantID  int
+	Price      int
 }

@@ -67,16 +67,6 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 
-	if err := ensureCityCategory(ctx, tx, moscowID, flowersID, 10); err != nil {
-		return err
-	}
-	if err := ensureCityCategory(ctx, tx, moscowID, giftsID, 20); err != nil {
-		return err
-	}
-	if err := ensureCityCategory(ctx, tx, spbID, flowersID, 10); err != nil {
-		return err
-	}
-
 	centerID, err := ensureDistrict(ctx, tx, districtSeed{
 		CityID:    moscowID,
 		Code:      "center",
@@ -112,11 +102,10 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 
 	roseBoxID, err := ensureProduct(ctx, tx, productSeed{
 		CategoryID:  flowersID,
-		DistrictID:  centerID,
 		Code:        "rose-box",
 		Name:        "Rose Box",
 		NameLatin:   "Rose Box",
-		Description: "Коробка роз для доставки по центру.",
+		Description: "Коробка роз.",
 		SortOrder:   10,
 	})
 	if err != nil {
@@ -125,11 +114,10 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 
 	tulipMixID, err := ensureProduct(ctx, tx, productSeed{
 		CategoryID:  flowersID,
-		DistrictID:  centerID,
 		Code:        "tulip-mix",
 		Name:        "Tulip Mix",
 		NameLatin:   "Tulip Mix",
-		Description: "Микс тюльпанов для центрального района.",
+		Description: "Микс тюльпанов.",
 		SortOrder:   20,
 	})
 	if err != nil {
@@ -138,11 +126,10 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 
 	giftBoxID, err := ensureProduct(ctx, tx, productSeed{
 		CategoryID:  giftsID,
-		DistrictID:  southID,
 		Code:        "gift-box",
 		Name:        "Gift Box",
 		NameLatin:   "Gift Box",
-		Description: "Подарочный набор для южного района.",
+		Description: "Подарочный набор.",
 		SortOrder:   10,
 	})
 	if err != nil {
@@ -151,78 +138,120 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 
 	peonySetID, err := ensureProduct(ctx, tx, productSeed{
 		CategoryID:  flowersID,
-		DistrictID:  petrogradkaID,
 		Code:        "peony-set",
 		Name:        "Peony Set",
 		NameLatin:   "Peony Set",
-		Description: "Набор пионов для Петроградки.",
+		Description: "Набор пионов.",
+		SortOrder:   30,
+	})
+	if err != nil {
+		return err
+	}
+
+	roseBoxSmallID, err := ensureVariant(ctx, tx, variantSeed{
+		ProductID:   roseBoxID,
+		Code:        "small",
+		Name:        "S / 9 шт",
+		NameLatin:   "S / 9 pcs",
+		Description: "Компактная упаковка.",
 		SortOrder:   10,
 	})
 	if err != nil {
 		return err
 	}
 
-	if err := ensureVariant(ctx, tx, variantSeed{
-		ProductID:    roseBoxID,
-		Code:         "small",
-		Name:         "S / 9 шт",
-		NameLatin:    "S / 9 pcs",
-		Description:  "Компактная упаковка.",
-		PriceMinor:   2500,
-		CurrencyCode: "RUB",
-		SortOrder:    10,
+	roseBoxLargeID, err := ensureVariant(ctx, tx, variantSeed{
+		ProductID:   roseBoxID,
+		Code:        "large",
+		Name:        "L / 25 шт",
+		NameLatin:   "L / 25 pcs",
+		Description: "Большая упаковка.",
+		SortOrder:   20,
+	})
+	if err != nil {
+		return err
+	}
+
+	tulipMixStandardID, err := ensureVariant(ctx, tx, variantSeed{
+		ProductID:   tulipMixID,
+		Code:        "standard",
+		Name:        "Standard",
+		NameLatin:   "Standard",
+		Description: "Стандартный букет.",
+		SortOrder:   10,
+	})
+	if err != nil {
+		return err
+	}
+
+	giftBoxClassicID, err := ensureVariant(ctx, tx, variantSeed{
+		ProductID:   giftBoxID,
+		Code:        "classic",
+		Name:        "Classic",
+		NameLatin:   "Classic",
+		Description: "Классический подарочный набор.",
+		SortOrder:   10,
+	})
+	if err != nil {
+		return err
+	}
+
+	peonySetPremiumID, err := ensureVariant(ctx, tx, variantSeed{
+		ProductID:   peonySetID,
+		Code:        "premium",
+		Name:        "Premium",
+		NameLatin:   "Premium",
+		Description: "Премиальный набор пионов.",
+		SortOrder:   10,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: centerID,
+		VariantID:  roseBoxSmallID,
+		Price:      2500,
 	}); err != nil {
 		return err
 	}
 
-	if err := ensureVariant(ctx, tx, variantSeed{
-		ProductID:    roseBoxID,
-		Code:         "large",
-		Name:         "L / 25 шт",
-		NameLatin:    "L / 25 pcs",
-		Description:  "Большая упаковка.",
-		PriceMinor:   5900,
-		CurrencyCode: "RUB",
-		SortOrder:    20,
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: centerID,
+		VariantID:  roseBoxLargeID,
+		Price:      5900,
 	}); err != nil {
 		return err
 	}
 
-	if err := ensureVariant(ctx, tx, variantSeed{
-		ProductID:    tulipMixID,
-		Code:         "standard",
-		Name:         "Standard",
-		NameLatin:    "Standard",
-		Description:  "Стандартный букет.",
-		PriceMinor:   3200,
-		CurrencyCode: "RUB",
-		SortOrder:    10,
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: southID,
+		VariantID:  roseBoxLargeID,
+		Price:      6100,
 	}); err != nil {
 		return err
 	}
 
-	if err := ensureVariant(ctx, tx, variantSeed{
-		ProductID:    giftBoxID,
-		Code:         "classic",
-		Name:         "Classic",
-		NameLatin:    "Classic",
-		Description:  "Классический подарочный набор.",
-		PriceMinor:   4100,
-		CurrencyCode: "RUB",
-		SortOrder:    10,
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: centerID,
+		VariantID:  tulipMixStandardID,
+		Price:      3200,
 	}); err != nil {
 		return err
 	}
 
-	if err := ensureVariant(ctx, tx, variantSeed{
-		ProductID:    peonySetID,
-		Code:         "premium",
-		Name:         "Premium",
-		NameLatin:    "Premium",
-		Description:  "Премиальный набор пионов.",
-		PriceMinor:   6800,
-		CurrencyCode: "RUB",
-		SortOrder:    10,
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: southID,
+		VariantID:  giftBoxClassicID,
+		Price:      4100,
+	}); err != nil {
+		return err
+	}
+
+	if err := ensureDistrictVariant(ctx, tx, districtVariantSeed{
+		DistrictID: petrogradkaID,
+		VariantID:  peonySetPremiumID,
+		Price:      6800,
 	}); err != nil {
 		return err
 	}
@@ -259,7 +288,6 @@ type districtSeed struct {
 
 type productSeed struct {
 	CategoryID  int
-	DistrictID  int
 	Code        string
 	Name        string
 	NameLatin   string
@@ -268,14 +296,18 @@ type productSeed struct {
 }
 
 type variantSeed struct {
-	ProductID    int
-	Code         string
-	Name         string
-	NameLatin    string
-	Description  string
-	PriceMinor   int64
-	CurrencyCode string
-	SortOrder    int
+	ProductID   int
+	Code        string
+	Name        string
+	NameLatin   string
+	Description string
+	SortOrder   int
+}
+
+type districtVariantSeed struct {
+	DistrictID int
+	VariantID  int
+	Price      int
 }
 
 func ensureCity(ctx context.Context, tx pgx.Tx, v citySeed) (int, error) {
@@ -325,23 +357,6 @@ func ensureCategory(ctx context.Context, tx pgx.Tx, v categorySeed) (int, error)
 	return id, nil
 }
 
-func ensureCityCategory(ctx context.Context, tx pgx.Tx, cityID, categoryID, sortOrder int) error {
-	const q = `
-		insert into catalog_city_categories (
-			city_id, category_id, sort_order, created_at
-		)
-		values ($1, $2, $3, now())
-		on conflict (city_id, category_id) do update set
-			sort_order = excluded.sort_order
-	`
-
-	if _, err := tx.Exec(ctx, q, cityID, categoryID, sortOrder); err != nil {
-		return fmt.Errorf("seed city_category city=%d category=%d: %w", cityID, categoryID, err)
-	}
-
-	return nil
-}
-
 func ensureDistrict(ctx context.Context, tx pgx.Tx, v districtSeed) (int, error) {
 	const q = `
 		insert into catalog_districts (
@@ -368,10 +383,10 @@ func ensureDistrict(ctx context.Context, tx pgx.Tx, v districtSeed) (int, error)
 func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 	const q = `
 		insert into catalog_products (
-			category_id, district_id, code, name, name_latin, description, is_active, sort_order, created_at, updated_at
+			category_id, code, name, name_latin, description, is_active, sort_order, created_at, updated_at
 		)
-		values ($1, $2, $3, $4, $5, $6, true, $7, now(), now())
-		on conflict (district_id, category_id, code) do update set
+		values ($1, $2, $3, $4, $5, true, $6, now(), now())
+		on conflict (category_id, code) do update set
 			name = excluded.name,
 			name_latin = excluded.name_latin,
 			description = excluded.description,
@@ -386,7 +401,6 @@ func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 		ctx,
 		q,
 		v.CategoryID,
-		v.DistrictID,
 		v.Code,
 		v.Name,
 		v.NameLatin,
@@ -399,24 +413,24 @@ func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 	return id, nil
 }
 
-func ensureVariant(ctx context.Context, tx pgx.Tx, v variantSeed) error {
+func ensureVariant(ctx context.Context, tx pgx.Tx, v variantSeed) (int, error) {
 	const q = `
 		insert into catalog_variants (
-			product_id, code, name, name_latin, description, price_minor, currency_code, is_active, sort_order, created_at, updated_at
+			product_id, code, name, name_latin, description, is_active, sort_order, created_at, updated_at
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, true, $8, now(), now())
+		values ($1, $2, $3, $4, $5, true, $6, now(), now())
 		on conflict (product_id, code) do update set
 			name = excluded.name,
 			name_latin = excluded.name_latin,
 			description = excluded.description,
-			price_minor = excluded.price_minor,
-			currency_code = excluded.currency_code,
 			is_active = true,
 			sort_order = excluded.sort_order,
 			updated_at = now()
+		returning id
 	`
 
-	if _, err := tx.Exec(
+	var id int
+	if err := tx.QueryRow(
 		ctx,
 		q,
 		v.ProductID,
@@ -424,11 +438,33 @@ func ensureVariant(ctx context.Context, tx pgx.Tx, v variantSeed) error {
 		v.Name,
 		v.NameLatin,
 		v.Description,
-		v.PriceMinor,
-		v.CurrencyCode,
 		v.SortOrder,
-	); err != nil {
-		return fmt.Errorf("seed variant %q: %w", v.Code, err)
+	).Scan(&id); err != nil {
+		return 0, fmt.Errorf("seed variant %q: %w", v.Code, err)
+	}
+
+	return id, nil
+}
+
+func ensureDistrictVariant(ctx context.Context, tx pgx.Tx, v districtVariantSeed) error {
+	const q = `
+		insert into catalog_district_variants (
+			district_id, variant_id, price, is_active, created_at, updated_at
+		)
+		values ($1, $2, $3, true, now(), now())
+		on conflict (district_id, variant_id) do update set
+			price = excluded.price,
+			is_active = true,
+			updated_at = now()
+	`
+
+	if _, err := tx.Exec(ctx, q, v.DistrictID, v.VariantID, v.Price); err != nil {
+		return fmt.Errorf(
+			"seed district variant district=%d variant=%d: %w",
+			v.DistrictID,
+			v.VariantID,
+			err,
+		)
 	}
 
 	return nil

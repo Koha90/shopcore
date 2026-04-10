@@ -19,7 +19,7 @@ func (r *Repository) CreateProduct(ctx context.Context, params catalogservice.Cr
 	}
 
 	const q = `
-		inser into catalog_products (
+		insert into catalog_products (
 			category_id,
 			code,
 			name,

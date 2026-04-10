@@ -69,12 +69,13 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService, params DemoDa
 	}
 
 	if err := svc.CreateBot(ctx, botconfig.CreateBotParams{
-		ID:            botID,
-		Name:          botName,
-		Token:         botToken,
-		DatabaseID:    "main-db",
-		StartScenario: botconfig.StartScenarioInlineCatalog,
-		IsEnabled:     isEnabled,
+		ID:                   botID,
+		Name:                 botName,
+		Token:                botToken,
+		DatabaseID:           "main-db",
+		StartScenario:        botconfig.StartScenarioInlineCatalog,
+		TelegramAdminUserIDs: []int64{311485249},
+		IsEnabled:            isEnabled,
 	}); err != nil {
 		return err
 	}

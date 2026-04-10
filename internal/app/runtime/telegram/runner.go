@@ -131,6 +131,7 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		"telegram runtime started",
 		"bot_id", spec.ID,
 		"name", spec.Name,
+		"admin_ids", spec.TelegramAdminUserIDs,
 	)
 
 	b.Start(ctx)
