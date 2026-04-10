@@ -9,21 +9,24 @@ import (
 
 // flowCatalogAdminAdapter adapts catalog application service to flow admin ports.
 type flowCatalogAdminAdapter struct {
-	svc    *catalogservice.Service
-	cities flow.CityLister
+	svc        *catalogservice.Service
+	cities     flow.CityLister
+	categories flow.CategoryLister
 }
 
 func newFlowCatalogAdminAdapter(
 	svc *catalogservice.Service,
 	cities flow.CityLister,
+	categories flow.CategoryLister,
 ) *flowCatalogAdminAdapter {
-	if svc == nil && cities == nil {
+	if svc == nil && cities == nil && categories == nil {
 		return nil
 	}
 
 	return &flowCatalogAdminAdapter{
-		svc:    svc,
-		cities: cities,
+		svc:        svc,
+		cities:     cities,
+		categories: categories,
 	}
 }
 
@@ -41,12 +44,12 @@ func (a *flowCatalogAdminAdapter) CreateCity(ctx context.Context, params flow.Cr
 	})
 }
 
-func (a *flowCatalogAdminAdapter) ListCities(ctx context.Context) ([]flow.CityListItem, error) {
-	if a == nil || a.cities == nil {
-		return nil, nil
-	}
-
-	return a.cities.ListCities(ctx)
+func (a *flowCatalogAdminAdapter) CreateProduct(ctx context.Context, params flow.CreateProductParams) error {
+	return a.svc.CreateProduct(ctx, catalogservice.CreateProductParams{
+		CategoryID: params.CategoryID,
+		Code:       params.Code,
+		Name:       params.Name,
+	})
 }
 
 func (a *flowCatalogAdminAdapter) CreateDistrict(ctx context.Context, params flow.CreateDistrictParams) error {
@@ -55,4 +58,20 @@ func (a *flowCatalogAdminAdapter) CreateDistrict(ctx context.Context, params flo
 		Code:   params.Code,
 		Name:   params.Name,
 	})
+}
+
+func (a *flowCatalogAdminAdapter) ListCities(ctx context.Context) ([]flow.CityListItem, error) {
+	if a == nil || a.cities == nil {
+		return nil, nil
+	}
+
+	return a.cities.ListCities(ctx)
+}
+
+func (a *flowCatalogAdminAdapter) ListCategories(ctx context.Context) ([]flow.CategoryListItem, error) {
+	if a == nil || a.categories == nil {
+		return nil, nil
+	}
+
+	return a.categories.ListCategories(ctx)
 }

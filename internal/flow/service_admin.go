@@ -34,6 +34,7 @@ func buildAdminCatalogView() ViewModel {
 						{ID: ActionAdminDistrictCreateStart, Label: "Создать район"},
 						{ID: ActionAdminCityCreateStart, Label: "Создать город"},
 						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
+						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
 						{ID: ActionBack, Label: "Назад"},
 					},
 				},
@@ -319,8 +320,159 @@ func pendingCityID(p PendingInput) (int, bool) {
 	return id, true
 }
 
+func buildAdminProductCategorySelectView(categories []CategoryListItem, validation string) ViewModel {
+	text := "Новый товар\n\nВыберите категорию:"
+	if validation != "" {
+		text = "Новый товар\n\n" + validation + "\n\nВыберите категорию:"
+	}
+
+	actions := make([]ActionButton, 0, len(categories)+1)
+	for _, category := range categories {
+		actions = append(actions, ActionButton{
+			ID:    adminProductSelectCategoryAction(category.ID),
+			Label: category.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminProductCreateInputView(categoryName, validation string) ViewModel {
+	text := "Новый товар"
+	if categoryName != "" {
+		text += "\n\nКатегория: " + categoryName
+	}
+	text += "\n\nВведите название товара сообщением."
+	if validation != "" {
+		text = "Новый товар"
+		if categoryName != "" {
+			text += "\n\nКатегория: " + categoryName
+		}
+		text += "\n\n" + validation + "\n\nВведите название товара сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminProductCodeInputView(categoryName, validation, suggested string) ViewModel {
+	text := "Новый товар"
+	if categoryName != "" {
+		text += "\n\nКатегория: " + categoryName
+	}
+	text += "\n\nВведите code товара сообщением."
+
+	if suggested != "" {
+		text = "Новый товар"
+		if categoryName != "" {
+			text += "\n\nКатегория: " + categoryName
+		}
+		text += "\n\nАвто-код: " + suggested + "\n\nВведите code товара сообщением."
+	}
+
+	if validation != "" {
+		text = "Новый товар"
+		if categoryName != "" {
+			text += "\n\nКатегория: " + categoryName
+		}
+		text += "\n\n" + validation + "\n\nВведите code товара сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminProductCreateDoneView() ViewModel {
+	return ViewModel{
+		Text: "Новый товар\n\nТовар создан.",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func (s *Service) buildAdminProductCategorySelectScreen() ViewModel {
+	if s == nil || s.categoryLister == nil {
+		return buildAdminProductCategorySelectView(nil, "Не удалось загрузить список категорий.")
+	}
+
+	categories, err := s.categoryLister.ListCategories(context.Background())
+	if err != nil {
+		return buildAdminProductCategorySelectView(nil, "Не удалось загрузить список категорий.")
+	}
+	if len(categories) == 0 {
+		return buildAdminProductCategorySelectView(nil, "Нет доступных категорий.")
+	}
+
+	return buildAdminProductCategorySelectView(categories, "")
+}
+
+func pendingCategoryID(p PendingInput) (int, bool) {
+	raw := p.Value(PendingValueCategoryID)
+	if raw == "" {
+		return 0, false
+	}
+
+	id, err := strconv.Atoi(raw)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+
+	return id, true
+}
+
 func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictSelectCityAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminProductSelectCategoryAction(actionID); ok {
 		return true
 	}
 
@@ -329,7 +481,8 @@ func isAdminAction(actionID ActionID) bool {
 		ActionAdminCatalogOpen,
 		ActionAdminCategoryCreateStart,
 		ActionAdminCityCreateStart,
-		ActionAdminDistrictCreateStart:
+		ActionAdminDistrictCreateStart,
+		ActionAdminProductCreateStart:
 		return true
 	default:
 		return false
@@ -349,7 +502,9 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictCitySelect,
 		ScreenAdminDistrictCreate,
 		ScreenAdminDistrictCode,
-		ScreenAdminDistrictCreateDone:
+		ScreenAdminDistrictCreateDone,
+		ScreenAdminProductCode,
+		ScreenAdminProductCreateDone:
 		return true
 	default:
 		return false
@@ -363,7 +518,9 @@ func isAdminPending(kind PendingInputKind) bool {
 		PendingInputCityName,
 		PendingInputCityCode,
 		PendingInputDistrictName,
-		PendingInputDistrictCode:
+		PendingInputDistrictCode,
+		PendingInputProductName,
+		PendingInputProductCode:
 		return true
 	default:
 		return false

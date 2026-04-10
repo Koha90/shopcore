@@ -66,3 +66,15 @@ type CreateDistrictParams struct {
 	Code   string
 	Name   string
 }
+
+// ProductCreator defines the admin write use case required by flow.
+type ProductCreator interface {
+	CreateProduct(ctx context.Context, params CreateProductParams) error
+}
+
+// CreateProductParams contains data required by flow admin product creation.
+type CreateProductParams struct {
+	CategoryID int
+	Code       string
+	Name       string
+}

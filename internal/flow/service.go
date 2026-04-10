@@ -41,12 +41,14 @@ const (
 // The service is transport-agnostic and contains no Telegram-specific code.
 // It resolves navigation screens, session-aware text input and admin flow actions.
 type Service struct {
-	store      Store
-	provider   CatalogProvider
-	categories CategoryCreator
-	cities     CityCreator
-	cityLister CityLister
-	districts  DistrictCreator
+	store          Store
+	provider       CatalogProvider
+	categories     CategoryCreator
+	cities         CityCreator
+	cityLister     CityLister
+	districts      DistrictCreator
+	categoryLister CategoryLister
+	products       ProductCreator
 }
 
 // NewService constructs transport-agnostic flow service.
@@ -87,6 +89,8 @@ func NewServiceWithDeps(
 	cities CityCreator,
 	cityLister CityLister,
 	districts DistrictCreator,
+	categoryLister CategoryLister,
+	products ProductCreator,
 ) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -96,12 +100,14 @@ func NewServiceWithDeps(
 	}
 
 	return &Service{
-		store:      store,
-		provider:   provider,
-		categories: categories,
-		cities:     cities,
-		cityLister: cityLister,
-		districts:  districts,
+		store:          store,
+		provider:       provider,
+		categories:     categories,
+		cities:         cities,
+		cityLister:     cityLister,
+		districts:      districts,
+		categoryLister: categoryLister,
+		products:       products,
 	}
 }
 

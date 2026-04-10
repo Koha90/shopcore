@@ -302,6 +302,111 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
+	case PendingInputProductName:
+		name := strings.TrimSpace(req.Text)
+		if name == "" {
+			return buildAdminProductCreateInputView(
+				session.Pending.Value(PendingValueCategoryName),
+				"Название товара не может быть пустым.",
+			), nil
+		}
+
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending product category id is invalid")
+		}
+
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		session.Pending.SetValue(PendingValueName, name)
+
+		suggestedCode := catalogservice.SuggestCode(name)
+		if suggestedCode == "" {
+			session.Current = ScreenAdminProductCode
+			session.Pending.Kind = PendingInputProductCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminProductCodeInputView(
+				categoryName,
+				"Не удалось автоматически подобрать code.",
+				"",
+			), nil
+		}
+
+		session.Pending.SetValue(PendingValueCode, suggestedCode)
+
+		if s.products == nil {
+			return ViewModel{}, errors.New("flow product creator is nil")
+		}
+
+		err := s.products.CreateProduct(ctx, CreateProductParams{
+			CategoryID: categoryID,
+			Code:       suggestedCode,
+			Name:       name,
+		})
+		if err != nil {
+			session.Current = ScreenAdminProductCode
+			session.Pending.Kind = PendingInputProductCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminProductCodeInputView(
+				categoryName,
+				"Не удалось создать товар с автоматическим code.",
+				"",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminProductCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
+	case PendingInputProductCode:
+		code := strings.TrimSpace(req.Text)
+		if code == "" {
+			return buildAdminProductCodeInputView(
+				session.Pending.Value(PendingValueCategoryName),
+				"Code товара не может быть пустым.",
+				"",
+			), nil
+		}
+
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending product category id is invalid")
+		}
+
+		name := strings.TrimSpace(session.Pending.Value(PendingValueName))
+		if name == "" {
+			return ViewModel{}, errors.New("pending product name is empty")
+		}
+
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		session.Pending.SetValue(PendingValueCode, code)
+
+		if s.products == nil {
+			return ViewModel{}, errors.New("flow product creator is nil")
+		}
+
+		err := s.products.CreateProduct(ctx, CreateProductParams{
+			CategoryID: categoryID,
+			Code:       session.Pending.Value(PendingValueCode),
+			Name:       name,
+		})
+		if err != nil {
+			return buildAdminProductCodeInputView(
+				categoryName,
+				"Не удалось создать товар. Попробуйте другой code.",
+				code,
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminProductCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

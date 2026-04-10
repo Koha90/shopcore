@@ -70,7 +70,7 @@ func TestHandleAction_AdminDistrictCreateStart_ShowsCitySelect(t *testing.T) {
 			{ID: 2, Code: "spb", Label: "Санкт-Петербург"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, lister, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, lister, nil, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	openAdminDistrictCreate(t, svc, key)
@@ -98,7 +98,7 @@ func TestHandleAction_AdminDistrictSelectCity_StartsNameInput(t *testing.T) {
 			{ID: 7, Code: "moskva", Label: "Москва"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, lister, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, lister, nil, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	openAdminDistrictCreate(t, svc, key)
@@ -126,7 +126,7 @@ func TestHandleText_AdminDistrictCreate_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &districtCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -158,7 +158,7 @@ func TestHandleText_AdminDistrictCreate_AutoCodeSuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &districtCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -201,7 +201,7 @@ func TestHandleText_AdminDistrictCreate_AutoCodeFailure_OpensManualCodeInput(t *
 	creator := &districtCreatorStub{
 		err: errors.New("duplicate district code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -241,7 +241,7 @@ func TestHandleText_AdminDistrictCreate_EmptySuggestedCode_OpensManualCodeInput(
 
 	store := NewMemoryStore()
 	creator := &districtCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -280,7 +280,7 @@ func TestHandleText_AdminDistrictCreate_NilDistrictCreator(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -310,7 +310,7 @@ func TestHandleText_AdminDistrictCode_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &districtCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -343,7 +343,7 @@ func TestHandleText_AdminDistrictCode_Success_UsesManualCode(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &districtCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -383,7 +383,7 @@ func TestHandleText_AdminDistrictCode_CreateError_KeepsPending(t *testing.T) {
 	creator := &districtCreatorStub{
 		err: errors.New("duplicate district code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	store.Put(key, Session{
@@ -421,7 +421,7 @@ func TestHandleAction_AdminDistrictCreateStart_NilCityLister(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin-district")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{

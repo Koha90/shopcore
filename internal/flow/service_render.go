@@ -89,6 +89,18 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID, canAdmin bool) 
 
 	case ScreenAdminDistrictCreateDone:
 		return buildAdminDistrictCreateDoneView()
+
+	case ScreenAdminProductCategorySelect:
+		return s.buildAdminProductCategorySelectScreen()
+
+	case ScreenAdminProductCreate:
+		return buildAdminProductCreateInputView("", "")
+
+	case ScreenAdminProductCode:
+		return buildAdminProductCodeInputView("", "", "")
+
+	case ScreenAdminProductCreateDone:
+		return buildAdminProductCreateDoneView()
 	}
 
 	path, ok := parseCatalogScreen(screen)

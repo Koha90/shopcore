@@ -111,6 +111,22 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next, req.CanAdmin), nil
+
+	case ActionAdminProductCreateStart:
+		if s.categoryLister == nil {
+			return ViewModel{}, errors.New("flow category lister is nil")
+		}
+
+		next := ScreenAdminProductCategorySelect
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
@@ -152,6 +168,47 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return buildAdminDistrictCreateInputView(selected.Label, ""), nil
+	}
+
+	if categoryID, ok := parseAdminProductSelectCategoryAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.categoryLister == nil {
+			return ViewModel{}, errors.New("flow category lister is nil")
+		}
+
+		categories, err := s.categoryLister.ListCategories(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *CategoryListItem
+		for i := range categories {
+			if categories[i].ID == categoryID {
+				selected = &categories[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminProductCreate
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputProductName,
+			Payload: PendingInputPayload{
+				PendingValueCategoryID:   strconv.Itoa(selected.ID),
+				PendingValueCategoryName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminProductCreateInputView(selected.Label, ""), nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
