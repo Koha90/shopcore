@@ -20,4 +20,8 @@ var (
 	ErrVariantProductIDInvalid = errors.New("catalog variant product id is invalid")
 	ErrVariantCodeEmpty        = errors.New("catalog variant code is empty")
 	ErrVariantNameEmpty        = errors.New("catalog variant name is empty")
+
+	ErrDistrictVariantDistrictIDInvalid = errors.New("catalog district variant district id is invalid")
+	ErrDistrictVariantVariantIDInvalid  = errors.New("catalog district variant variant id is invalid")
+	ErrDistrictVariantPriceInvalid      = errors.New("catalog district variant price is invalid")
 )
