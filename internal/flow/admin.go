@@ -18,6 +18,19 @@ type CreateCategoryParams struct {
 	Name string
 }
 
+// CategoryListItem contains one category option for admin selection flows.
+type CategoryListItem struct {
+	ID    int
+	Code  string
+	Label string
+}
+
+// CategoryLister defines the admin read use case required by flow
+// to select an existing category before nested catalog creation steps.
+type CategoryLister interface {
+	ListCategories(ctx context.Context) ([]CategoryListItem, error)
+}
+
 // CityCreator defines the admin write use case required by flow.
 type CityCreator interface {
 	CreateCity(ctx context.Context, params CreateCityParams) error
