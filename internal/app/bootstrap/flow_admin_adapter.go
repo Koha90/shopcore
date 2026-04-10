@@ -12,12 +12,14 @@ type flowCatalogAdminAdapter struct {
 	svc        *catalogservice.Service
 	cities     flow.CityLister
 	categories flow.CategoryLister
+	products   flow.ProductLister
 }
 
 func newFlowCatalogAdminAdapter(
 	svc *catalogservice.Service,
 	cities flow.CityLister,
 	categories flow.CategoryLister,
+	products flow.ProductLister,
 ) *flowCatalogAdminAdapter {
 	if svc == nil && cities == nil && categories == nil {
 		return nil
@@ -27,6 +29,7 @@ func newFlowCatalogAdminAdapter(
 		svc:        svc,
 		cities:     cities,
 		categories: categories,
+		products:   products,
 	}
 }
 
@@ -74,4 +77,12 @@ func (a *flowCatalogAdminAdapter) ListCategories(ctx context.Context) ([]flow.Ca
 	}
 
 	return a.categories.ListCategories(ctx)
+}
+
+func (a *flowCatalogAdminAdapter) ListProducts(ctx context.Context) ([]flow.ProductListItem, error) {
+	if a == nil || a.products == nil {
+		return nil, nil
+	}
+
+	return a.products.ListProducts(ctx)
 }

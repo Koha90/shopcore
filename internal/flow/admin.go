@@ -78,3 +78,16 @@ type CreateProductParams struct {
 	Code       string
 	Name       string
 }
+
+// ProductListItem contains one product option for admin selection flows.
+type ProductListItem struct {
+	ID    int
+	Code  string
+	Label string
+}
+
+// ProductLister defines the admin read use case required by flow
+// to select an existing product before nested catalog creation steps.
+type ProductLister interface {
+	ListProducts(ctx context.Context) ([]ProductListItem, error)
+}
