@@ -12,6 +12,7 @@ type flowCatalogAdminAdapter struct {
 	svc        *catalogservice.Service
 	cities     flow.CityLister
 	categories flow.CategoryLister
+	districts  flow.DistrictLister
 	products   flow.ProductLister
 }
 
@@ -19,6 +20,7 @@ func newFlowCatalogAdminAdapter(
 	svc *catalogservice.Service,
 	cities flow.CityLister,
 	categories flow.CategoryLister,
+	districts flow.DistrictLister,
 	products flow.ProductLister,
 ) *flowCatalogAdminAdapter {
 	if svc == nil && cities == nil && categories == nil {
@@ -29,6 +31,7 @@ func newFlowCatalogAdminAdapter(
 		svc:        svc,
 		cities:     cities,
 		categories: categories,
+		districts:  districts,
 		products:   products,
 	}
 }
@@ -77,6 +80,14 @@ func (a *flowCatalogAdminAdapter) ListCategories(ctx context.Context) ([]flow.Ca
 	}
 
 	return a.categories.ListCategories(ctx)
+}
+
+func (a *flowCatalogAdminAdapter) ListDistricts(ctx context.Context) ([]flow.DistrictListItem, error) {
+	if a == nil || a.products == nil {
+		return nil, nil
+	}
+
+	return a.districts.ListDistricts(ctx)
 }
 
 func (a *flowCatalogAdminAdapter) ListProducts(ctx context.Context) ([]flow.ProductListItem, error) {
