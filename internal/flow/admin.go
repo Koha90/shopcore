@@ -91,3 +91,15 @@ type ProductListItem struct {
 type ProductLister interface {
 	ListProducts(ctx context.Context) ([]ProductListItem, error)
 }
+
+// VariantCreator defines the admin write use case required by flow.
+type VariantCreator interface {
+	CreateVariant(ctx context.Context, params CreateVariantParams) error
+}
+
+// CreateVariantParams contains data required by flow admin variant creation.
+type CreateVariantParams struct {
+	ProductID int
+	Code      string
+	Name      string
+}

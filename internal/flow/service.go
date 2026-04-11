@@ -49,6 +49,8 @@ type Service struct {
 	districts      DistrictCreator
 	categoryLister CategoryLister
 	products       ProductCreator
+	productLister  ProductLister
+	variants       VariantCreator
 }
 
 // NewService constructs transport-agnostic flow service.
@@ -91,6 +93,8 @@ func NewServiceWithDeps(
 	districts DistrictCreator,
 	categoryLister CategoryLister,
 	products ProductCreator,
+	productLister ProductLister,
+	variants VariantCreator,
 ) *Service {
 	if store == nil {
 		store = NewMemoryStore()
@@ -108,6 +112,8 @@ func NewServiceWithDeps(
 		districts:      districts,
 		categoryLister: categoryLister,
 		products:       products,
+		productLister:  productLister,
+		variants:       variants,
 	}
 }
 

@@ -35,6 +35,7 @@ func buildAdminCatalogView() ViewModel {
 						{ID: ActionAdminCityCreateStart, Label: "Создать город"},
 						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
 						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
+						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант товара"},
 						{ID: ActionBack, Label: "Назад"},
 					},
 				},
@@ -468,6 +469,146 @@ func pendingCategoryID(p PendingInput) (int, bool) {
 	return id, true
 }
 
+func buildAdminVariantProductSelectView(products []ProductListItem, validation string) ViewModel {
+	text := "Новый вариант\n\nВыберите товар:"
+	if validation != "" {
+		text = "Новый вариант\n\n" + validation + "\n\nВыберите товар:"
+	}
+
+	actions := make([]ActionButton, 0, len(products)+1)
+	for _, product := range products {
+		actions = append(actions, ActionButton{
+			ID:    adminVariantSelectProductAction(product.ID),
+			Label: product.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminVariantCreateInputView(productName, validation string) ViewModel {
+	text := "Новый вариант"
+	if productName != "" {
+		text += "\n\nТовар: " + productName
+	}
+	text += "\n\nВведите название варианта сообщением."
+	if validation != "" {
+		text = "Новый вариант"
+		if productName != "" {
+			text += "\n\nТовар: " + productName
+		}
+		text = "\n\n" + validation + "\n\nВведите название варианта сообщением"
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminVariantCodeInputView(productName, validation, suggested string) ViewModel {
+	text := "Новый вариант"
+	if productName != "" {
+		text += "\n\nТовар: " + productName
+	}
+
+	switch {
+	case validation != "":
+		text += "\n\n" + validation + "\n\nВведите code варианта сообщением."
+	case suggested != "":
+		text += "\n\nАвто-код: " + suggested + "\n\nВведите code варианта сообщением."
+	default:
+		text += "\n\nВведите code варианта сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminVariantCreateDoneView() ViewModel {
+	return ViewModel{
+		Text: "Новый вариант\n\nВариант создан.",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func (s *Service) buildAdminVariantProductSelectScreen() ViewModel {
+	if s == nil || s.productLister == nil {
+		return buildAdminVariantProductSelectView(nil, "Не удалось загрузить список товаров.")
+	}
+
+	products, err := s.productLister.ListProducts(context.Background())
+	if err != nil {
+		return buildAdminVariantProductSelectView(nil, "Не удалось загрузить список товаров.")
+	}
+	if len(products) == 0 {
+		return buildAdminVariantProductSelectView(nil, "Нет доступных товаров.")
+	}
+
+	return buildAdminVariantProductSelectView(products, "")
+}
+
+func pendingProductID(p PendingInput) (int, bool) {
+	raw := p.Value(PendingValueProductID)
+	if raw == "" {
+		return 0, false
+	}
+
+	id, err := strconv.Atoi(raw)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+
+	return id, true
+}
+
 func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictSelectCityAction(actionID); ok {
 		return true
@@ -503,8 +644,14 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictCreate,
 		ScreenAdminDistrictCode,
 		ScreenAdminDistrictCreateDone,
+		ScreenAdminProductCategorySelect,
+		ScreenAdminProductCreate,
 		ScreenAdminProductCode,
-		ScreenAdminProductCreateDone:
+		ScreenAdminProductCreateDone,
+		ScreenAdminVariantProductSelect,
+		ScreenAdminVariantCreate,
+		ScreenAdminVariantCode,
+		ScreenAdminVariantCreateDone:
 		return true
 	default:
 		return false
@@ -520,7 +667,9 @@ func isAdminPending(kind PendingInputKind) bool {
 		PendingInputDistrictName,
 		PendingInputDistrictCode,
 		PendingInputProductName,
-		PendingInputProductCode:
+		PendingInputProductCode,
+		PendingInputVariantName,
+		PendingInputVariantCode:
 		return true
 	default:
 		return false

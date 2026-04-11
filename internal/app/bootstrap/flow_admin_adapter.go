@@ -86,3 +86,11 @@ func (a *flowCatalogAdminAdapter) ListProducts(ctx context.Context) ([]flow.Prod
 
 	return a.products.ListProducts(ctx)
 }
+
+func (a *flowCatalogAdminAdapter) CreateVariant(ctx context.Context, params flow.CreateVariantParams) error {
+	return a.svc.CreateVariant(ctx, catalogservice.CreateVariantParams{
+		ProductID: params.ProductID,
+		Code:      params.Code,
+		Name:      params.Name,
+	})
+}

@@ -37,6 +37,11 @@ const (
 	ScreenAdminProductCreate         ScreenID = "admin_product_create"
 	ScreenAdminProductCode           ScreenID = "admin_product_code"
 	ScreenAdminProductCreateDone     ScreenID = "admin_product_create_done"
+
+	ScreenAdminVariantProductSelect ScreenID = "admin_variant_product_select"
+	ScreenAdminVariantCreate        ScreenID = "admin_variant_create"
+	ScreenAdminVariantCode          ScreenID = "admin_variant_code"
+	ScreenAdminVariantCreateDone    ScreenID = "admin_variant_create_done"
 )
 
 // PendingInputKind identifies which text input flow currently expects.
@@ -56,6 +61,9 @@ const (
 
 	PendingInputProductName PendingInputKind = "product_name"
 	PendingInputProductCode PendingInputKind = "product_code"
+
+	PendingInputVariantName PendingInputKind = "variant_name"
+	PendingInputVariantCode PendingInputKind = "variant_code"
 )
 
 const (
@@ -76,4 +84,10 @@ const (
 
 	// PendingValueCategoryName stores selected category name label inside pending input payload.
 	PendingValueCategoryName = "category_name"
+
+	// PendingValueProductID stores selected product id inside pending input payload.
+	PendingValueProductID = "product_id"
+
+	// PendingValueProductName stores selected product label inside pending input payload.
+	PendingValueProductName = "product_name"
 )

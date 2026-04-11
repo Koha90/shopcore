@@ -70,7 +70,7 @@ func TestHandleAction_AdminProductCreateStart_ShowsCategorySelect(t *testing.T) 
 			{ID: 2, Code: "gifts", Label: "Подарки"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, lister, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, lister, nil, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	openAdminProductCreate(t, svc, key)
@@ -98,7 +98,7 @@ func TestHandleAction_AdminProductSelectCategory_StartsNameInput(t *testing.T) {
 			{ID: 7, Code: "flowers", Label: "Цветы"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, lister, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, lister, nil, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	openAdminProductCreate(t, svc, key)
@@ -126,7 +126,7 @@ func TestHandleText_AdminProductCreate_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &productCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -158,7 +158,7 @@ func TestHandleText_AdminProductCreate_AutoCodeSuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &productCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -201,7 +201,7 @@ func TestHandleText_AdminProductCreate_AutoCodeFailure_OpensManualCodeInput(t *t
 	creator := &productCreatorStub{
 		err: errors.New("duplicate product code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -241,7 +241,7 @@ func TestHandleText_AdminProductCreate_EmptySuggestedCode_OpensManualCodeInput(t
 
 	store := NewMemoryStore()
 	creator := &productCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -280,7 +280,7 @@ func TestHandleText_AdminProductCreate_NilProductCreator(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -310,7 +310,7 @@ func TestHandleText_AdminProductCode_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &productCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -343,7 +343,7 @@ func TestHandleText_AdminProductCode_Success_UsesManualCode(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &productCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -383,7 +383,7 @@ func TestHandleText_AdminProductCode_CreateError_KeepsPending(t *testing.T) {
 	creator := &productCreatorStub{
 		err: errors.New("duplicate product code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, creator, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	store.Put(key, Session{
@@ -421,7 +421,7 @@ func TestHandleAction_AdminProductCreateStart_NilCategoryLister(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin-product")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{

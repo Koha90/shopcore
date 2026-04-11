@@ -407,6 +407,112 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
+	case PendingInputVariantName:
+		name := strings.TrimSpace(req.Text)
+		if name == "" {
+			return buildAdminVariantCreateInputView(
+				session.Pending.Value(PendingValueProductName),
+				"Название варианта не может быть пустым.",
+			), nil
+		}
+
+		productID, ok := pendingProductID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending variant product id is invalid")
+		}
+
+		productName := session.Pending.Value(PendingValueProductName)
+		session.Pending.SetValue(PendingValueName, name)
+
+		suggestedCode := catalogservice.SuggestCode(name)
+		if suggestedCode == "" {
+			session.Current = ScreenAdminVariantCode
+			session.Pending.Kind = PendingInputVariantCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminVariantCodeInputView(
+				productName,
+				"Не удалось автоматически подобрать code",
+				"",
+			), nil
+
+		}
+
+		session.Pending.SetValue(PendingValueCode, suggestedCode)
+
+		if s.variants == nil {
+			return ViewModel{}, errors.New("flow variant creator is nil")
+		}
+
+		err := s.variants.CreateVariant(ctx, CreateVariantParams{
+			ProductID: productID,
+			Code:      suggestedCode,
+			Name:      name,
+		})
+		if err != nil {
+			session.Current = ScreenAdminVariantCode
+			session.Pending.Kind = PendingInputVariantCode
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminVariantCodeInputView(
+				productName,
+				"Не удалось создать вариант с автоматическим code.",
+				"",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminVariantCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
+	case PendingInputVariantCode:
+		code := strings.TrimSpace(req.Text)
+		if code == "" {
+			return buildAdminVariantCodeInputView(
+				session.Pending.Value(PendingValueProductName),
+				"Code варианта не может быть пустым.",
+				"",
+			), nil
+		}
+
+		productID, ok := pendingProductID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending variant product id is invalid")
+		}
+
+		name := strings.TrimSpace(session.Pending.Value(PendingValueName))
+		if name == "" {
+			return ViewModel{}, errors.New("pending variant name is empty")
+		}
+
+		productName := session.Pending.Value(PendingValueProductName)
+		session.Pending.SetValue(PendingValueCode, code)
+
+		if s.variants == nil {
+			return ViewModel{}, errors.New("flow variant creator is nil")
+		}
+
+		err := s.variants.CreateVariant(ctx, CreateVariantParams{
+			ProductID: productID,
+			Code:      session.Pending.Value(PendingValueCode),
+			Name:      name,
+		})
+		if err != nil {
+			return buildAdminVariantCodeInputView(
+				productName,
+				"Не удалось создать вариант. Попробуйте другой code.",
+				code,
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminVariantCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

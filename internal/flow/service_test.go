@@ -536,7 +536,7 @@ func TestHandleAction_ReturnsCatalogProviderError(t *testing.T) {
 func TestHandleText_AdminCategoryCreate_Success(t *testing.T) {
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -624,7 +624,7 @@ func TestHandleText_AdminCategoryCreate_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -676,7 +676,7 @@ func TestHandleAction_AdminCategoryCreateStart_PendingIsClearedByRegularAction(t
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -732,7 +732,7 @@ func TestHandleAction_Back_ClearsPendingInput(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -783,7 +783,7 @@ func TestHandleText_AdminCategoryCreate_CallsCategoryCreator(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -840,7 +840,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeError_OpensManualCodeInput(t *te
 	creator := &categoryCreatorStub{
 		err: errors.New("create category failed"),
 	}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -892,7 +892,7 @@ func TestHandleText_AdminCategoryCreate_NilCategoryCreator(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -937,7 +937,7 @@ func TestHandleAction_AdminCategoryCreateStart_InitializesPendingPayload(t *test
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -980,7 +980,7 @@ func TestHandleText_AdminCategoryCreate_StoresNameInPendingPayload(t *testing.T)
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	_, err := svc.HandleAction(context.Background(), ActionRequest{
@@ -1075,7 +1075,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeSuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	openAdminCategoryCreate(t, svc, key)
@@ -1107,7 +1107,7 @@ func TestHandleText_AdminCategoryCreate_AutoCodeFailure_OpensManualCodeInput(t *
 	creator := &categoryCreatorStub{
 		err: errors.New("duplicate category code"),
 	}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	openAdminCategoryCreate(t, svc, key)
@@ -1135,7 +1135,7 @@ func TestHandleText_AdminCategoryCreate_EmptySuggestedCode_OpensManualCodeInput(
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	openAdminCategoryCreate(t, svc, key)
@@ -1165,7 +1165,7 @@ func TestHandleText_AdminCategoryCode_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{
@@ -1202,7 +1202,7 @@ func TestHandleText_AdminCategoryCode_Success_UsesManualCode(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{
@@ -1244,7 +1244,7 @@ func TestHandleText_AdminCategoryCode_CreateError_KeepsPending(t *testing.T) {
 	creator := &categoryCreatorStub{
 		err: errors.New("duplicate category code"),
 	}
-	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, creator, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin")
 
 	store.Put(key, Session{

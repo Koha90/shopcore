@@ -127,6 +127,22 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next, req.CanAdmin), nil
+
+	case ActionAdminVariantCreateStart:
+		if s.productLister == nil {
+			return ViewModel{}, errors.New("flow product lister is nil")
+		}
+
+		next := ScreenAdminVariantProductSelect
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
@@ -209,6 +225,47 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return buildAdminProductCreateInputView(selected.Label, ""), nil
+	}
+
+	if productID, ok := parseAdminVariantSelectProductAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.productLister == nil {
+			return ViewModel{}, errors.New("flow product lister is nil")
+		}
+
+		products, err := s.productLister.ListProducts(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *ProductListItem
+		for i := range products {
+			if products[i].ID == productID {
+				selected = &products[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminVariantCreate
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputVariantName,
+			Payload: PendingInputPayload{
+				PendingValueProductID:   strconv.Itoa(selected.ID),
+				PendingValueProductName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminVariantCreateInputView(selected.Label, ""), nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
