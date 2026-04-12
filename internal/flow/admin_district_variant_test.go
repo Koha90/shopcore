@@ -78,7 +78,7 @@ func TestHandleAction_AdminDistrictVariantCreateStart_ShowsDistrictSelect(t *tes
 			{ID: 2, Code: "south", Label: "Юг"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, districts, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, districts, nil, nil, nil)
 	key := testSessionKey("shop-admin-district-variant")
 
 	openAdminDistrictVariantCreate(t, svc, key)
@@ -107,7 +107,7 @@ func TestHandleAction_AdminDistrictVariantSelectDistrict_ShowsVariantSelect(t *t
 			{ID: 9, Code: "large", Label: "L / 25 шт"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, districts, variants, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, districts, variants, nil, nil)
 	key := testSessionKey("shop-admin-district-variant")
 
 	openAdminDistrictVariantCreate(t, svc, key)
@@ -138,7 +138,7 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 			{ID: 9, Code: "large", Label: "L / 25 шт"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, variants, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, variants, nil, nil)
 	key := testSessionKey("shop-admin-district-variant")
 
 	store.Put(key, Session{
@@ -175,7 +175,7 @@ func TestHandleText_AdminDistrictVariantPrice_Success(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &districtVariantCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, creator)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, creator, nil)
 	key := testSessionKey("shop-admin-district-variant")
 
 	store.Put(key, Session{

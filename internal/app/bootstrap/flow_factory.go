@@ -55,6 +55,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		var districtLister flow.DistrictLister
 		var variantLister flow.VariantLister
 		var districtVariantCreator flow.DistrictVariantCreator
+		var districtVariantPriceUpdater flow.DistrictVariantPriceUpdater
 
 		if admin := newFlowCatalogAdminAdapter(catalog, repo, repo, repo, repo, repo); admin != nil {
 			categoryCreator = admin
@@ -68,6 +69,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 			variantCreator = admin
 			variantLister = admin
 			districtVariantCreator = admin
+			districtVariantPriceUpdater = admin
 		}
 
 		return flow.NewServiceWithDeps(
@@ -84,6 +86,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 			districtLister,
 			variantLister,
 			districtVariantCreator,
+			districtVariantPriceUpdater,
 		), nil
 	}
 }
