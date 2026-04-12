@@ -10,7 +10,7 @@ func buildCatalogNodeView(node CatalogNode) ViewModel {
 	for _, child := range node.Children {
 		actions = append(actions, ActionButton{
 			ID:    catalogSelectAction(child.Level, child.ID),
-			Label: child.Label,
+			Label: catalogChildButtonLabel(child),
 		})
 	}
 
