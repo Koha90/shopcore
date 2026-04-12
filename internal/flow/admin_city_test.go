@@ -56,7 +56,7 @@ func TestHandleAction_AdminCityCreateStart_InitializesPendingPayload(t *testing.
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -74,7 +74,7 @@ func TestHandleText_AdminCityCreate_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -100,7 +100,7 @@ func TestHandleText_AdminCityCreate_AutoCodeSuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -132,7 +132,7 @@ func TestHandleText_AdminCityCreate_AutoCodeFailure_OpensManualCodeInput(t *test
 	creator := &cityCreatorStub{
 		err: errors.New("duplicate city code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -160,7 +160,7 @@ func TestHandleText_AdminCityCreate_EmptySuggestedCode_OpensManualCodeInput(t *t
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -189,7 +189,7 @@ func TestHandleText_AdminCityCreate_NilCityCreator(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -209,7 +209,7 @@ func TestHandleText_AdminCityCode_EmptyTextKeepsPending(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	store.Put(key, Session{
@@ -246,7 +246,7 @@ func TestHandleText_AdminCityCode_Success_UsesManualCode(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	store.Put(key, Session{
@@ -288,7 +288,7 @@ func TestHandleText_AdminCityCode_CreateError_KeepsPending(t *testing.T) {
 	creator := &cityCreatorStub{
 		err: errors.New("duplicate city code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	store.Put(key, Session{
@@ -326,7 +326,7 @@ func TestHandleAction_AdminCityCreateStart_PendingIsClearedByRegularAction(t *te
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)
@@ -357,7 +357,7 @@ func TestHandleAction_AdminCityBack_ClearsPendingInput(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &cityCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, creator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Cities: creator})
 	key := testSessionKey("shop-admin-city")
 
 	openAdminCityCreate(t, svc, key)

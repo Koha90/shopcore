@@ -75,18 +75,20 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		return flow.NewServiceWithDeps(
 			nil,
 			provider,
-			categoryCreator,
-			cityCreator,
-			cityLister,
-			districtCreator,
-			categoryLister,
-			productCreator,
-			productLister,
-			variantCreator,
-			districtLister,
-			variantLister,
-			districtVariantCreator,
-			districtVariantPriceUpdater,
+			flow.ServiceDeps{
+				Categories:            categoryCreator,
+				Cities:                cityCreator,
+				CityLister:            cityLister,
+				Districts:             districtCreator,
+				CategoryLister:        categoryLister,
+				Products:              productCreator,
+				ProductLister:         productLister,
+				Variants:              variantCreator,
+				DistrictLister:        districtLister,
+				VariantLister:         variantLister,
+				DistrictVariants:      districtVariantCreator,
+				DistrictVariantPrices: districtVariantPriceUpdater,
+			},
 		), nil
 	}
 }

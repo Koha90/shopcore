@@ -57,6 +57,22 @@ type Service struct {
 	districtVariantPrices DistrictVariantPriceUpdater
 }
 
+// ServiceDeps contains optional flow dependencies used by admin/catalog actions.
+type ServiceDeps struct {
+	Categories            CategoryCreator
+	Cities                CityCreator
+	CityLister            CityLister
+	Districts             DistrictCreator
+	CategoryLister        CategoryLister
+	Products              ProductCreator
+	ProductLister         ProductLister
+	Variants              VariantCreator
+	DistrictLister        DistrictLister
+	VariantLister         VariantLister
+	DistrictVariants      DistrictVariantCreator
+	DistrictVariantPrices DistrictVariantPriceUpdater
+}
+
 // NewService constructs transport-agnostic flow service.
 //
 // If store is nil, in-memory session storage is used.
@@ -88,22 +104,7 @@ func NewServiceWithCatalogProvider(store Store, provider CatalogProvider) *Servi
 //
 // It allows wiring a custom catalog provider and optional admin category creator.
 // This constructor is intended for application wiring and tests.
-func NewServiceWithDeps(
-	store Store,
-	provider CatalogProvider,
-	categories CategoryCreator,
-	cities CityCreator,
-	cityLister CityLister,
-	districts DistrictCreator,
-	categoryLister CategoryLister,
-	products ProductCreator,
-	productLister ProductLister,
-	variants VariantCreator,
-	districtLister DistrictLister,
-	variantLister VariantLister,
-	districtVariants DistrictVariantCreator,
-	districtVariantPrices DistrictVariantPriceUpdater,
-) *Service {
+func NewServiceWithDeps(store Store, provider CatalogProvider, deps ServiceDeps) *Service {
 	if store == nil {
 		store = NewMemoryStore()
 	}
@@ -114,18 +115,18 @@ func NewServiceWithDeps(
 	return &Service{
 		store:                 store,
 		provider:              provider,
-		categories:            categories,
-		cities:                cities,
-		cityLister:            cityLister,
-		districts:             districts,
-		categoryLister:        categoryLister,
-		products:              products,
-		productLister:         productLister,
-		variants:              variants,
-		districtLister:        districtLister,
-		variantLister:         variantLister,
-		districtVariants:      districtVariants,
-		districtVariantPrices: districtVariantPrices,
+		categories:            deps.Categories,
+		cities:                deps.Cities,
+		cityLister:            deps.CityLister,
+		districts:             deps.Districts,
+		categoryLister:        deps.CategoryLister,
+		products:              deps.Products,
+		productLister:         deps.ProductLister,
+		variants:              deps.Variants,
+		districtLister:        deps.DistrictLister,
+		variantLister:         deps.VariantLister,
+		districtVariants:      deps.DistrictVariants,
+		districtVariantPrices: deps.DistrictVariantPrices,
 	}
 }
 

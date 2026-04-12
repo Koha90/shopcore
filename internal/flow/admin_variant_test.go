@@ -70,7 +70,7 @@ func TestHandleAction_AdminVariantCreateStart_ShowsProductSelect(t *testing.T) {
 			{ID: 2, Code: "gift-box", Label: "Gift Box"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, lister, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{ProductLister: lister})
 	key := testSessionKey("shop-admin-variant")
 
 	openAdminVariantCreate(t, svc, key)
@@ -98,7 +98,7 @@ func TestHandleAction_AdminVariantSelectProduct_StartsNameInput(t *testing.T) {
 			{ID: 7, Code: "rose-box", Label: "Rose Box"},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, lister, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{ProductLister: lister})
 	key := testSessionKey("shop-admin-variant")
 
 	openAdminVariantCreate(t, svc, key)
@@ -126,7 +126,7 @@ func TestHandleText_AdminVariantCreate_AutoCodeSuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	creator := &variantCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, creator, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Variants: creator})
 	key := testSessionKey("shop-admin-variant")
 
 	store.Put(key, Session{
@@ -164,7 +164,7 @@ func TestHandleText_AdminVariantCode_CreateError_KeepsPending(t *testing.T) {
 	creator := &variantCreatorStub{
 		err: errors.New("duplicate variant code"),
 	}
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, creator, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{Variants: creator})
 	key := testSessionKey("shop-admin-variant")
 
 	store.Put(key, Session{
