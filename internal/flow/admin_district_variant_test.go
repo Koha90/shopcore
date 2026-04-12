@@ -207,3 +207,14 @@ func TestHandleText_AdminDistrictVariantPrice_Success(t *testing.T) {
 	require.Equal(t, 9, creator.params.VariantID)
 	require.Equal(t, 5900, creator.params.Price)
 }
+
+func TestBuildAdminDistrictVariantVariantSelectView_UsesVariantAction(t *testing.T) {
+	vm := buildAdminDistrictVariantVariantSelectView("Центр", []VariantListItem{
+		{ID: 9, Code: "large", Label: "L / 25 шт"},
+	}, "")
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 2)
+	require.Equal(t, adminDistrictVariantSelectVariantAction(9), vm.Inline.Sections[0].Actions[0].ID)
+}
