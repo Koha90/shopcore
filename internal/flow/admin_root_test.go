@@ -11,7 +11,7 @@ func TestHandleAction_AdminRoot_BackReturnsToCatalog(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	svc := NewServiceWithDeps(store, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	key := testSessionKey("shop-admin-root")
 
 	vm, err := svc.HandleAction(context.Background(), ActionRequest{

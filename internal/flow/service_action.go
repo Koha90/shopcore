@@ -143,6 +143,21 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next, req.CanAdmin), nil
+
+	case ActionAdminDistrictVariantCreateStart:
+		if s.districtLister == nil {
+			return ViewModel{}, errors.New("flow district lister is nil")
+		}
+
+		next := ScreenAdminDistrictVariantDistrictSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
@@ -266,6 +281,102 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return buildAdminVariantCreateInputView(selected.Label, ""), nil
+	}
+
+	if districtID, ok := parseAdminDistrictVariantSelectDistrictAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.districtLister == nil {
+			return ViewModel{}, errors.New("flow distict lister is nil")
+		}
+		if s.variantLister == nil {
+			return ViewModel{}, errors.New("flow variant lister is nil")
+		}
+
+		districts, err := s.districtLister.ListDistricts(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *DistrictListItem
+		for i := range districts {
+			if districts[i].ID == districtID {
+				selected = &districts[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictVariantVariantSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueDistrictID:   strconv.Itoa(selected.ID),
+				PendingValueDistrictName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return s.buildAdminDistrictVariantVariantSelectScreen(selected.Label), nil
+	}
+
+	if variantID, ok := parseAdminDistrictVariantSelectVariantAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.variantLister == nil {
+			return ViewModel{}, errors.New("flow variant lister is nil")
+		}
+
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district id is invalid")
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		if districtName == "" {
+			return ViewModel{}, errors.New("pending district name is empty")
+		}
+
+		variants, err := s.variantLister.ListVariants(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *VariantListItem
+		for i := range variants {
+			if variants[i].ID == variantID {
+				selected = &variants[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictVariantPrice
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputDistrictVariantPrice,
+			Payload: PendingInputPayload{
+				PendingValueDistrictID:   strconv.Itoa(districtID),
+				PendingValueDistrictName: districtName,
+				PendingValueVariantID:    strconv.Itoa(selected.ID),
+				PendingValueVariantName:  selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminDistrictVariantPriceInputView(districtName, selected.Label, ""), nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {

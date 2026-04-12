@@ -35,7 +35,8 @@ func buildAdminCatalogView() ViewModel {
 						{ID: ActionAdminCityCreateStart, Label: "Создать город"},
 						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
 						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
-						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант товара"},
+						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант"},
+						{ID: ActionAdminDistrictVariantCreateStart, Label: "Разместить вариант"},
 						{ID: ActionBack, Label: "Назад"},
 					},
 				},
@@ -609,11 +610,206 @@ func pendingProductID(p PendingInput) (int, bool) {
 	return id, true
 }
 
+func buildAdminDistrictVariantDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
+	text := "Размещение варианта\n\nВыберите район:"
+	if validation != "" {
+		text = "Размещение варианта\n\n" + validation + "\n\nВыберите район:"
+	}
+
+	actions := make([]ActionButton, 0, len(districts)+1)
+	for _, district := range districts {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantSelectDistrictAction(district.ID),
+			Label: district.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantVariantSelectView(districtName string, variants []VariantListItem, validation string) ViewModel {
+	text := "Размещение варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	text += "\n\nВыберите вариант:"
+	if validation != "" {
+		text = "Размещение варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		text += "\n\n" + validation + "\n\nВыберите вариант:"
+	}
+
+	actions := make([]ActionButton, 0, len(variants)+1)
+	for _, variant := range variants {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantSelectDistrictAction(variant.ID),
+			Label: variant.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantPriceInputView(districtName, variantName, validation string) ViewModel {
+	text := "Размещение варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	if variantName != "" {
+		text += "\n\nВариант: " + variantName
+	}
+	text += "\n\nВведите цену сообщением."
+
+	if validation != "" {
+		text = "Размещение варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		if variantName != "" {
+			text += "\n\nВариант: " + variantName
+		}
+		text += "\n\n" + validation + "\n\nВведите цену сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantCreateDoneView() ViewModel {
+	return ViewModel{
+		Text: "Размещение варианта\n\nВариант размещён в районе.",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func (s *Service) buildAdminDistrictVariantDistrictSelectScreen() ViewModel {
+	if s == nil || s.districtLister == nil {
+		return buildAdminDistrictVariantDistrictSelectView(nil, "Не удалось загрузить список районов.")
+	}
+
+	districts, err := s.districtLister.ListDistricts(context.Background())
+	if err != nil {
+		return buildAdminDistrictVariantDistrictSelectView(nil, "Не удалось загрузить список районов.")
+	}
+	if len(districts) == 0 {
+		return buildAdminDistrictVariantDistrictSelectView(nil, "Нет доступных районов.")
+	}
+
+	return buildAdminDistrictVariantDistrictSelectView(districts, "")
+}
+
+func (s *Service) buildAdminDistrictVariantVariantSelectScreen(districtName string) ViewModel {
+	if s == nil || s.variantLister == nil {
+		return buildAdminDistrictVariantVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+	}
+
+	variants, err := s.variantLister.ListVariants(context.Background())
+	if err != nil {
+		return buildAdminDistrictVariantVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+	}
+	if len(variants) == 0 {
+		return buildAdminDistrictVariantVariantSelectView(districtName, nil, "Нет доступных вариантов.")
+	}
+
+	return buildAdminDistrictVariantVariantSelectView(districtName, variants, "")
+}
+
+func pendingDistrictID(p PendingInput) (int, bool) {
+	raw := p.Value(PendingValueDistrictID)
+	if raw == "" {
+		return 0, false
+	}
+
+	id, err := strconv.Atoi(raw)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+
+	return id, true
+}
+
+func pendingVariantID(p PendingInput) (int, bool) {
+	raw := p.Value(PendingValueVariantID)
+	if raw == "" {
+		return 0, false
+	}
+
+	id, err := strconv.Atoi(raw)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+
+	return id, true
+}
+
 func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictSelectCityAction(actionID); ok {
 		return true
 	}
 	if _, ok := parseAdminProductSelectCategoryAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminVariantSelectProductAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminDistrictVariantSelectDistrictAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminDistrictVariantSelectVariantAction(actionID); ok {
 		return true
 	}
 
@@ -623,7 +819,9 @@ func isAdminAction(actionID ActionID) bool {
 		ActionAdminCategoryCreateStart,
 		ActionAdminCityCreateStart,
 		ActionAdminDistrictCreateStart,
-		ActionAdminProductCreateStart:
+		ActionAdminProductCreateStart,
+		ActionAdminVariantCreateStart,
+		ActionAdminDistrictVariantCreateStart:
 		return true
 	default:
 		return false
@@ -651,7 +849,11 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminVariantProductSelect,
 		ScreenAdminVariantCreate,
 		ScreenAdminVariantCode,
-		ScreenAdminVariantCreateDone:
+		ScreenAdminVariantCreateDone,
+		ScreenAdminDistrictVariantDistrictSelect,
+		ScreenAdminDistrictVariantVariantSelect,
+		ScreenAdminDistrictVariantPrice,
+		ScreenAdminDistrictVariantCreateDone:
 		return true
 	default:
 		return false
@@ -669,7 +871,8 @@ func isAdminPending(kind PendingInputKind) bool {
 		PendingInputProductName,
 		PendingInputProductCode,
 		PendingInputVariantName,
-		PendingInputVariantCode:
+		PendingInputVariantCode,
+		PendingInputDistrictVariantPrice:
 		return true
 	default:
 		return false

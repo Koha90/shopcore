@@ -42,6 +42,11 @@ const (
 	ScreenAdminVariantCreate        ScreenID = "admin_variant_create"
 	ScreenAdminVariantCode          ScreenID = "admin_variant_code"
 	ScreenAdminVariantCreateDone    ScreenID = "admin_variant_create_done"
+
+	ScreenAdminDistrictVariantDistrictSelect ScreenID = "admin_district_variant_district_select"
+	ScreenAdminDistrictVariantVariantSelect  ScreenID = "admin_district_variant_variant_select"
+	ScreenAdminDistrictVariantPrice          ScreenID = "admin_district_variant_price"
+	ScreenAdminDistrictVariantCreateDone     ScreenID = "admin_district_variant_create_done"
 )
 
 // PendingInputKind identifies which text input flow currently expects.
@@ -64,6 +69,8 @@ const (
 
 	PendingInputVariantName PendingInputKind = "variant_name"
 	PendingInputVariantCode PendingInputKind = "variant_code"
+
+	PendingInputDistrictVariantPrice PendingInputKind = "district_variant_price"
 )
 
 const (
@@ -90,4 +97,16 @@ const (
 
 	// PendingValueProductName stores selected product label inside pending input payload.
 	PendingValueProductName = "product_name"
+
+	// PendingValueDistrictID stores selected district id inside pending input payload.
+	PendingValueDistrictID = "district_id"
+
+	// PendingValueDistrictName stores selected district name inside pending input payload.
+	PendingValueDistrictName = "district_name"
+
+	// PendingValueVariantID stores selected viariant id inside pending input payload.
+	PendingValueVariantID = "variant_id"
+
+	// PendingValueVariantName stores selected variant label inside pending input payload.
+	PendingValueVariantName = "variant_name"
 )

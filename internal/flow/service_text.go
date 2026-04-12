@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
@@ -509,6 +510,58 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		session.Pending = PendingInput{}
 		session.Current = ScreenAdminVariantCreateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
+	case PendingInputDistrictVariantPrice:
+		raw := strings.TrimSpace(req.Text)
+		if raw == "" {
+			return buildAdminDistrictVariantPriceInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Цена не может быть пустой.",
+			), nil
+		}
+
+		price, err := strconv.Atoi(raw)
+		if err != nil || price <= 0 {
+			return buildAdminDistrictVariantPriceInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Цена должна быть положительным числом.",
+			), nil
+		}
+
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district id is invalid")
+		}
+
+		variantID, ok := pendingVariantID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending variant id is invalid")
+		}
+
+		if s.districtVariants == nil {
+			return ViewModel{}, errors.New("flow district variant creator is nil")
+		}
+
+		err = s.districtVariants.CreateDistrictVariant(ctx, CreateDistrictVariantParams{
+			DistrictID: districtID,
+			VariantID:  variantID,
+			Price:      price,
+		})
+		if err != nil {
+			return buildAdminDistrictVariantPriceInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Не удалось разместить вариант в районе.",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminDistrictVariantCreateDone
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil

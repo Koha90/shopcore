@@ -42,7 +42,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		provider := catalogpg.NewCatalogProvider(loader)
 
 		repo := catalogpg.NewRepository(pool)
-		catalog := catalogservice.New(repo, repo, repo, repo, repo, nil)
+		catalog := catalogservice.New(repo, repo, repo, repo, repo, repo)
 
 		var categoryCreator flow.CategoryCreator
 		var cityCreator flow.CityCreator
@@ -52,8 +52,11 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		var productCreator flow.ProductCreator
 		var productLister flow.ProductLister
 		var variantCreator flow.VariantCreator
+		var districtLister flow.DistrictLister
+		var variantLister flow.VariantLister
+		var districtVariantCreator flow.DistrictVariantCreator
 
-		if admin := newFlowCatalogAdminAdapter(catalog, repo, repo, repo, nil); admin != nil {
+		if admin := newFlowCatalogAdminAdapter(catalog, repo, repo, repo, repo, repo); admin != nil {
 			categoryCreator = admin
 			cityCreator = admin
 			cityLister = admin
@@ -61,7 +64,10 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 			categoryLister = admin
 			productCreator = admin
 			productLister = admin
+			districtLister = admin
 			variantCreator = admin
+			variantLister = admin
+			districtVariantCreator = admin
 		}
 
 		return flow.NewServiceWithDeps(
@@ -75,6 +81,9 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 			productCreator,
 			productLister,
 			variantCreator,
+			districtLister,
+			variantLister,
+			districtVariantCreator,
 		), nil
 	}
 }

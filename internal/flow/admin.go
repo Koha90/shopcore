@@ -116,3 +116,28 @@ type CreateVariantParams struct {
 	Code      string
 	Name      string
 }
+
+// VariantListItem contains one variant option for admin selection flows.
+type VariantListItem struct {
+	ID    int
+	Code  string
+	Label string
+}
+
+// VariantLister defines the admin read use case required by flow
+// to select an existing variant before nested catalog creation steps.
+type VariantLister interface {
+	ListVariants(ctx context.Context) ([]VariantListItem, error)
+}
+
+// DistrictVariantCreator defines the admin write use case required by flow.
+type DistrictVariantCreator interface {
+	CreateDistrictVariant(ctx context.Context, params CreateDistrictVariantParams) error
+}
+
+// CreateDistrictVariantParams contains data required by flow admin placement creation.
+type CreateDistrictVariantParams struct {
+	DistrictID int
+	VariantID  int
+	Price      int
+}
