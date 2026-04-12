@@ -1333,3 +1333,103 @@ func TestHandleAction_AdminOpen_NonAdmin_ReturnsUnknownAction(t *testing.T) {
 	})
 	require.ErrorIs(t, err, ErrUnknownAction)
 }
+
+func TestHandleAction_ProductScreen_ShowsVariantButtonsWithPrice(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-inline")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	var vm ViewModel
+
+	for _, action := range []ActionID{
+		catalogSelectAction(LevelCity, "moscow"),
+		catalogSelectAction(LevelCategory, "flowers"),
+		catalogSelectAction(LevelDistrict, "center"),
+		catalogSelectAction(LevelProduct, "rose-box"),
+	} {
+		vm, err = svc.HandleAction(context.Background(), ActionRequest{
+			BotID:         "shop-inline",
+			BotName:       "Inline Shop",
+			StartScenario: string(StartScenarioInlineCatalog),
+			ActionID:      action,
+			SessionKey:    key,
+		})
+		require.NoError(t, err)
+	}
+
+	require.Equal(t, "Rose Box\n\nКомпозиция из роз для центрального района.\n\nВыберите вариант:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.True(t, hasInlineActionLabel(vm, "L / 25 шт • 5900 ₽"))
+}
+
+func TestHandleAction_NonVariantButtons_KeepPlainLabels(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-inline")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      catalogSelectAction(LevelCity, "moscow"),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      catalogSelectAction(LevelCategory, "flowers"),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-inline",
+		BotName:       "Inline Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      catalogSelectAction(LevelDistrict, "center"),
+		SessionKey:    key,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, "Центр\n\nВыберите товар:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.True(t, hasInlineActionLabel(vm, "Rose Box"))
+	require.False(t, hasInlineActionLabel(vm, "Rose Box • 5900 ₽"))
+}
+
+func hasInlineActionLabel(vm ViewModel, want string) bool {
+	if vm.Inline == nil {
+		return false
+	}
+
+	for _, section := range vm.Inline.Sections {
+		for _, action := range section.Actions {
+			if action.Label == want {
+				return true
+			}
+		}
+	}
+
+	return false
+}
