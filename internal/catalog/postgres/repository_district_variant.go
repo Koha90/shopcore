@@ -8,7 +8,10 @@ import (
 )
 
 // CreateDistrictVariant inserts one district-variant placement row.
-func (r *Repository) CreateDistrictVariant(ctx context.Context, params catalogservice.CreateDistrictVariantParams) error {
+func (r *Repository) CreateDistrictVariant(
+	ctx context.Context,
+	params catalogservice.CreateDistrictVariantParams,
+) error {
 	const op = "catalog postgres repository create district variant"
 
 	if r == nil {
