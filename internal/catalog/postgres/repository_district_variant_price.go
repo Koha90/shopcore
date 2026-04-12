@@ -2,13 +2,10 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 )
-
-var ErrDistrictVariantNotFound = errors.New("catalog district variant not found")
 
 // UpdateDistrictVariantPrice updates price for one district-variant placement row.
 func (r *Repository) UpdateDistrictVariantPrice(
