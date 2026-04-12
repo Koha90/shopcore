@@ -21,7 +21,7 @@ func (s *districtVariantWriterStub) CreateDistrictVariant(ctx context.Context, p
 
 func TestCreateDistrictVariant_Valid(t *testing.T) {
 	writer := &districtVariantWriterStub{}
-	svc := New(nil, nil, nil, nil, nil, writer)
+	svc := New(nil, nil, nil, nil, nil, writer, nil)
 
 	err := svc.CreateDistrictVariant(context.Background(), CreateDistrictVariantParams{
 		DistrictID: 7,
@@ -38,7 +38,7 @@ func TestCreateDistrictVariant_Valid(t *testing.T) {
 
 func TestCreateDistrictVariant_DistrictIDInvalid(t *testing.T) {
 	writer := &districtVariantWriterStub{}
-	svc := New(nil, nil, nil, nil, nil, writer)
+	svc := New(nil, nil, nil, nil, nil, writer, nil)
 
 	err := svc.CreateDistrictVariant(context.Background(), CreateDistrictVariantParams{
 		DistrictID: 0,
@@ -51,7 +51,7 @@ func TestCreateDistrictVariant_DistrictIDInvalid(t *testing.T) {
 
 func TestCreateDistrictVariant_VariantIDInvalid(t *testing.T) {
 	writer := &districtVariantWriterStub{}
-	svc := New(nil, nil, nil, nil, nil, writer)
+	svc := New(nil, nil, nil, nil, nil, writer, nil)
 
 	err := svc.CreateDistrictVariant(context.Background(), CreateDistrictVariantParams{
 		DistrictID: 7,
@@ -64,7 +64,7 @@ func TestCreateDistrictVariant_VariantIDInvalid(t *testing.T) {
 
 func TestCreateDistrictVariant_PriceInvalid(t *testing.T) {
 	writer := &districtVariantWriterStub{}
-	svc := New(nil, nil, nil, nil, nil, writer)
+	svc := New(nil, nil, nil, nil, nil, writer, nil)
 
 	err := svc.CreateDistrictVariant(context.Background(), CreateDistrictVariantParams{
 		DistrictID: 7,
@@ -76,7 +76,7 @@ func TestCreateDistrictVariant_PriceInvalid(t *testing.T) {
 }
 
 func TestCreateDistrictVariant_NilWriter(t *testing.T) {
-	svc := New(nil, nil, nil, nil, nil, nil)
+	svc := New(nil, nil, nil, nil, nil, nil, nil)
 
 	err := svc.CreateDistrictVariant(context.Background(), CreateDistrictVariantParams{
 		DistrictID: 7,
