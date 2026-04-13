@@ -134,7 +134,7 @@ func (a *flowCatalogAdminAdapter) CreateDistrictVariant(ctx context.Context, par
 
 func (a *flowCatalogAdminAdapter) UpdateDistrictVariantPrice(
 	ctx context.Context,
-	params flow.UpdateDistictVariantPriceParams,
+	params flow.UpdateDistrictVariantPriceParams,
 ) error {
 	return a.svc.UpdateDistrictVariantPrice(ctx, catalogservice.UpdateDistrictVariantPriceParams{
 		DistrictID: params.DistrictID,

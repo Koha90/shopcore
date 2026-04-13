@@ -47,6 +47,11 @@ const (
 	ScreenAdminDistrictVariantVariantSelect  ScreenID = "admin_district_variant_variant_select"
 	ScreenAdminDistrictVariantPrice          ScreenID = "admin_district_variant_price"
 	ScreenAdminDistrictVariantCreateDone     ScreenID = "admin_district_variant_create_done"
+
+	ScreenAdminDistrictVariantPriceUpdateDistrictSelect ScreenID = "admin_district_variant_price_update_district_select"
+	ScreenAdminDistrictVariantPriceUpdateVariantSelect  ScreenID = "admin_district_variant_price_update_variant_select"
+	ScreenAdminDistrictVariantPriceUpdatePrice          ScreenID = "admin_district_variant_update_price"
+	ScreenAdminDistrictVariantPriceUpdateDone           ScreenID = "admin_district_variant_update_price_done"
 )
 
 // PendingInputKind identifies which text input flow currently expects.
@@ -71,6 +76,8 @@ const (
 	PendingInputVariantCode PendingInputKind = "variant_code"
 
 	PendingInputDistrictVariantPrice PendingInputKind = "district_variant_price"
+
+	PendingInputDistrictVariantPriceUpdate PendingInputKind = "district_variant_price_update"
 )
 
 const (

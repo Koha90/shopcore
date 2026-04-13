@@ -566,6 +566,58 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
 
+	case PendingInputDistrictVariantPriceUpdate:
+		raw := strings.TrimSpace(req.Text)
+		if raw == "" {
+			return buildAdminDistrictVariantPriceUpdateInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Цена не может быть пустой.",
+			), nil
+		}
+
+		price, err := strconv.Atoi(raw)
+		if err != nil || price <= 0 {
+			return buildAdminDistrictVariantPriceUpdateInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Цена должна быть положительным числом.",
+			), nil
+		}
+
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district id is invalid")
+		}
+
+		variantID, ok := pendingVariantID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending variant id is invalid")
+		}
+
+		if s.districtVariantPrices == nil {
+			return ViewModel{}, errors.New("flow district variant price updater is nil")
+		}
+
+		err = s.districtVariantPrices.UpdateDistrictVariantPrice(ctx, UpdateDistrictVariantPriceParams{
+			DistrictID: districtID,
+			VariantID:  variantID,
+			Price:      price,
+		})
+		if err != nil {
+			return buildAdminDistrictVariantPriceUpdateInputView(
+				session.Pending.Value(PendingValueDistrictName),
+				session.Pending.Value(PendingValueVariantName),
+				"Не удалось обновить цену варианта.",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminDistrictVariantPriceUpdateDone
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

@@ -37,6 +37,7 @@ func buildAdminCatalogView() ViewModel {
 						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
 						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант"},
 						{ID: ActionAdminDistrictVariantCreateStart, Label: "Разместить вариант"},
+						{ID: ActionAdminDistrictVariantPriceUpdateStart, Label: "Изменить цену варианта"},
 						{ID: ActionBack, Label: "Назад"},
 					},
 				},
@@ -796,6 +797,168 @@ func pendingVariantID(p PendingInput) (int, bool) {
 	return id, true
 }
 
+func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
+	text := "Изменение цены варианта\n\nВыберите район:"
+	if validation != "" {
+		text = "Изменение цены варианта\n\n" + validation + "\n\nВыберите район:"
+	}
+
+	actions := make([]ActionButton, 0, len(districts)+1)
+	for _, district := range districts {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantSelectDistrictAction(district.ID),
+			Label: district.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantPriceUpdateVariantSelectView(
+	districtName string,
+	variants []VariantListItem,
+	validation string,
+) ViewModel {
+	text := "Изменение цены варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	text += "\n\nВыберите вариант:"
+	if validation != "" {
+		text = "Изменение цены варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		text += "\n\n" + validation + "\n\nВыберите вариант:"
+	}
+
+	actions := make([]ActionButton, 0, len(variants)+1)
+	for _, variant := range variants {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
+			Label: variant.Label,
+		})
+		actions = append(actions, ActionButton{
+			ID:    ActionBack,
+			Label: "Назад",
+		})
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantPriceUpdateInputView(districtName, variantName, validation string) ViewModel {
+	text := "Изменение цены варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	if variantName != "" {
+		text += "\n\nВариант: " + variantName
+	}
+	text += "\n\nВведите новую цену сообщением."
+
+	if validation != "" {
+		text = "Изменение цены варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		if variantName != "" {
+			text += "\n\nВариант: " + variantName
+		}
+		text += "\n\n" + validation + "\n\nВведите новую цену сообщением."
+	}
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
+	return ViewModel{
+		Text: "Изменение цены варианта\n\nЦена варианта обновлена.",
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func (s *Service) buildAdminDistrictVariantPriceUpdateDistrictSelectScreen() ViewModel {
+	if s == nil || s.districtLister == nil {
+		return buildAdminDistrictVariantPriceUpdateDistrictSelectView(nil, "Не удалось загрузить список районов.")
+	}
+
+	districts, err := s.districtLister.ListDistricts(context.Background())
+	if err != nil {
+		return buildAdminDistrictVariantPriceUpdateDistrictSelectView(nil, "Не удалось загрузить список районов.")
+	}
+	if len(districts) == 0 {
+		return buildAdminDistrictVariantPriceUpdateDistrictSelectView(nil, "Нет доступных районов.")
+	}
+
+	return buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts, "")
+}
+
+func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(districtName string) ViewModel {
+	if s == nil || s.variantLister == nil {
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+	}
+
+	variants, err := s.variantLister.ListVariants(context.Background())
+	if err != nil {
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+	}
+	if len(variants) == 0 {
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Нет доступных вариантов.")
+	}
+
+	return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, variants, "")
+}
+
 func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictSelectCityAction(actionID); ok {
 		return true
@@ -821,7 +984,8 @@ func isAdminAction(actionID ActionID) bool {
 		ActionAdminDistrictCreateStart,
 		ActionAdminProductCreateStart,
 		ActionAdminVariantCreateStart,
-		ActionAdminDistrictVariantCreateStart:
+		ActionAdminDistrictVariantCreateStart,
+		ActionAdminDistrictVariantPriceUpdateStart:
 		return true
 	default:
 		return false
@@ -853,7 +1017,11 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictVariantDistrictSelect,
 		ScreenAdminDistrictVariantVariantSelect,
 		ScreenAdminDistrictVariantPrice,
-		ScreenAdminDistrictVariantCreateDone:
+		ScreenAdminDistrictVariantCreateDone,
+		ScreenAdminDistrictVariantPriceUpdateDistrictSelect,
+		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
+		ScreenAdminDistrictVariantPriceUpdatePrice,
+		ScreenAdminDistrictVariantPriceUpdateDone:
 		return true
 	default:
 		return false
@@ -872,7 +1040,8 @@ func isAdminPending(kind PendingInputKind) bool {
 		PendingInputProductCode,
 		PendingInputVariantName,
 		PendingInputVariantCode,
-		PendingInputDistrictVariantPrice:
+		PendingInputDistrictVariantPrice,
+		PendingInputDistrictVariantPriceUpdate:
 		return true
 	default:
 		return false

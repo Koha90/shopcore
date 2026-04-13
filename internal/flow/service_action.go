@@ -158,6 +158,21 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, next, req.CanAdmin), nil
+
+	case ActionAdminDistrictVariantPriceUpdateStart:
+		if s.districtLister == nil {
+			return ViewModel{}, errors.New("flow district lister is nil")
+		}
+
+		next := ScreenAdminDistrictVariantPriceUpdateDistrictSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{}
+		s.store.Put(req.SessionKey, session)
+
+		return s.renderScreen(catalog, next, req.CanAdmin), nil
 	}
 
 	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
@@ -310,23 +325,45 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return ViewModel{}, ErrUnknownAction
 		}
 
-		next := ScreenAdminDistrictVariantVariantSelect
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind: PendingInputNone,
-			Payload: PendingInputPayload{
-				PendingValueDistrictID:   strconv.Itoa(selected.ID),
-				PendingValueDistrictName: selected.Label,
-			},
-		}
-		s.store.Put(req.SessionKey, session)
+		switch session.Current {
+		case ScreenAdminDistrictVariantDistrictSelect:
+			next := ScreenAdminDistrictVariantVariantSelect
+			if next != session.Current {
+				session.History = append(session.History, session.Current)
+			}
+			session.Current = next
+			session.Pending = PendingInput{
+				Kind: PendingInputNone,
+				Payload: PendingInputPayload{
+					PendingValueDistrictID:   strconv.Itoa(selected.ID),
+					PendingValueDistrictName: selected.Label,
+				},
+			}
+			s.store.Put(req.SessionKey, session)
 
-		return s.buildAdminDistrictVariantVariantSelectScreen(selected.Label), nil
+			return s.buildAdminDistrictVariantVariantSelectScreen(selected.Label), nil
+
+		case ScreenAdminDistrictVariantPriceUpdateDistrictSelect:
+			next := ScreenAdminDistrictVariantPriceUpdateVariantSelect
+			if next != session.Current {
+				session.History = append(session.History, session.Current)
+			}
+			session.Current = next
+			session.Pending = PendingInput{
+				Kind: PendingInputNone,
+				Payload: PendingInputPayload{
+					PendingValueDistrictID:   strconv.Itoa(selected.ID),
+					PendingValueDistrictName: selected.Label,
+				},
+			}
+			s.store.Put(req.SessionKey, session)
+
+			return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen(selected.Label), nil
+
+		default:
+			return ViewModel{}, ErrUnknownAction
+		}
 	}
-
 	if variantID, ok := parseAdminDistrictVariantSelectVariantAction(req.ActionID); ok {
 		if !session.CanAdmin {
 			return ViewModel{}, ErrUnknownAction
@@ -360,23 +397,48 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return ViewModel{}, ErrUnknownAction
 		}
 
-		next := ScreenAdminDistrictVariantPrice
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind: PendingInputDistrictVariantPrice,
-			Payload: PendingInputPayload{
-				PendingValueDistrictID:   strconv.Itoa(districtID),
-				PendingValueDistrictName: districtName,
-				PendingValueVariantID:    strconv.Itoa(selected.ID),
-				PendingValueVariantName:  selected.Label,
-			},
-		}
-		s.store.Put(req.SessionKey, session)
+		switch session.Current {
+		case ScreenAdminDistrictVariantVariantSelect:
+			next := ScreenAdminDistrictVariantPrice
+			if next != session.Current {
+				session.History = append(session.History, session.Current)
+			}
+			session.Current = next
+			session.Pending = PendingInput{
+				Kind: PendingInputDistrictVariantPrice,
+				Payload: PendingInputPayload{
+					PendingValueDistrictID:   strconv.Itoa(districtID),
+					PendingValueDistrictName: districtName,
+					PendingValueVariantID:    strconv.Itoa(selected.ID),
+					PendingValueVariantName:  selected.Label,
+				},
+			}
+			s.store.Put(req.SessionKey, session)
 
-		return buildAdminDistrictVariantPriceInputView(districtName, selected.Label, ""), nil
+			return buildAdminDistrictVariantPriceInputView(districtName, selected.Label, ""), nil
+
+		case ScreenAdminDistrictVariantPriceUpdateVariantSelect:
+			next := ScreenAdminDistrictVariantPriceUpdatePrice
+			if next != session.Current {
+				session.History = append(session.History, session.Current)
+			}
+			session.Current = next
+			session.Pending = PendingInput{
+				Kind: PendingInputDistrictVariantPriceUpdate,
+				Payload: PendingInputPayload{
+					PendingValueDistrictID:   strconv.Itoa(districtID),
+					PendingValueDistrictName: districtName,
+					PendingValueVariantID:    strconv.Itoa(selected.ID),
+					PendingValueVariantName:  selected.Label,
+				},
+			}
+			s.store.Put(req.SessionKey, session)
+
+			return buildAdminDistrictVariantPriceUpdateInputView(districtName, selected.Label, ""), nil
+
+		default:
+			return ViewModel{}, ErrUnknownAction
+		}
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {

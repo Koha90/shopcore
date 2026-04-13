@@ -47,6 +47,8 @@ const (
 	ActionAdminCategoryCreateStart ActionID = "admin:category:create:start"
 	ActionAdminCityCreateStart     ActionID = "admin:city:create:start"
 
+	ActionAdminDistrictVariantPriceUpdateStart ActionID = "admin:district_variant:price:update:start"
+
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
 

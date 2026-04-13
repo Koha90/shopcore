@@ -141,3 +141,15 @@ type CreateDistrictVariantParams struct {
 	VariantID  int
 	Price      int
 }
+
+// DistrictVariantPriceUpdater updates price for an existing district variant placement
+type DistrictVariantPriceUpdater interface {
+	UpdateDistrictVariantPrice(ctx context.Context, params UpdateDistrictVariantPriceParams) error
+}
+
+// UpdateDistrictVariantPriceParams contains input for district variant price update.
+type UpdateDistrictVariantPriceParams struct {
+	DistrictID int
+	VariantID  int
+	Price      int
+}
