@@ -153,3 +153,11 @@ type UpdateDistrictVariantPriceParams struct {
 	VariantID  int
 	Price      int
 }
+
+// DistrictPlacementReader defines filtered admin read use cases
+// for district placement edit flows.
+type DistrictPlacementReader interface {
+	ListDistrictCategories(ctx context.Context, districtID int) ([]CategoryListItem, error)
+	ListDistrictProducts(ctx context.Context, districtID, categoryID int) ([]ProductListItem, error)
+	ListDistrictVariants(ctx context.Context, districtID, productID int) ([]VariantListItem, error)
+}

@@ -853,11 +853,11 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
 			Label: variant.Label,
 		})
-		actions = append(actions, ActionButton{
-			ID:    ActionBack,
-			Label: "Назад",
-		})
 	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
 
 	return ViewModel{
 		Text: text,
