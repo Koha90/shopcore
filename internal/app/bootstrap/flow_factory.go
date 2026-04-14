@@ -87,6 +87,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 				DistrictLister:        districtLister,
 				VariantLister:         variantLister,
 				DistrictVariants:      districtVariantCreator,
+				DistrictPlacements:    repo,
 				DistrictVariantPrices: districtVariantPriceUpdater,
 			},
 		), nil

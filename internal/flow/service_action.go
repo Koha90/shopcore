@@ -44,16 +44,18 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				session.Pending = PendingInput{}
 				s.store.Put(req.SessionKey, session)
 			}
-			return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+			return s.renderScreen(catalog, session, req.CanAdmin), nil
 		}
 
 		prev := session.History[len(session.History)-1]
 		session.History = session.History[:len(session.History)-1]
 		session.Current = prev
-		session.Pending = PendingInput{}
+		if !shouldPreservePendingOnBack(prev) {
+			session.Pending = PendingInput{}
+		}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, prev, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionCatalogStart:
 		next := catalogRootForScenario(req.StartScenario)
@@ -65,7 +67,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminCategoryCreateStart:
 		next := ScreenAdminCategoryCreate
@@ -80,7 +82,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminCityCreateStart:
 		next := ScreenAdminCityCreate
@@ -95,7 +97,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminDistrictCreateStart:
 		if s.cityLister == nil {
@@ -110,7 +112,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminProductCreateStart:
 		if s.categoryLister == nil {
@@ -126,7 +128,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminVariantCreateStart:
 		if s.productLister == nil {
@@ -142,7 +144,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminDistrictVariantCreateStart:
 		if s.districtLister == nil {
@@ -157,7 +159,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminDistrictVariantPriceUpdateStart:
 		if s.districtLister == nil {
@@ -172,7 +174,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 	}
 
 	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
@@ -257,6 +259,66 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return buildAdminProductCreateInputView(selected.Label, ""), nil
 	}
 
+	if categoryID, ok := parseAdminDistrictVariantPriceUpdateSelectCategoryAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if session.Current != ScreenAdminDistrictVariantPriceUpdateCategorySelect {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.districtPlacements == nil {
+			return ViewModel{}, errors.New("flow district placements reader is nil")
+		}
+
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district id is invalid")
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		if districtName == "" {
+			return ViewModel{}, errors.New("pending district name is empty")
+		}
+
+		categories, err := s.districtPlacements.ListDistrictCategories(ctx, districtID)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *CategoryListItem
+		for i := range categories {
+			if categories[i].ID == categoryID {
+				selected = &categories[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictVariantPriceUpdateProductSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueDistrictID:   strconv.Itoa(districtID),
+				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   strconv.Itoa(selected.ID),
+				PendingValueCategoryName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return s.buildAdminDistrictVariantPriceUpdateProductSelectScreen(
+			districtID,
+			districtName,
+			selected.ID,
+			selected.Label,
+		), nil
+	}
+
 	if productID, ok := parseAdminVariantSelectProductAction(req.ActionID); ok {
 		if !session.CanAdmin {
 			return ViewModel{}, ErrUnknownAction
@@ -298,15 +360,83 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return buildAdminVariantCreateInputView(selected.Label, ""), nil
 	}
 
+	if productID, ok := parseAdminDistrictVariantPriceUpdateSelectProductAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if session.Current != ScreenAdminDistrictVariantPriceUpdateProductSelect {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.districtPlacements == nil {
+			return ViewModel{}, errors.New("flow district placements reader is nil")
+		}
+
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending district id is invalid")
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		if districtName == "" {
+			return ViewModel{}, errors.New("pending district name is empty")
+		}
+
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending category id is invalid")
+		}
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		if categoryName == "" {
+			return ViewModel{}, errors.New("pending category name is empty")
+		}
+
+		products, err := s.districtPlacements.ListDistrictProducts(ctx, districtID, categoryID)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *ProductListItem
+		for i := range products {
+			if products[i].ID == productID {
+				selected = &products[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictVariantPriceUpdateVariantSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueDistrictID:   strconv.Itoa(districtID),
+				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   strconv.Itoa(categoryID),
+				PendingValueCategoryName: categoryName,
+				PendingValueProductID:    strconv.Itoa(selected.ID),
+				PendingValueProductName:  selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
+			districtID,
+			districtName,
+			selected.ID,
+			selected.Label,
+		), nil
+	}
+
 	if districtID, ok := parseAdminDistrictVariantSelectDistrictAction(req.ActionID); ok {
 		if !session.CanAdmin {
 			return ViewModel{}, ErrUnknownAction
 		}
 		if s.districtLister == nil {
 			return ViewModel{}, errors.New("flow distict lister is nil")
-		}
-		if s.variantLister == nil {
-			return ViewModel{}, errors.New("flow variant lister is nil")
 		}
 
 		districts, err := s.districtLister.ListDistricts(ctx)
@@ -327,6 +457,10 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 
 		switch session.Current {
 		case ScreenAdminDistrictVariantDistrictSelect:
+			if s.variantLister == nil {
+				return ViewModel{}, errors.New("flow variant lister is nil")
+			}
+
 			next := ScreenAdminDistrictVariantVariantSelect
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -344,7 +478,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return s.buildAdminDistrictVariantVariantSelectScreen(selected.Label), nil
 
 		case ScreenAdminDistrictVariantPriceUpdateDistrictSelect:
-			next := ScreenAdminDistrictVariantPriceUpdateVariantSelect
+			next := ScreenAdminDistrictVariantPriceUpdateCategorySelect
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
 			}
@@ -358,7 +492,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			}
 			s.store.Put(req.SessionKey, session)
 
-			return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen(selected.Label), nil
+			return s.buildAdminDistrictVariantPriceUpdateCategorySelectScreen(selected.ID, selected.Label), nil
 
 		default:
 			return ViewModel{}, ErrUnknownAction
@@ -367,9 +501,6 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	if variantID, ok := parseAdminDistrictVariantSelectVariantAction(req.ActionID); ok {
 		if !session.CanAdmin {
 			return ViewModel{}, ErrUnknownAction
-		}
-		if s.variantLister == nil {
-			return ViewModel{}, errors.New("flow variant lister is nil")
 		}
 
 		districtID, ok := pendingDistrictID(session.Pending)
@@ -381,24 +512,28 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return ViewModel{}, errors.New("pending district name is empty")
 		}
 
-		variants, err := s.variantLister.ListVariants(ctx)
-		if err != nil {
-			return ViewModel{}, err
-		}
-
-		var selected *VariantListItem
-		for i := range variants {
-			if variants[i].ID == variantID {
-				selected = &variants[i]
-				break
-			}
-		}
-		if selected == nil {
-			return ViewModel{}, ErrUnknownAction
-		}
-
 		switch session.Current {
 		case ScreenAdminDistrictVariantVariantSelect:
+			if s.variantLister == nil {
+				return ViewModel{}, errors.New("flow variant lister is nil")
+			}
+
+			variants, err := s.variantLister.ListVariants(ctx)
+			if err != nil {
+				return ViewModel{}, err
+			}
+
+			var selected *VariantListItem
+			for i := range variants {
+				if variants[i].ID == variantID {
+					selected = &variants[i]
+					break
+				}
+			}
+			if selected == nil {
+				return ViewModel{}, ErrUnknownAction
+			}
+
 			next := ScreenAdminDistrictVariantPrice
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -418,6 +553,31 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return buildAdminDistrictVariantPriceInputView(districtName, selected.Label, ""), nil
 
 		case ScreenAdminDistrictVariantPriceUpdateVariantSelect:
+			if s.districtPlacements == nil {
+				return ViewModel{}, errors.New("flow district placements reader is nil")
+			}
+
+			productID, ok := pendingProductID(session.Pending)
+			if !ok {
+				return ViewModel{}, errors.New("pending product id is invalid")
+			}
+
+			variants, err := s.districtPlacements.ListDistrictVariants(ctx, districtID, productID)
+			if err != nil {
+				return ViewModel{}, err
+			}
+
+			var selected *VariantListItem
+			for i := range variants {
+				if variants[i].ID == variantID {
+					selected = &variants[i]
+					break
+				}
+			}
+			if selected == nil {
+				return ViewModel{}, ErrUnknownAction
+			}
+
 			next := ScreenAdminDistrictVariantPriceUpdatePrice
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -428,6 +588,8 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				Payload: PendingInputPayload{
 					PendingValueDistrictID:   strconv.Itoa(districtID),
 					PendingValueDistrictName: districtName,
+					PendingValueProductID:    strconv.Itoa(productID),
+					PendingValueProductName:  session.Pending.Value(PendingValueProductName),
 					PendingValueVariantID:    strconv.Itoa(selected.ID),
 					PendingValueVariantName:  selected.Label,
 				},
@@ -449,7 +611,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		session.Pending = PendingInput{}
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, next, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 	}
 
 	next, err := resolveNextScreen(req.ActionID)
@@ -464,7 +626,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 	session.Pending = PendingInput{}
 	s.store.Put(req.SessionKey, session)
 
-	return s.renderScreen(catalog, next, req.CanAdmin), nil
+	return s.renderScreen(catalog, session, req.CanAdmin), nil
 }
 
 // resolveCatalogScreen resolves one generic catalog selection action
@@ -561,5 +723,17 @@ func resolveNextScreen(actionID ActionID) (ScreenID, error) {
 
 	default:
 		return "", ErrUnknownAction
+	}
+}
+
+func shouldPreservePendingOnBack(screen ScreenID) bool {
+	switch screen {
+	case ScreenAdminDistrictVariantPriceUpdateCategorySelect,
+		ScreenAdminDistrictVariantPriceUpdateProductSelect,
+		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
+		ScreenAdminDistrictVariantPriceUpdatePrice:
+		return true
+	default:
+		return false
 	}
 }

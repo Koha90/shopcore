@@ -4,7 +4,10 @@ package flow
 //
 // Stable root/detail screens are handled directly.
 // Dynamic catalog drill-down screens are rendered from CatalogPath.
-func (s *Service) renderScreen(catalog Catalog, screen ScreenID, canAdmin bool) ViewModel {
+func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) ViewModel {
+	screen := session.Current
+	// pending := session.Pending
+
 	switch screen {
 	case ScreenReplyWelcome:
 		return buildReplyWelcomeStart()
@@ -129,11 +132,56 @@ func (s *Service) renderScreen(catalog Catalog, screen ScreenID, canAdmin bool) 
 	case ScreenAdminDistrictVariantPriceUpdateDistrictSelect:
 		return s.buildAdminDistrictVariantPriceUpdateDistrictSelectScreen()
 
+	case ScreenAdminDistrictVariantPriceUpdateCategorySelect:
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		return s.buildAdminDistrictVariantPriceUpdateCategorySelectScreen(districtID, districtName)
+
+	case ScreenAdminDistrictVariantPriceUpdateProductSelect:
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		return s.buildAdminDistrictVariantPriceUpdateProductSelectScreen(
+			districtID,
+			districtName,
+			categoryID,
+			categoryName,
+		)
+
 	case ScreenAdminDistrictVariantPriceUpdateVariantSelect:
-		return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen("")
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		productID, ok := pendingProductID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		productName := session.Pending.Value(PendingValueProductName)
+		return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
+			districtID,
+			districtName,
+			productID,
+			productName,
+		)
 
 	case ScreenAdminDistrictVariantPriceUpdatePrice:
-		return buildAdminDistrictVariantPriceUpdateInputView("", "", "")
+		return buildAdminDistrictVariantPriceUpdateInputView(
+			session.Pending.Value(PendingValueDistrictName),
+			session.Pending.Value(PendingValueVariantName),
+			"",
+		)
 
 	case ScreenAdminDistrictVariantPriceUpdateDone:
 		return buildAdminDistrictVariantPriceUpdateDoneView()

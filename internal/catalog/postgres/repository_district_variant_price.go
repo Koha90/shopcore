@@ -24,10 +24,11 @@ func (r *Repository) UpdateDistrictVariantPrice(
 	const q = `
 		update catalog_district_variants
 		set
-			price = $3
+			price = $3,
 			updated_at = now()
 		where district_id = $1
 			and variant_id = $2
+			and is_active = true
 	`
 
 	tag, err := r.pool.Exec(
@@ -39,7 +40,8 @@ func (r *Repository) UpdateDistrictVariantPrice(
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"update district variant price for district %d and variant %d: %w",
+			"%s: update district variant price for district %d and variant %d: %w",
+			op,
 			params.DistrictID,
 			params.VariantID,
 			err,

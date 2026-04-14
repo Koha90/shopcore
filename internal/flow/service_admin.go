@@ -830,7 +830,7 @@ func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []District
 }
 
 func buildAdminDistrictVariantPriceUpdateVariantSelectView(
-	districtName string,
+	districtName, productName string,
 	variants []VariantListItem,
 	validation string,
 ) ViewModel {
@@ -838,11 +838,17 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	if districtName != "" {
 		text += "\n\nРайон: " + districtName
 	}
+	if productName != "" {
+		text += "\n\nТовар: " + productName
+	}
 	text += "\n\nВыберите вариант:"
 	if validation != "" {
 		text = "Изменение цены варианта"
 		if districtName != "" {
 			text += "\n\nРайон: " + districtName
+		}
+		if productName != "" {
+			text += "\n\nТовар: " + productName
 		}
 		text += "\n\n" + validation + "\n\nВыберите вариант:"
 	}
@@ -927,6 +933,100 @@ func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
 	}
 }
 
+func buildAdminDistrictVariantPriceUpdateCategorySelectView(
+	districtName string,
+	categories []CategoryListItem,
+	validation string,
+) ViewModel {
+	text := "Изменение цены варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	text += "\n\nВыберите категорию:"
+	if validation != "" {
+		text = "Изменение цены варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		text += "\n\n" + validation + "\n\nВыберите категорию:"
+	}
+
+	actions := make([]ActionButton, 0, len(categories)+1)
+	for _, category := range categories {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantPriceUpdateSelectCategoryAction(category.ID),
+			Label: category.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantPriceUpdateProductSelectView(
+	districtName, categoryName string,
+	products []ProductListItem,
+	validation string,
+) ViewModel {
+	text := "Изменение цены варианта"
+	if districtName != "" {
+		text += "\n\nРайон: " + districtName
+	}
+	if categoryName != "" {
+		text += "\n\nКатегория: " + categoryName
+	}
+	text += "\n\nВыберите товар:"
+	if validation != "" {
+		text = "Изменение цены варианта"
+		if districtName != "" {
+			text += "\n\nРайон: " + districtName
+		}
+		if categoryName != "" {
+			text += "\n\nКатегория: " + categoryName
+		}
+		text += "\n\n" + validation + "\n\nВыберите товар:"
+	}
+
+	actions := make([]ActionButton, 0, len(products)+1)
+	for _, product := range products {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantPriceUpdateSelectProductAction(product.ID),
+			Label: product.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
 func (s *Service) buildAdminDistrictVariantPriceUpdateDistrictSelectScreen() ViewModel {
 	if s == nil || s.districtLister == nil {
 		return buildAdminDistrictVariantPriceUpdateDistrictSelectView(nil, "Не удалось загрузить список районов.")
@@ -943,20 +1043,89 @@ func (s *Service) buildAdminDistrictVariantPriceUpdateDistrictSelectScreen() Vie
 	return buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts, "")
 }
 
-func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(districtName string) ViewModel {
-	if s == nil || s.variantLister == nil {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+func (s *Service) buildAdminDistrictVariantPriceUpdateCategorySelectScreen(districtID int, districtName string) ViewModel {
+	if s == nil || s.districtPlacements == nil {
+		return buildAdminDistrictVariantPriceUpdateCategorySelectView(
+			districtName,
+			nil,
+			"Не удалось загрузить список категорий.",
+		)
 	}
 
-	variants, err := s.variantLister.ListVariants(context.Background())
+	categories, err := s.districtPlacements.ListDistrictCategories(context.Background(), districtID)
 	if err != nil {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Не удалось загрузить список вариантов.")
+		return buildAdminDistrictVariantPriceUpdateCategorySelectView(
+			districtName,
+			nil,
+			"Не удалось загрузить список категорий.",
+		)
+	}
+	if len(categories) == 0 {
+		return buildAdminDistrictVariantPriceUpdateCategorySelectView(
+			districtName,
+			nil,
+			"В этом районе нет доступных категорий.",
+		)
+	}
+
+	return buildAdminDistrictVariantPriceUpdateCategorySelectView(districtName, categories, "")
+}
+
+func (s *Service) buildAdminDistrictVariantPriceUpdateProductSelectScreen(
+	districtID int,
+	districtName string,
+	categoryID int,
+	categoryName string,
+) ViewModel {
+	if s == nil || s.districtPlacements == nil {
+		return buildAdminDistrictVariantPriceUpdateProductSelectView(
+			districtName,
+			categoryName,
+			nil,
+			"Не удалось загрузить список товаров.",
+		)
+	}
+
+	products, err := s.districtPlacements.ListDistrictProducts(context.Background(), districtID, categoryID)
+	if err != nil {
+		return buildAdminDistrictVariantPriceUpdateProductSelectView(
+			districtName,
+			categoryName,
+			nil,
+			"Не удалось загрузить список товаров."+err.Error(),
+		)
+	}
+	if len(products) == 0 {
+		return buildAdminDistrictVariantPriceUpdateProductSelectView(
+			districtName,
+			categoryName,
+			nil,
+			"В этой категории нет доступных товаров.",
+		)
+	}
+
+	return buildAdminDistrictVariantPriceUpdateProductSelectView(districtName, categoryName, products, "")
+}
+
+func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
+	districtID int,
+	districtName string,
+	productID int,
+	productName string,
+) ViewModel {
+	if s == nil || s.districtPlacements == nil {
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Не удалось загрузить список вариантов.")
+	}
+
+	variants, err := s.districtPlacements.ListDistrictVariants(context.Background(), districtID, productID)
+	if err != nil {
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Не удалось загрузить список вариантов.")
 	}
 	if len(variants) == 0 {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, nil, "Нет доступных вариантов.")
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Нет доступных вариантов.")
 	}
 
-	return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, variants, "")
+	return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, variants, "")
 }
 
 func isAdminAction(actionID ActionID) bool {
@@ -970,6 +1139,12 @@ func isAdminAction(actionID ActionID) bool {
 		return true
 	}
 	if _, ok := parseAdminDistrictVariantSelectDistrictAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminDistrictVariantPriceUpdateSelectCategoryAction(actionID); ok {
+		return true
+	}
+	if _, ok := parseAdminDistrictVariantPriceUpdateSelectProductAction(actionID); ok {
 		return true
 	}
 	if _, ok := parseAdminDistrictVariantSelectVariantAction(actionID); ok {
@@ -1019,6 +1194,8 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictVariantPrice,
 		ScreenAdminDistrictVariantCreateDone,
 		ScreenAdminDistrictVariantPriceUpdateDistrictSelect,
+		ScreenAdminDistrictVariantPriceUpdateCategorySelect,
+		ScreenAdminDistrictVariantPriceUpdateProductSelect,
 		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
 		ScreenAdminDistrictVariantPriceUpdatePrice,
 		ScreenAdminDistrictVariantPriceUpdateDone:

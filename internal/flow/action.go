@@ -49,6 +49,8 @@ const (
 	ScreenAdminDistrictVariantCreateDone     ScreenID = "admin_district_variant_create_done"
 
 	ScreenAdminDistrictVariantPriceUpdateDistrictSelect ScreenID = "admin_district_variant_price_update_district_select"
+	ScreenAdminDistrictVariantPriceUpdateCategorySelect ScreenID = "admin_district_variant_price_update_category_select"
+	ScreenAdminDistrictVariantPriceUpdateProductSelect  ScreenID = "admin_district_variant_price_update_product_select"
 	ScreenAdminDistrictVariantPriceUpdateVariantSelect  ScreenID = "admin_district_variant_price_update_variant_select"
 	ScreenAdminDistrictVariantPriceUpdatePrice          ScreenID = "admin_district_variant_update_price"
 	ScreenAdminDistrictVariantPriceUpdateDone           ScreenID = "admin_district_variant_update_price_done"

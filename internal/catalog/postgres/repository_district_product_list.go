@@ -27,7 +27,7 @@ func (r *Repository) ListDistrictProducts(ctx context.Context, districtID, categ
 			p.name
 		from catalog_district_variants dv
 		join catalog_variants v on v.id = dv.variant_id
-		join catalog_products p on p.id = dv.product_id
+		join catalog_products p on p.id = v.product_id
 		where dv.district_id = $1
 			and p.category_id = $2
 			and dv.is_active = true

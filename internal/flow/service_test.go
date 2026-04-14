@@ -1070,33 +1070,70 @@ func openAdminCategoryCreate(t *testing.T, svc *Service, key SessionKey) {
 	require.NoError(t, err)
 }
 
-func TestHandleText_AdminCategoryCreate_AutoCodeSuccess(t *testing.T) {
+func TestHandleText_AdminDistrictVariantPriceUpdate_Success(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
-	creator := &categoryCreatorStub{}
-	svc := NewServiceWithDeps(store, nil, ServiceDeps{Categories: creator})
-	key := testSessionKey("shop-admin")
+	updater := &flowDistrictVariantPriceUpdaterStub{}
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{
+		DistrictLister: &flowDistrictListerStub{
+			items: []DistrictListItem{
+				{ID: 7, Code: "center", Label: "Центр"},
+			},
+		},
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+			variants: []VariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			},
+		},
+		DistrictVariantPrices: updater,
+	})
+	key := testSessionKey("shop-admin-price-update-success")
 
-	openAdminCategoryCreate(t, svc, key)
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
+
+	for _, action := range []ActionID{
+		adminDistrictVariantSelectDistrictAction(7),
+		adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+		adminDistrictVariantPriceUpdateSelectProductAction(21),
+		adminDistrictVariantSelectVariantAction(9),
+	} {
+		_, err := svc.HandleAction(context.Background(), ActionRequest{
+			BotID:         "shop-admin",
+			BotName:       "Admin Shop",
+			StartScenario: string(StartScenarioInlineCatalog),
+			ActionID:      action,
+			SessionKey:    key,
+			CanAdmin:      true,
+		})
+		require.NoError(t, err)
+	}
 
 	vm, err := svc.HandleText(context.Background(), TextRequest{
 		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
 		StartScenario: string(StartScenarioInlineCatalog),
-		Text:          "Цветы",
+		Text:          "6100",
 		SessionKey:    key,
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Новая категория\n\nКатегория создана.", vm.Text)
+	require.Equal(t, "Изменение цены варианта\n\nЦена варианта обновлена.", vm.Text)
 
-	require.True(t, creator.called)
-	require.Equal(t, "tsvety", creator.params.Code)
-	require.Equal(t, "Цветы", creator.params.Name)
+	require.True(t, updater.called)
+	require.Equal(t, 7, updater.params.DistrictID)
+	require.Equal(t, 9, updater.params.VariantID)
+	require.Equal(t, 6100, updater.params.Price)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
-	require.Equal(t, ScreenAdminCategoryCreateDone, session.Current)
+	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateDone, session.Current)
 	require.Equal(t, PendingInputNone, session.Pending.Kind)
 }
 
@@ -1500,6 +1537,53 @@ func openAdminCatalog(t *testing.T, svc *Service, key SessionKey) {
 	require.NoError(t, err)
 }
 
+type flowDistrictPlacementReaderStub struct {
+	categories []CategoryListItem
+	products   []ProductListItem
+	variants   []VariantListItem
+
+	categoriesErr error
+	productsErr   error
+	variantsErr   error
+}
+
+func (s *flowDistrictPlacementReaderStub) ListDistrictCategories(
+	ctx context.Context,
+	districtID int,
+) ([]CategoryListItem, error) {
+	return s.categories, s.categoriesErr
+}
+
+func (s *flowDistrictPlacementReaderStub) ListDistrictProducts(
+	ctx context.Context,
+	districtID, categoryID int,
+) ([]ProductListItem, error) {
+	return s.products, s.productsErr
+}
+
+func (s *flowDistrictPlacementReaderStub) ListDistrictVariants(
+	ctx context.Context,
+	districtID, productID int,
+) ([]VariantListItem, error) {
+	return s.variants, s.variantsErr
+}
+
+func openAdminDistrictVariantPriceUpdate(t *testing.T, svc *Service, key SessionKey) {
+	t.Helper()
+
+	openAdminCatalog(t, svc, key)
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      ActionAdminDistrictVariantPriceUpdateStart,
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+}
+
 func TestHandleAction_AdminDistrictVariantPriceUpdateStart_OpensDistrictSelect(t *testing.T) {
 	t.Parallel()
 
@@ -1527,7 +1611,7 @@ func TestHandleAction_AdminDistrictVariantPriceUpdateStart_OpensDistrictSelect(t
 	require.NotNil(t, vm.Inline)
 }
 
-func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectDistrict_OpensVariantSelect(t *testing.T) {
+func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectDistrict_OpensCategorySelect(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
@@ -1537,52 +1621,15 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectDistrict_OpensVarian
 				{ID: 7, Code: "center", Label: "Центр"},
 			},
 		},
-		VariantLister: &flowVariantListerStub{
-			items: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
 			},
 		},
 	})
 	key := testSessionKey("shop-admin-price-update-district")
 
-	_, err := svc.Start(context.Background(), StartRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminCatalogOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminDistrictVariantPriceUpdateStart,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
 
 	vm, err := svc.HandleAction(context.Background(), ActionRequest{
 		BotID:         "shop-admin",
@@ -1593,15 +1640,129 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectDistrict_OpensVarian
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВыберите вариант:", vm.Text)
-	require.NotNil(t, vm.Inline)
+	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВыберите категорию:", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateCategorySelect, session.Current)
+	require.Equal(t, PendingInputNone, session.Pending.Kind)
+	require.Equal(t, "7", session.Pending.Value(PendingValueDistrictID))
+	require.Equal(t, "Центр", session.Pending.Value(PendingValueDistrictName))
+}
+
+func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectCategory_OpensProductSelect(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{
+		DistrictLister: &flowDistrictListerStub{
+			items: []DistrictListItem{
+				{ID: 7, Code: "center", Label: "Центр"},
+			},
+		},
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+		},
+	})
+	key := testSessionKey("shop-admin-price-update-category")
+
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantSelectDistrictAction(7),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nКатегория: Цветы\n\nВыберите товар:", vm.Text)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateProductSelect, session.Current)
+	require.Equal(t, "11", session.Pending.Value(PendingValueCategoryID))
+	require.Equal(t, "Цветы", session.Pending.Value(PendingValueCategoryName))
+}
+
+func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariantSelect(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{
+		DistrictLister: &flowDistrictListerStub{
+			items: []DistrictListItem{
+				{ID: 7, Code: "center", Label: "Центр"},
+			},
+		},
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+			variants: []VariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			},
+		},
+	})
+	key := testSessionKey("shop-admin-price-update-product")
+
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantSelectDistrictAction(7),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantPriceUpdateSelectProductAction(21),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nТовар: Rose Box\n\nВыберите вариант:", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
 	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateVariantSelect, session.Current)
-	require.Equal(t, PendingInputNone, session.Pending.Kind)
-	require.Equal(t, "7", session.Pending.Value(PendingValueDistrictID))
-	require.Equal(t, "Центр", session.Pending.Value(PendingValueDistrictName))
+	require.Equal(t, "21", session.Pending.Value(PendingValueProductID))
+	require.Equal(t, "Rose Box", session.Pending.Value(PendingValueProductName))
 }
 
 func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceInput(t *testing.T) {
@@ -1614,62 +1775,37 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceIn
 				{ID: 7, Code: "center", Label: "Центр"},
 			},
 		},
-		VariantLister: &flowVariantListerStub{
-			items: []VariantListItem{
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+			variants: []VariantListItem{
 				{ID: 9, Code: "large", Label: "L / 25 шт"},
 			},
 		},
 	})
 	key := testSessionKey("shop-admin-price-update-variant")
 
-	_, err := svc.Start(context.Background(), StartRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
 
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminCatalogOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminDistrictVariantPriceUpdateStart,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      adminDistrictVariantSelectDistrictAction(7),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
+	for _, action := range []ActionID{
+		adminDistrictVariantSelectDistrictAction(7),
+		adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+		adminDistrictVariantPriceUpdateSelectProductAction(21),
+	} {
+		_, err := svc.HandleAction(context.Background(), ActionRequest{
+			BotID:         "shop-admin",
+			BotName:       "Admin Shop",
+			StartScenario: string(StartScenarioInlineCatalog),
+			ActionID:      action,
+			SessionKey:    key,
+			CanAdmin:      true,
+		})
+		require.NoError(t, err)
+	}
 
 	vm, err := svc.HandleAction(context.Background(), ActionRequest{
 		BotID:         "shop-admin",
@@ -1686,111 +1822,6 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceIn
 	require.True(t, ok)
 	require.Equal(t, ScreenAdminDistrictVariantPriceUpdatePrice, session.Current)
 	require.Equal(t, PendingInputDistrictVariantPriceUpdate, session.Pending.Kind)
-	require.Equal(t, "7", session.Pending.Value(PendingValueDistrictID))
-	require.Equal(t, "Центр", session.Pending.Value(PendingValueDistrictName))
-	require.Equal(t, "9", session.Pending.Value(PendingValueVariantID))
-	require.Equal(t, "L / 25 шт", session.Pending.Value(PendingValueVariantName))
-}
-
-func TestHandleText_AdminDistrictVariantPriceUpdate_Success(t *testing.T) {
-	t.Parallel()
-
-	store := NewMemoryStore()
-	updater := &flowDistrictVariantPriceUpdaterStub{}
-	svc := NewServiceWithDeps(store, nil, ServiceDeps{
-		DistrictLister: &flowDistrictListerStub{
-			items: []DistrictListItem{
-				{ID: 7, Code: "center", Label: "Центр"},
-			},
-		},
-		VariantLister: &flowVariantListerStub{
-			items: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
-			},
-		},
-		DistrictVariantPrices: updater,
-	})
-	key := testSessionKey("shop-admin-price-update-success")
-
-	_, err := svc.Start(context.Background(), StartRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminCatalogOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminDistrictVariantPriceUpdateStart,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      adminDistrictVariantSelectDistrictAction(7),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      adminDistrictVariantSelectVariantAction(9),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	vm, err := svc.HandleText(context.Background(), TextRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		Text:          "6100",
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-	require.Equal(t, "Изменение цены варианта\n\nЦена варианта обновлена.", vm.Text)
-
-	require.True(t, updater.called)
-	require.Equal(t, 7, updater.params.DistrictID)
-	require.Equal(t, 9, updater.params.VariantID)
-	require.Equal(t, 6100, updater.params.Price)
-
-	session, ok := store.Get(key)
-	require.True(t, ok)
-	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateDone, session.Current)
-	require.Equal(t, PendingInputNone, session.Pending.Kind)
 }
 
 func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
@@ -1804,8 +1835,14 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
 				{ID: 7, Code: "center", Label: "Центр"},
 			},
 		},
-		VariantLister: &flowVariantListerStub{
-			items: []VariantListItem{
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+			variants: []VariantListItem{
 				{ID: 9, Code: "large", Label: "L / 25 шт"},
 			},
 		},
@@ -1813,64 +1850,24 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
 	})
 	key := testSessionKey("shop-admin-price-update-invalid")
 
-	_, err := svc.Start(context.Background(), StartRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
 
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminCatalogOpen,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      ActionAdminDistrictVariantPriceUpdateStart,
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      adminDistrictVariantSelectDistrictAction(7),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
-
-	_, err = svc.HandleAction(context.Background(), ActionRequest{
-		BotID:         "shop-admin",
-		BotName:       "Admin Shop",
-		StartScenario: string(StartScenarioInlineCatalog),
-		ActionID:      adminDistrictVariantSelectVariantAction(9),
-		SessionKey:    key,
-		CanAdmin:      true,
-	})
-	require.NoError(t, err)
+	for _, action := range []ActionID{
+		adminDistrictVariantSelectDistrictAction(7),
+		adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+		adminDistrictVariantPriceUpdateSelectProductAction(21),
+		adminDistrictVariantSelectVariantAction(9),
+	} {
+		_, err := svc.HandleAction(context.Background(), ActionRequest{
+			BotID:         "shop-admin",
+			BotName:       "Admin Shop",
+			StartScenario: string(StartScenarioInlineCatalog),
+			ActionID:      action,
+			SessionKey:    key,
+			CanAdmin:      true,
+		})
+		require.NoError(t, err)
+	}
 
 	vm, err := svc.HandleText(context.Background(), TextRequest{
 		BotID:         "shop-admin",

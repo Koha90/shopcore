@@ -39,7 +39,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 	}
 
 	if !session.Pending.Active() {
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 	}
 
 	switch session.Pending.Kind {
@@ -88,7 +88,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCategoryCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputCategoryCode:
 		code := strings.TrimSpace(req.Text)
@@ -119,7 +119,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCategoryCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputCityName:
 		name := strings.TrimSpace(req.Text)
@@ -166,7 +166,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCityCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputCityCode:
 		code := strings.TrimSpace(req.Text)
@@ -197,7 +197,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminCityCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputDistrictName:
 		name := strings.TrimSpace(req.Text)
@@ -255,7 +255,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminDistrictCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputDistrictCode:
 		code := strings.TrimSpace(req.Text)
@@ -301,7 +301,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminDistrictCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputProductName:
 		name := strings.TrimSpace(req.Text)
@@ -360,7 +360,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminProductCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputProductCode:
 		code := strings.TrimSpace(req.Text)
@@ -406,7 +406,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminProductCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputVariantName:
 		name := strings.TrimSpace(req.Text)
@@ -466,7 +466,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminVariantCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputVariantCode:
 		code := strings.TrimSpace(req.Text)
@@ -512,7 +512,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminVariantCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputDistrictVariantPrice:
 		raw := strings.TrimSpace(req.Text)
@@ -564,7 +564,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminDistrictVariantCreateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case PendingInputDistrictVariantPriceUpdate:
 		raw := strings.TrimSpace(req.Text)
@@ -616,7 +616,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 		session.Current = ScreenAdminDistrictVariantPriceUpdateDone
 		s.store.Put(req.SessionKey, session)
 
-		return s.renderScreen(catalog, session.Current, req.CanAdmin), nil
+		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	default:
 		return ViewModel{}, ErrUnknownPendingInput

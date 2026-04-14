@@ -143,16 +143,16 @@ func (s *Service) Start(ctx context.Context, req StartRequest) (ViewModel, error
 		return ViewModel{}, err
 	}
 
-	screen := startScreenForScenario(req.StartScenario)
-
-	s.store.Put(req.SessionKey, Session{
-		Current:  screen,
+	session := Session{
+		Current:  startScreenForScenario(req.StartScenario),
 		History:  nil,
 		Pending:  PendingInput{},
 		CanAdmin: req.CanAdmin,
-	})
+	}
 
-	return s.renderScreen(catalog, screen, req.CanAdmin), nil
+	s.store.Put(req.SessionKey, session)
+
+	return s.renderScreen(catalog, session, req.CanAdmin), nil
 }
 
 // ResolveReplyAction maps reply-button text to action identifiers.
