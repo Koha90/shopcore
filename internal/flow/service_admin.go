@@ -857,7 +857,7 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	for _, variant := range variants {
 		actions = append(actions, ActionButton{
 			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
-			Label: formatDistrictPlacementVariantActionLabel(variant.Label, variant.PriceText),
+			Label: formatDistrictPlacementVariantActionLabel(variant.Label, variant.Price, variant.PriceText),
 		})
 	}
 	actions = append(actions, ActionButton{
@@ -1145,14 +1145,31 @@ func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
 
 const districtPlacementVariantLabelSeparator = " / "
 
-func formatDistrictPlacementVariantActionLabel(label, priceText string) string {
+func formatDistrictPlacementVariantPrice(price int, priceText string) string {
+	if priceText != "" {
+		return priceText
+	}
+	if price <= 0 {
+		return ""
+	}
+
+	return strconv.Itoa(price) + " ₽"
+}
+
+func formatDistrictPlacementVariantActionLabel(
+	label string,
+	price int,
+	priceText string,
+) string {
+	resolvedPriceText := formatDistrictPlacementVariantPrice(price, priceText)
+
 	switch {
 	case label == "":
-		return priceText
-	case priceText == "":
+		return resolvedPriceText
+	case resolvedPriceText == "":
 		return label
 	default:
-		return label + districtPlacementVariantLabelSeparator + priceText
+		return label + districtPlacementVariantLabelSeparator + resolvedPriceText
 	}
 }
 

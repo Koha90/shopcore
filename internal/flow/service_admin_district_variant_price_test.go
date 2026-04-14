@@ -303,6 +303,59 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariant
 	require.True(t, hasInlineActionLabel(vm, "L / 25 шт / 5900 ₽"))
 }
 
+func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariantSelect_UsesPriceFallback(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{
+		DistrictLister: &flowDistrictListerStub{
+			items: []DistrictListItem{
+				{ID: 7, Code: "center", Label: "Центр"},
+			},
+		},
+		DistrictPlacements: &flowDistrictPlacementReaderStub{
+			categories: []CategoryListItem{
+				{ID: 11, Code: "flowers", Label: "Цветы"},
+			},
+			products: []ProductListItem{
+				{ID: 21, Code: "rose-box", Label: "Rose Box"},
+			},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900},
+			},
+		},
+	})
+	key := testSessionKey("shop-admin-price-update-product-fallback")
+
+	openAdminDistrictVariantPriceUpdate(t, svc, key)
+
+	for _, action := range []ActionID{
+		adminDistrictVariantSelectDistrictAction(7),
+		adminDistrictVariantPriceUpdateSelectCategoryAction(11),
+	} {
+		_, err := svc.HandleAction(context.Background(), ActionRequest{
+			BotID:         "shop-admin",
+			BotName:       "Admin Shop",
+			StartScenario: string(StartScenarioInlineCatalog),
+			ActionID:      action,
+			SessionKey:    key,
+			CanAdmin:      true,
+		})
+		require.NoError(t, err)
+	}
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		BotName:       "Admin Shop",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantPriceUpdateSelectProductAction(21),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+	require.True(t, hasInlineActionLabel(vm, "L / 25 шт / 5900 ₽"))
+}
+
 func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceInput(t *testing.T) {
 	t.Parallel()
 
