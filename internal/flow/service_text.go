@@ -614,6 +614,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		session.Pending = PendingInput{}
 		session.Current = ScreenAdminDistrictVariantPriceUpdateDone
+		session.History = trimHistoryToScreen(session.History, ScreenAdminCatalog)
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, session, req.CanAdmin), nil
@@ -621,4 +622,14 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}
+}
+
+func trimHistoryToScreen(history []ScreenID, targer ScreenID) []ScreenID {
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i] == targer {
+			return append([]ScreenID(nil), history[:i+1]...)
+		}
+	}
+
+	return nil
 }

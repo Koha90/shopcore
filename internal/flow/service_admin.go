@@ -1092,7 +1092,7 @@ func (s *Service) buildAdminDistrictVariantPriceUpdateProductSelectScreen(
 			districtName,
 			categoryName,
 			nil,
-			"Не удалось загрузить список товаров."+err.Error(),
+			"Не удалось загрузить список товаров.",
 		)
 	}
 	if len(products) == 0 {
