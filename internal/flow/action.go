@@ -118,4 +118,7 @@ const (
 
 	// PendingValueVariantName stores selected variant label inside pending input payload.
 	PendingValueVariantName = "variant_name"
+
+	// PendingValueCurrentPrice stores current placement price inside pending input payload.
+	PendingValueCurrentPrice = "current_price"
 )

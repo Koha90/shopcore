@@ -592,11 +592,12 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 					PendingValueProductName:  session.Pending.Value(PendingValueProductName),
 					PendingValueVariantID:    strconv.Itoa(selected.ID),
 					PendingValueVariantName:  selected.Label,
+					PendingValueCurrentPrice: strconv.Itoa(selected.Price),
 				},
 			}
 			s.store.Put(req.SessionKey, session)
 
-			return buildAdminDistrictVariantPriceUpdateInputView(districtName, selected.Label, ""), nil
+			return buildAdminDistrictVariantPriceUpdateInputView(districtName, selected.Label, formatDistrictPlacementVariantPrice(selected.Price, selected.PriceText), ""), nil
 
 		default:
 			return ViewModel{}, ErrUnknownAction

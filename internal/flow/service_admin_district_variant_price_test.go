@@ -407,7 +407,7 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceIn
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nВведите новую цену сообщением.", vm.Text)
+	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nТекущая цена: 5900 ₽\n\nВведите новую цену сообщением.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
@@ -471,7 +471,7 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(
 		t,
-		"Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nЦена должна быть положительным числом.\n\nВведите новую цену сообщением.",
+		"Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nТекущая цена: 5900 ₽\n\nЦена должна быть положительным числом.\n\nВведите новую цену сообщением.",
 		vm.Text,
 	)
 

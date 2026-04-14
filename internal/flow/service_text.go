@@ -572,6 +572,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			return buildAdminDistrictVariantPriceUpdateInputView(
 				session.Pending.Value(PendingValueDistrictName),
 				session.Pending.Value(PendingValueVariantName),
+				currentPlacementPriceTextFromPending(session.Pending),
 				"Цена не может быть пустой.",
 			), nil
 		}
@@ -581,6 +582,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			return buildAdminDistrictVariantPriceUpdateInputView(
 				session.Pending.Value(PendingValueDistrictName),
 				session.Pending.Value(PendingValueVariantName),
+				currentPlacementPriceTextFromPending(session.Pending),
 				"Цена должна быть положительным числом.",
 			), nil
 		}
@@ -608,6 +610,7 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			return buildAdminDistrictVariantPriceUpdateInputView(
 				session.Pending.Value(PendingValueDistrictName),
 				session.Pending.Value(PendingValueVariantName),
+				currentPlacementPriceTextFromPending(session.Pending),
 				"Не удалось обновить цену варианта.",
 			), nil
 		}

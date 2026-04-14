@@ -180,6 +180,7 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 		return buildAdminDistrictVariantPriceUpdateInputView(
 			session.Pending.Value(PendingValueDistrictName),
 			session.Pending.Value(PendingValueVariantName),
+			currentPlacementPriceTextFromPending(session.Pending),
 			"",
 		)
 

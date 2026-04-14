@@ -879,13 +879,18 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	}
 }
 
-func buildAdminDistrictVariantPriceUpdateInputView(districtName, variantName, validation string) ViewModel {
+func buildAdminDistrictVariantPriceUpdateInputView(
+	districtName, variantName, currentPriceText, validation string,
+) ViewModel {
 	text := "Изменение цены варианта"
 	if districtName != "" {
 		text += "\n\nРайон: " + districtName
 	}
 	if variantName != "" {
 		text += "\n\nВариант: " + variantName
+	}
+	if currentPriceText != "" {
+		text += "\n\nТекущая цена: " + currentPriceText
 	}
 	text += "\n\nВведите новую цену сообщением."
 
@@ -896,6 +901,9 @@ func buildAdminDistrictVariantPriceUpdateInputView(districtName, variantName, va
 		}
 		if variantName != "" {
 			text += "\n\nВариант: " + variantName
+		}
+		if currentPriceText != "" {
+			text += "\n\nТекущая цена: " + currentPriceText
 		}
 		text += "\n\n" + validation + "\n\nВведите новую цену сообщением."
 	}
@@ -914,6 +922,20 @@ func buildAdminDistrictVariantPriceUpdateInputView(districtName, variantName, va
 		},
 		RemoveReply: true,
 	}
+}
+
+func currentPlacementPriceTextFromPending(p PendingInput) string {
+	raw := p.Value(PendingValueCurrentPrice)
+	if raw == "" {
+		return ""
+	}
+
+	v, err := strconv.Atoi(raw)
+	if err != nil || v <= 0 {
+		return ""
+	}
+
+	return strconv.Itoa(v) + " ₽"
 }
 
 func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
