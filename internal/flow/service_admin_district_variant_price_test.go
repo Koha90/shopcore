@@ -76,7 +76,7 @@ func openAdminCatalog(t *testing.T, svc *Service, key SessionKey) {
 type flowDistrictPlacementReaderStub struct {
 	categories []CategoryListItem
 	products   []ProductListItem
-	variants   []VariantListItem
+	variants   []DistrictPlacementVariantListItem
 
 	categoriesErr error
 	productsErr   error
@@ -100,7 +100,7 @@ func (s *flowDistrictPlacementReaderStub) ListDistrictProducts(
 func (s *flowDistrictPlacementReaderStub) ListDistrictVariants(
 	ctx context.Context,
 	districtID, productID int,
-) ([]VariantListItem, error) {
+) ([]DistrictPlacementVariantListItem, error) {
 	return s.variants, s.variantsErr
 }
 
@@ -254,8 +254,8 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariant
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 	})
@@ -299,6 +299,8 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariant
 	require.Equal(t, ScreenAdminDistrictVariantPriceUpdateVariantSelect, session.Current)
 	require.Equal(t, "21", session.Pending.Value(PendingValueProductID))
 	require.Equal(t, "Rose Box", session.Pending.Value(PendingValueProductName))
+	require.NotNil(t, vm.Inline)
+	require.True(t, hasInlineActionLabel(vm, "L / 25 шт / 5900 ₽"))
 }
 
 func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceInput(t *testing.T) {
@@ -318,8 +320,8 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceIn
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 	})
@@ -378,8 +380,8 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 		DistrictVariantPrices: updater,
@@ -446,8 +448,8 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_BackFromDone_ReturnsAdminC
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 		DistrictVariantPrices: updater,
@@ -518,8 +520,8 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_BackChainAfterDone_Returns
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 		DistrictVariantPrices: updater,
@@ -601,8 +603,8 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_Success(t *testing.T) {
 			products: []ProductListItem{
 				{ID: 21, Code: "rose-box", Label: "Rose Box"},
 			},
-			variants: []VariantListItem{
-				{ID: 9, Code: "large", Label: "L / 25 шт"},
+			variants: []DistrictPlacementVariantListItem{
+				{ID: 9, Code: "large", Label: "L / 25 шт", Price: 5900, PriceText: "5900 ₽"},
 			},
 		},
 		DistrictVariantPrices: updater,

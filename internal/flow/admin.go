@@ -124,6 +124,16 @@ type VariantListItem struct {
 	Label string
 }
 
+// DistrictPlacementVariantListItem contains one placed variant option
+// for district placement edit flows.
+type DistrictPlacementVariantListItem struct {
+	ID        int
+	Code      string
+	Label     string
+	Price     int
+	PriceText string
+}
+
 // VariantLister defines the admin read use case required by flow
 // to select an existing variant before nested catalog creation steps.
 type VariantLister interface {
@@ -159,5 +169,5 @@ type UpdateDistrictVariantPriceParams struct {
 type DistrictPlacementReader interface {
 	ListDistrictCategories(ctx context.Context, districtID int) ([]CategoryListItem, error)
 	ListDistrictProducts(ctx context.Context, districtID, categoryID int) ([]ProductListItem, error)
-	ListDistrictVariants(ctx context.Context, districtID, productID int) ([]VariantListItem, error)
+	ListDistrictVariants(ctx context.Context, districtID, productID int) ([]DistrictPlacementVariantListItem, error)
 }

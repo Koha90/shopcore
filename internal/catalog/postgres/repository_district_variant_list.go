@@ -10,7 +10,10 @@ import (
 )
 
 // ListDistrictVariants returns active placed variants for one product in one district.
-func (r *Repository) ListDistrictVariants(ctx context.Context, districtID, productID int) ([]flow.VariantListItem, error) {
+func (r *Repository) ListDistrictVariants(
+	ctx context.Context,
+	districtID, productID int,
+) ([]flow.DistrictPlacementVariantListItem, error) {
 	const op = "catalog postgres repository list district variants"
 
 	if r == nil {
@@ -24,7 +27,8 @@ func (r *Repository) ListDistrictVariants(ctx context.Context, districtID, produ
 		select
 			v.id,
 			v.code,
-			v.name
+			v.name,
+			dv.price
 		from catalog_district_variants dv
 		join catalog_variants v on v.id = dv.variant_id
 		join catalog_products p on p.id = v.product_id
@@ -33,7 +37,6 @@ func (r *Repository) ListDistrictVariants(ctx context.Context, districtID, produ
 			and dv.is_active = true
 			and v.is_active = true
 			and p.is_active = true
-		group by v.id, v.code, v.name, v.sort_order
 		order by v.sort_order asc, v.name asc
 	`
 
@@ -43,15 +46,16 @@ func (r *Repository) ListDistrictVariants(ctx context.Context, districtID, produ
 	}
 	defer rows.Close()
 
-	items, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (flow.VariantListItem, error) {
-		var item flow.VariantListItem
+	items, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (flow.DistrictPlacementVariantListItem, error) {
+		var item flow.DistrictPlacementVariantListItem
 		err := row.Scan(
 			&item.ID,
 			&item.Code,
 			&item.Label,
+			&item.Price,
 		)
 		if err != nil {
-			return flow.VariantListItem{}, err
+			return flow.DistrictPlacementVariantListItem{}, err
 		}
 		return item, nil
 	})

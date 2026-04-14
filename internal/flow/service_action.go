@@ -567,7 +567,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, err
 			}
 
-			var selected *VariantListItem
+			var selected *DistrictPlacementVariantListItem
 			for i := range variants {
 				if variants[i].ID == variantID {
 					selected = &variants[i]

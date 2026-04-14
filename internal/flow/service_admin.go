@@ -831,7 +831,7 @@ func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []District
 
 func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	districtName, productName string,
-	variants []VariantListItem,
+	variants []DistrictPlacementVariantListItem,
 	validation string,
 ) ViewModel {
 	text := "Изменение цены варианта"
@@ -857,7 +857,7 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	for _, variant := range variants {
 		actions = append(actions, ActionButton{
 			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
-			Label: variant.Label,
+			Label: formatDistrictPlacementVariantActionLabel(variant.Label, variant.PriceText),
 		})
 	}
 	actions = append(actions, ActionButton{
@@ -1114,18 +1114,46 @@ func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
 	productName string,
 ) ViewModel {
 	if s == nil || s.districtPlacements == nil {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Не удалось загрузить список вариантов.")
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(
+			districtName,
+			productName,
+			nil,
+			"Не удалось загрузить список вариантов.",
+		)
 	}
 
 	variants, err := s.districtPlacements.ListDistrictVariants(context.Background(), districtID, productID)
 	if err != nil {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Не удалось загрузить список вариантов.")
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(
+			districtName,
+			productName,
+			nil,
+			"Не удалось загрузить список вариантов.",
+		)
 	}
 	if len(variants) == 0 {
-		return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, nil, "Нет доступных вариантов.")
+		return buildAdminDistrictVariantPriceUpdateVariantSelectView(
+			districtName,
+			productName,
+			nil,
+			"У этого товара нет доступных вариантов.",
+		)
 	}
 
 	return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, variants, "")
+}
+
+const districtPlacementVariantLabelSeparator = " / "
+
+func formatDistrictPlacementVariantActionLabel(label, priceText string) string {
+	switch {
+	case label == "":
+		return priceText
+	case priceText == "":
+		return label
+	default:
+		return label + districtPlacementVariantLabelSeparator + priceText
+	}
 }
 
 func isAdminAction(actionID ActionID) bool {
