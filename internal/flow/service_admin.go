@@ -48,10 +48,12 @@ func buildAdminCatalogView() ViewModel {
 }
 
 func buildAdminCategoryCreateInputView(validation string) ViewModel {
-	text := "Новая категория\n\nВведите название категории сообщением."
-	if validation != "" {
-		text = "Новая категория\n\n" + validation + "\n\nВведите название категории сообщением."
-	}
+	text := buildAdminTextWithValidation(
+		"Новая категория",
+		nil,
+		validation,
+		"Введите название категории сообщением.",
+	)
 
 	return ViewModel{
 		Text: text,
@@ -70,27 +72,73 @@ func buildAdminCategoryCreateInputView(validation string) ViewModel {
 }
 
 func buildAdminCategoryCodeInputView(validation, suggested string) ViewModel {
-	text := "Новая категория\n\nВведите code категории сообщением."
-	if suggested != "" {
-		text = "Новая категория\n\nАвто-код: " + suggested + "\n\nВведите code категории сообщением."
-	}
-	if validation != "" {
-		text = "Новая категория\n\n" + validation + "\n\nВведите code категории сообщением."
-	}
+	switch {
+	case validation != "":
+		text := buildAdminTextWithValidation(
+			"Новая категория",
+			nil,
+			validation,
+			"Введите code категории сообщением.",
+		)
 
-	return ViewModel{
-		Text: text,
-		Inline: &InlineKeyboardView{
-			Sections: []ActionSection{
-				{
-					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
 					},
 				},
 			},
-		},
-		RemoveReply: true,
+			RemoveReply: true,
+		}
+
+	case suggested != "":
+		text := buildAdminText(
+			"Новая категория",
+			[]string{formatAdminAutoCodeLine(suggested)},
+			"Введите code категории сообщением.",
+		)
+
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
+					},
+				},
+			},
+			RemoveReply: true,
+		}
+
+	default:
+		text := buildAdminText(
+			"Новая категория",
+			nil,
+			"Введите code категории сообщением.",
+		)
+
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
+					},
+				},
+			},
+			RemoveReply: true,
+		}
 	}
 }
 
@@ -112,10 +160,12 @@ func buildAdminCategoryCreateDoneView() ViewModel {
 }
 
 func buildAdminCityCreateInputView(validation string) ViewModel {
-	text := "Новый город\n\nВведите название города сообщением."
-	if validation != "" {
-		text = "Новый город\n\n" + validation + "\n\nВведите название города сообщением."
-	}
+	text := buildAdminTextWithValidation(
+		"Новый город",
+		nil,
+		validation,
+		"Введите название города сообщением.",
+	)
 
 	return ViewModel{
 		Text: text,
@@ -134,27 +184,73 @@ func buildAdminCityCreateInputView(validation string) ViewModel {
 }
 
 func buildAdminCityCodeInputView(validation, suggested string) ViewModel {
-	text := "Новый город\n\nВведите code города сообщением."
-	if suggested != "" {
-		text = "Новый город\n\nАвто-код: " + suggested + "\n\nВведите code города сообщением."
-	}
-	if validation != "" {
-		text = "Новый город\n\n" + validation + "\n\nВведите code города сообщением."
-	}
+	switch {
+	case validation != "":
+		text := buildAdminTextWithValidation(
+			"Новый город",
+			nil,
+			validation,
+			"Введите code города сообщением.",
+		)
 
-	return ViewModel{
-		Text: text,
-		Inline: &InlineKeyboardView{
-			Sections: []ActionSection{
-				{
-					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
 					},
 				},
 			},
-		},
-		RemoveReply: true,
+			RemoveReply: true,
+		}
+
+	case suggested != "":
+		text := buildAdminText(
+			"Новый город",
+			[]string{formatAdminAutoCodeLine(suggested)},
+			"Введите code города сообщением.",
+		)
+
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
+					},
+				},
+			},
+			RemoveReply: true,
+		}
+
+	default:
+		text := buildAdminText(
+			"Новый город",
+			nil,
+			"Введите code города сообщением.",
+		)
+
+		return ViewModel{
+			Text: text,
+			Inline: &InlineKeyboardView{
+				Sections: []ActionSection{
+					{
+						Columns: 1,
+						Actions: []ActionButton{
+							{ID: ActionBack, Label: "Назад"},
+						},
+					},
+				},
+			},
+			RemoveReply: true,
+		}
 	}
 }
 
@@ -176,10 +272,12 @@ func buildAdminCityCreateDoneView() ViewModel {
 }
 
 func buildAdminDistrictCitySelectView(cities []CityListItem, validation string) ViewModel {
-	text := "Новый район\n\nВыберите город:"
-	if validation != "" {
-		text = "Новый район\n\n" + validation + "\n\nВыберите город:"
-	}
+	text := buildAdminSelectText(
+		"Новый район",
+		nil,
+		validation,
+		"Выберите город:",
+	)
 
 	actions := make([]ActionButton, 0, len(cities)+1)
 	for _, city := range cities {
@@ -356,10 +454,12 @@ func pendingCityID(p PendingInput) (int, bool) {
 }
 
 func buildAdminProductCategorySelectView(categories []CategoryListItem, validation string) ViewModel {
-	text := "Новый товар" + adminSectionSeparator + "Выберите категорию:"
-	if validation != "" {
-		text = "Новый товар" + adminSectionSeparator + validation + adminSectionSeparator + "Выберите категорию:"
-	}
+	text := buildAdminSelectText(
+		"Новый товар",
+		nil,
+		validation,
+		"Выберите категорию:",
+	)
 
 	actions := make([]ActionButton, 0, len(categories)+1)
 	for _, category := range categories {
@@ -536,10 +636,12 @@ func pendingCategoryID(p PendingInput) (int, bool) {
 }
 
 func buildAdminVariantProductSelectView(products []ProductListItem, validation string) ViewModel {
-	text := "Новый вариант\n\nВыберите товар:"
-	if validation != "" {
-		text = "Новый вариант\n\n" + validation + "\n\nВыберите товар:"
-	}
+	text := buildAdminSelectText(
+		"Новый вариант",
+		nil,
+		validation,
+		"Выберите товар:",
+	)
 
 	actions := make([]ActionButton, 0, len(products)+1)
 	for _, product := range products {
@@ -716,10 +818,12 @@ func pendingProductID(p PendingInput) (int, bool) {
 }
 
 func buildAdminDistrictVariantDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
-	text := "Размещение варианта\n\nВыберите район:"
-	if validation != "" {
-		text = "Размещение варианта\n\n" + validation + "\n\nВыберите район:"
-	}
+	text := buildAdminSelectText(
+		"Размещение варианта",
+		nil,
+		validation,
+		"Выберите район:",
+	)
 
 	actions := make([]ActionButton, 0, len(districts)+1)
 	for _, district := range districts {
@@ -747,19 +851,19 @@ func buildAdminDistrictVariantDistrictSelectView(districts []DistrictListItem, v
 	}
 }
 
-func buildAdminDistrictVariantVariantSelectView(districtName string, variants []VariantListItem, validation string) ViewModel {
-	text := "Размещение варианта"
-	if districtName != "" {
-		text += "\n\nРайон: " + districtName
-	}
-	text += "\n\nВыберите вариант:"
-	if validation != "" {
-		text = "Размещение варианта"
-		if districtName != "" {
-			text += "\n\nРайон: " + districtName
-		}
-		text += "\n\n" + validation + "\n\nВыберите вариант:"
-	}
+func buildAdminDistrictVariantVariantSelectView(
+	districtName string,
+	variants []VariantListItem,
+	validation string,
+) ViewModel {
+	text := buildAdminSelectText(
+		"Размещение варианта",
+		[]string{
+			formatAdminFieldLine("Район", districtName),
+		},
+		validation,
+		"Выберите вариант:",
+	)
 
 	actions := make([]ActionButton, 0, len(variants)+1)
 	for _, variant := range variants {
@@ -788,25 +892,15 @@ func buildAdminDistrictVariantVariantSelectView(districtName string, variants []
 }
 
 func buildAdminDistrictVariantPriceInputView(districtName, variantName, validation string) ViewModel {
-	text := "Размещение варианта"
-	if districtName != "" {
-		text += "\n\nРайон: " + districtName
-	}
-	if variantName != "" {
-		text += "\n\nВариант: " + variantName
-	}
-	text += "\n\nВведите цену сообщением."
-
-	if validation != "" {
-		text = "Размещение варианта"
-		if districtName != "" {
-			text += "\n\nРайон: " + districtName
-		}
-		if variantName != "" {
-			text += "\n\nВариант: " + variantName
-		}
-		text += "\n\n" + validation + "\n\nВведите цену сообщением."
-	}
+	text := buildAdminTextWithValidation(
+		"Размещение варианта",
+		[]string{
+			formatAdminFieldLine("Район", districtName),
+			formatAdminFieldLine("Вариант", variantName),
+		},
+		validation,
+		"Введите цену сообщением.",
+	)
 
 	return ViewModel{
 		Text: text,
@@ -902,10 +996,12 @@ func pendingVariantID(p PendingInput) (int, bool) {
 }
 
 func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
-	text := "Изменение цены варианта\n\nВыберите район:"
-	if validation != "" {
-		text = "Изменение цены варианта\n\n" + validation + "\n\nВыберите район:"
-	}
+	text := buildAdminSelectText(
+		"Изменение цены варианта",
+		nil,
+		validation,
+		"Выберите район:",
+	)
 
 	actions := make([]ActionButton, 0, len(districts)+1)
 	for _, district := range districts {
@@ -938,24 +1034,15 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 	variants []DistrictPlacementVariantListItem,
 	validation string,
 ) ViewModel {
-	text := "Изменение цены варианта"
-	if districtName != "" {
-		text += "\n\nРайон: " + districtName
-	}
-	if productName != "" {
-		text += "\n\nТовар: " + productName
-	}
-	text += "\n\nВыберите вариант:"
-	if validation != "" {
-		text = "Изменение цены варианта"
-		if districtName != "" {
-			text += "\n\nРайон: " + districtName
-		}
-		if productName != "" {
-			text += "\n\nТовар: " + productName
-		}
-		text += "\n\n" + validation + "\n\nВыберите вариант:"
-	}
+	text := buildAdminSelectText(
+		"Изменение цены варианта",
+		[]string{
+			formatAdminFieldLine("Район", districtName),
+			formatAdminFieldLine("Товар", productName),
+		},
+		validation,
+		"Выберите вариант:",
+	)
 
 	actions := make([]ActionButton, 0, len(variants)+1)
 	for _, variant := range variants {
@@ -1049,18 +1136,14 @@ func buildAdminDistrictVariantPriceUpdateCategorySelectView(
 	categories []CategoryListItem,
 	validation string,
 ) ViewModel {
-	text := "Изменение цены варианта"
-	if districtName != "" {
-		text += "\n\nРайон: " + districtName
-	}
-	text += "\n\nВыберите категорию:"
-	if validation != "" {
-		text = "Изменение цены варианта"
-		if districtName != "" {
-			text += "\n\nРайон: " + districtName
-		}
-		text += "\n\n" + validation + "\n\nВыберите категорию:"
-	}
+	text := buildAdminSelectText(
+		"Изменение цены варианта",
+		[]string{
+			formatAdminFieldLine("Район", districtName),
+		},
+		validation,
+		"Выберите категорию:",
+	)
 
 	actions := make([]ActionButton, 0, len(categories)+1)
 	for _, category := range categories {
@@ -1093,24 +1176,15 @@ func buildAdminDistrictVariantPriceUpdateProductSelectView(
 	products []ProductListItem,
 	validation string,
 ) ViewModel {
-	text := "Изменение цены варианта"
-	if districtName != "" {
-		text += "\n\nРайон: " + districtName
-	}
-	if categoryName != "" {
-		text += "\n\nКатегория: " + categoryName
-	}
-	text += "\n\nВыберите товар:"
-	if validation != "" {
-		text = "Изменение цены варианта"
-		if districtName != "" {
-			text += "\n\nРайон: " + districtName
-		}
-		if categoryName != "" {
-			text += "\n\nКатегория: " + categoryName
-		}
-		text += "\n\n" + validation + "\n\nВыберите товар:"
-	}
+	text := buildAdminSelectText(
+		"Изменение цены варианта",
+		[]string{
+			formatAdminFieldLine("Район", districtName),
+			formatAdminFieldLine("Категория", categoryName),
+		},
+		validation,
+		"Выберите товар:",
+	)
 
 	actions := make([]ActionButton, 0, len(products)+1)
 	for _, product := range products {

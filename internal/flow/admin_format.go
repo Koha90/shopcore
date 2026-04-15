@@ -1,6 +1,9 @@
 package flow
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 const (
 	adminSectionSeparator                  = "\n\n"
@@ -47,43 +50,36 @@ func formatDistrictPlacementVariantActionLabel(label string, price int, priceTex
 }
 
 func buildAdminText(title string, fields []string, body string) string {
-	text := title
+	var b strings.Builder
 
-	for _, field := range fields {
-		if field == "" {
-			continue
-		}
-		text += adminSectionSeparator + field
-	}
+	b.WriteString(title)
+	writeAdminSections(&b, fields)
 
 	if body != "" {
-		text += adminSectionSeparator + body
+		b.WriteString(adminSectionSeparator)
+		b.WriteString(body)
 	}
 
-	return text
+	return b.String()
 }
 
 func buildAdminTextWithValidation(title string, fields []string, validation, body string) string {
-	if validation == "" {
-		return buildAdminText(title, fields, body)
+	var b strings.Builder
+
+	b.WriteString(title)
+	writeAdminSections(&b, fields)
+
+	if validation != "" {
+		b.WriteString(adminSectionSeparator)
+		b.WriteString(validation)
 	}
-
-	text := title
-
-	for _, field := range fields {
-		if field == "" {
-			continue
-		}
-		text += adminSectionSeparator + field
-	}
-
-	text += adminSectionSeparator + validation
 
 	if body != "" {
-		text += adminSectionSeparator + body
+		b.WriteString(adminSectionSeparator)
+		b.WriteString(body)
 	}
 
-	return text
+	return b.String()
 }
 
 func formatAdminAutoCodeLine(code string) string {
@@ -92,4 +88,19 @@ func formatAdminAutoCodeLine(code string) string {
 	}
 
 	return "Авто-код" + adminFieldLabelSeparator + code
+}
+
+func writeAdminSections(b *strings.Builder, sections []string) {
+	for _, section := range sections {
+		if section == "" {
+			continue
+		}
+
+		b.WriteString(adminSectionSeparator)
+		b.WriteString(section)
+	}
+}
+
+func buildAdminSelectText(title string, fields []string, validation, prompt string) string {
+	return buildAdminTextWithValidation(title, fields, validation, prompt)
 }
