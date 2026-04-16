@@ -124,7 +124,15 @@ func (l *Loader) loadDistrictVariants(ctx context.Context) ([]districtVariantRow
 
 func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 	rows, err := l.pool.Query(ctx, `
-		select id, category_id, code, name, name_latin, description, sort_order
+		select	
+			id,
+			category_id,
+			code,
+			name,
+			name_latin,
+			description,
+			image_url,
+			sort_order
 		from catalog_products
 		where is_active = true
 		order by sort_order, id
@@ -144,6 +152,7 @@ func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 			&v.Name,
 			&v.NameLatin,
 			&v.Description,
+			&v.ImageURL,
 			&v.SortOrder,
 		); err != nil {
 			return nil, err
@@ -156,7 +165,15 @@ func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 
 func (l *Loader) loadVariants(ctx context.Context) ([]variantRow, error) {
 	rows, err := l.pool.Query(ctx, `
-		select id, product_id, code, name, name_latin, description, sort_order
+		select 
+			id,
+			product_id,
+			code,
+			name, 
+			name_latin,
+			description,
+			image_url,
+			sort_order
 		from catalog_variants
 		where is_active = true
 		order by sort_order, id
@@ -176,6 +193,7 @@ func (l *Loader) loadVariants(ctx context.Context) ([]variantRow, error) {
 			&v.Name,
 			&v.NameLatin,
 			&v.Description,
+			&v.ImageURL,
 			&v.SortOrder,
 		); err != nil {
 			return nil, err

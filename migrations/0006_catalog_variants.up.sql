@@ -5,6 +5,7 @@ create table if not exists catalog_variants (
   name text not null,
   name_latin text not null default '',
   description text not null default '',
+  image_url text not null default '',
   is_active boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),

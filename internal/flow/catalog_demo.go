@@ -15,6 +15,7 @@ type CatalogNode struct {
 	ID          string
 	Label       string
 	Description string
+	ImageURL    string
 	PriceText   string
 	Children    []CatalogNode
 }

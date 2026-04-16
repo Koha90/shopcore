@@ -185,6 +185,7 @@ func buildCatalog(
 							ID:          variant.Code,
 							Label:       variant.Name,
 							Description: variant.Description,
+							ImageURL:    product.ImageURL,
 							PriceText:   formatPrice(price),
 						})
 					}
@@ -198,6 +199,7 @@ func buildCatalog(
 						ID:          product.Code,
 						Label:       product.Name,
 						Description: product.Description,
+						ImageURL:    product.ImageURL,
 						Children:    variantNodes,
 					})
 				}

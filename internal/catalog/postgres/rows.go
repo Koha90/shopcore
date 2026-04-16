@@ -33,6 +33,7 @@ type productRow struct {
 	Name        string
 	NameLatin   string
 	Description string
+	ImageURL    string
 	SortOrder   int
 }
 
@@ -43,6 +44,7 @@ type variantRow struct {
 	Name        string
 	NameLatin   string
 	Description string
+	ImageURL    string
 	SortOrder   int
 }
 
