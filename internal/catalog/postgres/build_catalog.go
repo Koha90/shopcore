@@ -185,7 +185,7 @@ func buildCatalog(
 							ID:          variant.Code,
 							Label:       variant.Name,
 							Description: variant.Description,
-							ImageURL:    product.ImageURL,
+							ImageURL:    variant.ImageURL,
 							PriceText:   formatPrice(price),
 						})
 					}

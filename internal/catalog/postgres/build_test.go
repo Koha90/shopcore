@@ -25,10 +25,10 @@ func TestBuildCatalog_BuildsPlacedBranch(t *testing.T) {
 			{ID: 100, CityID: 1, Code: "center", Name: "Центр"},
 		},
 		[]productRow{
-			{ID: 1000, CategoryID: 10, Code: "rose-box", Name: "Rose Box", Description: "Коробка роз"},
+			{ID: 1000, CategoryID: 10, Code: "rose-box", Name: "Rose Box", Description: "Коробка роз", ImageURL: ""},
 		},
 		[]variantRow{
-			{ID: 10000, ProductID: 1000, Code: "large", Name: "L / 25 шт", Description: "Большая упаковка"},
+			{ID: 10000, ProductID: 1000, Code: "large", Name: "L / 25 шт", Description: "Большая упаковка", ImageURL: ""},
 		},
 		[]districtVariantRow{
 			{DistrictID: 100, VariantID: 10000, Price: 5900},
@@ -62,6 +62,7 @@ func TestBuildCatalog_BuildsPlacedBranch(t *testing.T) {
 	require.Equal(t, "rose-box", product.ID)
 	require.Equal(t, "Rose Box", product.Label)
 	require.Equal(t, "Коробка роз", product.Description)
+	require.Equal(t, "", product.ImageURL)
 	require.Len(t, product.Children, 1)
 
 	variant := product.Children[0]
@@ -69,6 +70,7 @@ func TestBuildCatalog_BuildsPlacedBranch(t *testing.T) {
 	require.Equal(t, "large", variant.ID)
 	require.Equal(t, "L / 25 шт", variant.Label)
 	require.Equal(t, "Большая упаковка", variant.Description)
+	require.Equal(t, "", product.ImageURL)
 	require.Equal(t, "5900 ₽", variant.PriceText)
 }
 
