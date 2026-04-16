@@ -61,7 +61,7 @@ func (r *Runner) callbackHandler(
 			return
 		}
 
-		chatID, messageID, ok := callbackMessageContext(update)
+		msg, ok := callbackMessageContext(update)
 		if !ok {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "message unavailable")
 			r.log.Error(
@@ -72,7 +72,7 @@ func (r *Runner) callbackHandler(
 			return
 		}
 
-		if err := r.editView(ctx, b, chatID, messageID, vm); err != nil {
+		if err := r.editView(ctx, b, msg, vm); err != nil {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "render failed")
 			r.log.Error(
 				"telegram edit callback view failed",
@@ -214,15 +214,15 @@ func (r *Runner) resolveTextView(
 //
 // go-telegram/bot wraps callback messages into MaybeInaccessibleMessage, so we
 // only proceed when the accessible message is present.
-func callbackMessageContext(update *models.Update) (chatID int64, messageID int, ok bool) {
+func callbackMessageContext(update *models.Update) (*models.Message, bool) {
 	if update == nil || update.CallbackQuery == nil {
-		return 0, 0, false
+		return nil, false
 	}
 
 	msg := update.CallbackQuery.Message.Message
 	if msg == nil {
-		return 0, 0, false
+		return nil, false
 	}
 
-	return msg.Chat.ID, msg.ID, true
+	return msg, true
 }

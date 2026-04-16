@@ -13,3 +13,6 @@ bin
 # logs
 *.log
 logs
+
+# assets media
+assets

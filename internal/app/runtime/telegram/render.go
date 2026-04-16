@@ -23,6 +23,19 @@ func (r *Runner) sendView(
 	chatID int64,
 	vm flow.ViewModel,
 ) error {
+	if hasImage(vm) {
+		return r.sendImageView(ctx, b, chatID, vm)
+	}
+
+	return r.sendTextView(ctx, b, chatID, vm)
+}
+
+func (r *Runner) sendTextView(
+	ctx context.Context,
+	b *tgbot.Bot,
+	chatID int64,
+	vm flow.ViewModel,
+) error {
 	params := &tgbot.SendMessageParams{
 		ChatID: chatID,
 		Text:   vm.Text,
@@ -43,19 +56,51 @@ func (r *Runner) sendView(
 	return nil
 }
 
+func (r *Runner) sendImageView(
+	ctx context.Context,
+	b *tgbot.Bot,
+	chatID int64,
+	vm flow.ViewModel,
+) error {
+	const op = "send telegram image view"
+	if vm.Media == nil {
+		return fmt.Errorf("%s: media is nil", op)
+	}
+
+	params := &tgbot.SendPhotoParams{
+		ChatID:  chatID,
+		Photo:   &models.InputFileString{Data: vm.Media.Source},
+		Caption: vm.Text,
+	}
+
+	replyMarkup, err := r.buildReplyMarkup(vm)
+	if err != nil {
+		return err
+	}
+
+	if inline, ok := replyMarkup.(*models.InlineKeyboardMarkup); ok {
+		params.ReplyMarkup = inline
+	}
+
+	if _, err := b.SendPhoto(ctx, params); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
 // editView edits an existing Telegram message rendered from flow.ViewModel.
 //
 // It is intended primarily for inline-button flows driven by callback queries.
 func (r *Runner) editView(
 	ctx context.Context,
 	b *tgbot.Bot,
-	chatID int64,
-	messageID int,
+	msg *models.Message,
 	vm flow.ViewModel,
 ) error {
 	params := &tgbot.EditMessageTextParams{
-		ChatID:    chatID,
-		MessageID: messageID,
+		ChatID:    msg.Chat.ID,
+		MessageID: msg.ID,
 		Text:      vm.Text,
 	}
 
@@ -181,4 +226,18 @@ func decodeActionID(data string) (flow.ActionID, bool) {
 	}
 
 	return flow.ActionID(raw), true
+}
+
+func hasImage(vm flow.ViewModel) bool {
+	return vm.Media != nil &&
+		vm.Media.Kind == flow.MediaKindImage &&
+		vm.Media.Source != ""
+}
+
+func messageHasImage(msg *models.Message) bool {
+	if msg == nil {
+		return false
+	}
+
+	return len(msg.Photo) > 0
 }

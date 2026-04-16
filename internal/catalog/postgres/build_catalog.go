@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/koha90/shopcore/internal/flow"
 )
@@ -185,7 +186,7 @@ func buildCatalog(
 							ID:          variant.Code,
 							Label:       variant.Name,
 							Description: variant.Description,
-							ImageURL:    variant.ImageURL,
+							Media:       buildCatalogNodeMedia(variant.ImageURL, variant.Name),
 							PriceText:   formatPrice(price),
 						})
 					}
@@ -199,7 +200,7 @@ func buildCatalog(
 						ID:          product.Code,
 						Label:       product.Name,
 						Description: product.Description,
-						ImageURL:    product.ImageURL,
+						Media:       buildCatalogNodeMedia(product.ImageURL, product.Name),
 						Children:    variantNodes,
 					})
 				}
@@ -250,4 +251,21 @@ func buildCatalog(
 // formatPrice formats integer price storage into display text.
 func formatPrice(v int) string {
 	return fmt.Sprintf("%d ₽", v)
+}
+
+func buildCatalogNodeMedia(imageSource, imageAlt string) *flow.CatalogNodeMedia {
+	imageSource = strings.TrimSpace(imageSource)
+	if imageSource == "" {
+		return nil
+	}
+
+	imageAlt = strings.TrimSpace(imageAlt)
+	if imageAlt == "" {
+		imageAlt = "image"
+	}
+
+	return &flow.CatalogNodeMedia{
+		ImageSource: imageSource,
+		ImageAlt:    imageAlt,
+	}
 }

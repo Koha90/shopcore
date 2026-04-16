@@ -9,15 +9,53 @@ type Catalog struct {
 	Roots  []CatalogNode
 }
 
-// CatalogNode is one selectable node in catalog tree.
+// CatalogNodeMedia describes optional media attached to one catalog node.
+//
+// Media remains catalog-level data. It does not contain transport-specific
+// rendering details. Concrete transports decide how to present the media
+// source in their own UI.
+//
+// ImageSource contains the image location prepared by catalog data builders.
+// Empty ImageSource means that the node has no image attached.
+//
+// ImageAlt contains human-readable fallback text for the image.
+// When empty, renderers may fall back to the node label.
+//
+// Media is optional. Its absence means that the node should be rendered
+// without attached media.
+type CatalogNodeMedia struct {
+	ImageSource string
+	ImageAlt    string
+}
+
+// CatalogNode describes one catalog tree node prepared for flow rendering.
+//
+// A node may represent either an intermediate section with children or
+// a terminal leaf with final product or variant information.
+//
+// Media is optional. Its absence means that the node should be rendered
 type CatalogNode struct {
 	Level       CatalogLevel
 	ID          string
 	Label       string
 	Description string
-	ImageURL    string
 	PriceText   string
 	Children    []CatalogNode
+
+	Media *CatalogNodeMedia
+}
+
+func buildCatalogLeafMedia(node CatalogNode) *MediaView {
+	if node.Media == nil {
+		return nil
+	}
+
+	alt := node.Media.ImageAlt
+	if alt == "" {
+		alt = node.Label
+	}
+
+	return NewImageMedia(node.Media.ImageSource, alt)
 }
 
 // DemoCatalog returns in-memory demo catalog tree for flow development.
@@ -59,6 +97,10 @@ func DemoCatalog() Catalog {
 												Label:       "L / 25 шт",
 												PriceText:   "5900 ₽",
 												Description: "Большая упаковка.",
+												Media: &CatalogNodeMedia{
+													ImageSource: "assets/demo/catalog/variant/rose-box-lagrge.jpg",
+													ImageAlt:    "Rose Box L / 25 шт",
+												},
 											},
 										},
 									},
@@ -88,6 +130,10 @@ func DemoCatalog() Catalog {
 										ID:          "gift-box",
 										Label:       "Gift Box",
 										Description: "Подарочный набор.",
+										Media: &CatalogNodeMedia{
+											ImageSource: "assets/demo/catalog/products/gift-box.jpg",
+											ImageAlt:    "Gift Box",
+										},
 										Children: []CatalogNode{
 											{
 												Level:       LevelVariant,
@@ -95,6 +141,10 @@ func DemoCatalog() Catalog {
 												Label:       "Standard",
 												PriceText:   "3200 ₽",
 												Description: "Базовый вариант набора.",
+												Media: &CatalogNodeMedia{
+													ImageSource: "assets/demo/catalog/variant/gift-box.jpg",
+													ImageAlt:    "Gift Box Standard",
+												},
 											},
 										},
 									},
