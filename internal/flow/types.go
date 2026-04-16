@@ -59,6 +59,9 @@ const (
 type ViewModel struct {
 	Text string
 
+	// Media contains one optional transport-agnostic media attachment.
+	Media *MediaView
+
 	// Inline contains inline button sections, if any.
 	Inline *InlineKeyboardView
 
