@@ -9,21 +9,19 @@ import (
 
 func TestCallbackMessageContext(t *testing.T) {
 	t.Run("nil update", func(t *testing.T) {
-		chatID, messageID, ok := callbackMessageContext(nil)
+		msg, ok := callbackMessageContext(nil)
 
 		require.False(t, ok)
-		require.Zero(t, chatID)
-		require.Zero(t, messageID)
+		require.Nil(t, msg)
 	})
 
 	t.Run("nil callback query", func(t *testing.T) {
 		update := &models.Update{}
 
-		chatID, messageID, ok := callbackMessageContext(update)
+		msg, ok := callbackMessageContext(update)
 
 		require.False(t, ok)
-		require.Zero(t, chatID)
-		require.Zero(t, messageID)
+		require.Nil(t, msg)
 	})
 
 	t.Run("accessible message", func(t *testing.T) {
@@ -41,11 +39,12 @@ func TestCallbackMessageContext(t *testing.T) {
 			},
 		}
 
-		chatID, messageID, ok := callbackMessageContext(update)
+		msg, ok := callbackMessageContext(update)
 
 		require.True(t, ok)
-		require.Equal(t, int64(12345), chatID)
-		require.Equal(t, 321, messageID)
+		require.NotNil(t, msg)
+		require.Equal(t, int64(12345), msg.Chat.ID)
+		require.Equal(t, 321, msg.ID)
 	})
 
 	t.Run("accessible type but nil message", func(t *testing.T) {
@@ -57,11 +56,10 @@ func TestCallbackMessageContext(t *testing.T) {
 			},
 		}
 
-		chatID, messageID, ok := callbackMessageContext(update)
+		msg, ok := callbackMessageContext(update)
 
 		require.False(t, ok)
-		require.Zero(t, chatID)
-		require.Zero(t, messageID)
+		require.Nil(t, msg)
 	})
 
 	t.Run("inaccessible message", func(t *testing.T) {
@@ -80,10 +78,9 @@ func TestCallbackMessageContext(t *testing.T) {
 			},
 		}
 
-		chatID, messageID, ok := callbackMessageContext(update)
+		msg, ok := callbackMessageContext(update)
 
 		require.False(t, ok)
-		require.Zero(t, chatID)
-		require.Zero(t, messageID)
+		require.Nil(t, msg)
 	})
 }

@@ -39,24 +39,8 @@ func (r *Runner) sendTextView(
 	chatID int64,
 	vm flow.ViewModel,
 ) error {
-	params := &tgbot.SendMessageParams{
-		ChatID: chatID,
-		Text:   vm.Text,
-	}
-
-	replyMarkup, err := r.buildReplyMarkup(vm)
-	if err != nil {
-		return err
-	}
-	if replyMarkup != nil {
-		params.ReplyMarkup = replyMarkup
-	}
-
-	if _, err := b.SendMessage(ctx, params); err != nil {
-		return fmt.Errorf("send telegram view: %w", err)
-	}
-
-	return nil
+	_, err := r.sendTextMessage(ctx, b, chatID, vm)
+	return err
 }
 
 func (r *Runner) sendImageView(
@@ -66,6 +50,7 @@ func (r *Runner) sendImageView(
 	vm flow.ViewModel,
 ) error {
 	const op = "send telegram image view"
+
 	if vm.Media == nil {
 		return fmt.Errorf("%s: media is nil", op)
 	}
@@ -108,27 +93,21 @@ func (r *Runner) editView(
 ) error {
 	const op = "edit telegram view"
 	if msg == nil {
-		return fmt.Errorf("%s: message is nil")
+		return fmt.Errorf("%s: message is nil", op)
 	}
 
-	oldHasImage := messageHasImage(msg)
-	newHasImage := hasImage(vm)
-
-	switch {
-	case !oldHasImage && !newHasImage:
+	switch classifyRenderTransition(msg, vm) {
+	case renderTransitionEditText:
 		return r.editTextView(ctx, b, msg, vm)
 
-	case !oldHasImage && newHasImage:
+	case renderTransitionEditImage:
 		return r.editImageView(ctx, b, msg, vm)
 
-	case oldHasImage && newHasImage:
-		return r.editImageView(ctx, b, msg, vm)
-
-	case oldHasImage && !newHasImage:
-		return r.sendTextView(ctx, b, msg.Chat.ID, vm)
+	case renderTransitionReplaceImageWithText:
+		return r.replaceImageWithText(ctx, b, msg, vm)
 
 	default:
-		return fmt.Errorf("%s: unsupported render transition")
+		return fmt.Errorf("%s: unsupported render transition", op)
 	}
 }
 
@@ -144,12 +123,12 @@ func (r *Runner) editTextView(
 		Text:      vm.Text,
 	}
 
-	replyMarkyp, err := r.buildReplyMarkup(vm)
+	replyMarkup, err := r.buildReplyMarkup(vm)
 	if err != nil {
 		return err
 	}
 
-	if inline, ok := replyMarkyp.(*models.InlineKeyboardMarkup); ok {
+	if inline, ok := replyMarkup.(*models.InlineKeyboardMarkup); ok {
 		params.ReplyMarkup = inline
 	}
 
@@ -197,6 +176,65 @@ func (r *Runner) editImageView(
 	}
 
 	return nil
+}
+
+func (r *Runner) replaceImageWithText(
+	ctx context.Context,
+	b *tgbot.Bot,
+	msg *models.Message,
+	vm flow.ViewModel,
+) error {
+	const op = "replace telegram image with text"
+
+	if msg == nil {
+		return fmt.Errorf("%s: message is nil", op)
+	}
+
+	if _, err := r.sendTextMessage(ctx, b, msg.Chat.ID, vm); err != nil {
+		return fmt.Errorf("%s: send text: %w", op, err)
+	}
+
+	_, err := b.DeleteMessage(ctx, &tgbot.DeleteMessageParams{
+		ChatID:    msg.Chat.ID,
+		MessageID: msg.ID,
+	})
+	if err != nil {
+		r.log.Warn(
+			"telegram delete old media message failed",
+			"chat_id", msg.Chat.ID,
+			"message_id", msg.ID,
+			"err", err,
+		)
+	}
+
+	return nil
+}
+
+func (r *Runner) sendTextMessage(
+	ctx context.Context,
+	b *tgbot.Bot,
+	chatID int64,
+	vm flow.ViewModel,
+) (*models.Message, error) {
+	params := &tgbot.SendMessageParams{
+		ChatID: chatID,
+		Text:   vm.Text,
+	}
+
+	replyMarkup, err := r.buildReplyMarkup(vm)
+	if err != nil {
+		return nil, err
+	}
+	if replyMarkup != nil {
+		params.ReplyMarkup = replyMarkup
+	}
+
+	msg, err := b.SendMessage(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("send telegram text view: %w", err)
+	}
+
+	return msg, nil
 }
 
 // buildReplyMarkup converts flow.ViewModel keyboard description into Telegram
@@ -317,6 +355,33 @@ func messageHasImage(msg *models.Message) bool {
 	}
 
 	return len(msg.Photo) > 0
+}
+
+type renderTransition int
+
+const (
+	renderTransitionEditText renderTransition = iota
+	renderTransitionEditImage
+	renderTransitionReplaceImageWithText
+)
+
+func classifyRenderTransition(msg *models.Message, vm flow.ViewModel) renderTransition {
+	oldHasImage := messageHasImage(msg)
+	newHasImage := hasImage(vm)
+
+	switch {
+	case !oldHasImage && !newHasImage:
+		return renderTransitionEditText
+
+	case !oldHasImage && newHasImage:
+		return renderTransitionEditImage
+
+	case oldHasImage && newHasImage:
+		return renderTransitionEditImage
+
+	default:
+		return renderTransitionReplaceImageWithText
+	}
 }
 
 func isRemoteMediaSource(source string) bool {

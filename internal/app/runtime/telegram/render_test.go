@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
@@ -198,4 +200,142 @@ func TestDecodeActionID_Invalid(t *testing.T) {
 			require.Empty(t, got)
 		})
 	}
+}
+
+func TestHasImage(t *testing.T) {
+	t.Parallel()
+
+	require.False(t, hasImage(flow.ViewModel{}))
+	require.False(t, hasImage(flow.ViewModel{
+		Media: &flow.MediaView{Kind: flow.MediaKindImage},
+	}))
+	require.True(t, hasImage(flow.ViewModel{
+		Media: &flow.MediaView{
+			Kind:   flow.MediaKindImage,
+			Source: "assets/catalog/variants/classic.png",
+		},
+	}))
+}
+
+func TestMessageHasImage(t *testing.T) {
+	t.Parallel()
+
+	require.False(t, messageHasImage(nil))
+	require.False(t, messageHasImage(&models.Message{}))
+	require.True(t, messageHasImage(&models.Message{
+		Photo: []models.PhotoSize{
+			{FileID: "photo-1"},
+		},
+	}))
+}
+
+func TestIsRemoteMediaSource(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, isRemoteMediaSource("https://example.com/a.png"))
+	require.True(t, isRemoteMediaSource("http://example.com/a.png"))
+	require.False(t, isRemoteMediaSource("assets/catalog/a.png"))
+	require.False(t, isRemoteMediaSource(""))
+}
+
+func TestBuildTelegramPhotoInput_Remote(t *testing.T) {
+	t.Parallel()
+
+	got, err := buildTelegramPhotoInput("https://example.com/a.png")
+	require.NoError(t, err)
+
+	file, ok := got.(*models.InputFileString)
+	require.True(t, ok)
+	require.Equal(t, "https://example.com/a.png", file.Data)
+}
+
+func TestBuildTelegramPhotoInput_Local(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "classic.png")
+	require.NoError(t, os.WriteFile(path, []byte("png-data"), 0o644))
+
+	got, err := buildTelegramPhotoInput(path)
+	require.NoError(t, err)
+
+	file, ok := got.(*models.InputFileUpload)
+	require.True(t, ok)
+	require.Equal(t, "classic.png", file.Filename)
+	require.NotNil(t, file.Data)
+}
+
+func TestBuildTelegramPhotoInput_Empty(t *testing.T) {
+	t.Parallel()
+
+	got, err := buildTelegramPhotoInput("")
+	require.Error(t, err)
+	require.Nil(t, got)
+}
+
+func TestBuildTelegramPhotoInput_MissingFile(t *testing.T) {
+	t.Parallel()
+
+	got, err := buildTelegramPhotoInput("/no/such/file.png")
+	require.Error(t, err)
+	require.Nil(t, got)
+}
+
+func TestBuildTelegramInputMediaPhoto_Remote(t *testing.T) {
+	t.Parallel()
+
+	got, err := buildTelegramInputMediaPhoto("https://example.com/a.png", "caption")
+	require.NoError(t, err)
+
+	media, ok := got.(*models.InputMediaPhoto)
+	require.True(t, ok)
+	require.Equal(t, "https://example.com/a.png", media.Media)
+	require.Equal(t, "caption", media.Caption)
+}
+
+func TestBuildTelegramInputMediaPhoto_Local(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "classic.png")
+	require.NoError(t, os.WriteFile(path, []byte("png-data"), 0o644))
+
+	got, err := buildTelegramInputMediaPhoto(path, "caption")
+	require.NoError(t, err)
+
+	media, ok := got.(*models.InputMediaPhoto)
+	require.True(t, ok)
+	require.Equal(t, "attach://classic.png", media.Media)
+	require.Equal(t, "caption", media.Caption)
+	require.NotNil(t, media.MediaAttachment)
+}
+
+func TestBuildTelegramInputMediaPhoto_Empty(t *testing.T) {
+	t.Parallel()
+
+	got, err := buildTelegramInputMediaPhoto("", "caption")
+	require.Error(t, err)
+	require.Nil(t, got)
+}
+
+func TestClassifyRenderTransition(t *testing.T) {
+	t.Parallel()
+
+	textMsg := &models.Message{}
+	imageMsg := &models.Message{
+		Photo: []models.PhotoSize{{FileID: "p1"}},
+	}
+
+	textVM := flow.ViewModel{}
+	imageVM := flow.ViewModel{
+		Media: &flow.MediaView{
+			Kind:   flow.MediaKindImage,
+			Source: "assets/catalog/variants/classic.png",
+		},
+	}
+
+	require.Equal(t, renderTransitionEditText, classifyRenderTransition(textMsg, textVM))
+	require.Equal(t, renderTransitionEditImage, classifyRenderTransition(textMsg, imageVM))
+	require.Equal(t, renderTransitionEditImage, classifyRenderTransition(imageMsg, imageVM))
+	require.Equal(t, renderTransitionReplaceImageWithText, classifyRenderTransition(imageMsg, textVM))
 }
