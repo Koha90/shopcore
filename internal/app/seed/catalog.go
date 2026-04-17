@@ -130,6 +130,7 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 		Name:        "Gift Box",
 		NameLatin:   "Gift Box",
 		Description: "Подарочный набор.",
+		ImageURL:    "assets/demo/catalog/products/gift-box.jpg",
 		SortOrder:   10,
 	})
 	if err != nil {
@@ -190,6 +191,7 @@ func EnsureCatalogDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 		Name:        "Classic",
 		NameLatin:   "Classic",
 		Description: "Классический подарочный набор.",
+		ImageURL:    "assets/demo/catalog/variants/gift-box.jpg",
 		SortOrder:   10,
 	})
 	if err != nil {
@@ -292,6 +294,7 @@ type productSeed struct {
 	Name        string
 	NameLatin   string
 	Description string
+	ImageURL    string
 	SortOrder   int
 }
 
@@ -301,6 +304,7 @@ type variantSeed struct {
 	Name        string
 	NameLatin   string
 	Description string
+	ImageURL    string
 	SortOrder   int
 }
 
@@ -383,13 +387,14 @@ func ensureDistrict(ctx context.Context, tx pgx.Tx, v districtSeed) (int, error)
 func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 	const q = `
 		insert into catalog_products (
-			category_id, code, name, name_latin, description, is_active, sort_order, created_at, updated_at
+			category_id, code, name, name_latin, description, image_url, is_active, sort_order, created_at, updated_at
 		)
-		values ($1, $2, $3, $4, $5, true, $6, now(), now())
+		values ($1, $2, $3, $4, $5, $6, true, $7, now(), now())
 		on conflict (category_id, code) do update set
 			name = excluded.name,
 			name_latin = excluded.name_latin,
 			description = excluded.description,
+			image_url = excluded.image_url,
 			is_active = true,
 			sort_order = excluded.sort_order,
 			updated_at = now()
@@ -405,6 +410,7 @@ func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 		v.Name,
 		v.NameLatin,
 		v.Description,
+		v.ImageURL,
 		v.SortOrder,
 	).Scan(&id); err != nil {
 		return 0, fmt.Errorf("seed product %q: %w", v.Code, err)
@@ -416,13 +422,14 @@ func ensureProduct(ctx context.Context, tx pgx.Tx, v productSeed) (int, error) {
 func ensureVariant(ctx context.Context, tx pgx.Tx, v variantSeed) (int, error) {
 	const q = `
 		insert into catalog_variants (
-			product_id, code, name, name_latin, description, is_active, sort_order, created_at, updated_at
+			product_id, code, name, name_latin, description, image_url, is_active, sort_order, created_at, updated_at
 		)
-		values ($1, $2, $3, $4, $5, true, $6, now(), now())
+		values ($1, $2, $3, $4, $5, $6, true, $7, now(), now())
 		on conflict (product_id, code) do update set
 			name = excluded.name,
 			name_latin = excluded.name_latin,
 			description = excluded.description,
+			image_url = excluded.image_url,
 			is_active = true,
 			sort_order = excluded.sort_order,
 			updated_at = now()
@@ -438,6 +445,7 @@ func ensureVariant(ctx context.Context, tx pgx.Tx, v variantSeed) (int, error) {
 		v.Name,
 		v.NameLatin,
 		v.Description,
+		v.ImageURL,
 		v.SortOrder,
 	).Scan(&id); err != nil {
 		return 0, fmt.Errorf("seed variant %q: %w", v.Code, err)

@@ -59,7 +59,8 @@ func buildCatalogLeafView(node CatalogNode) ViewModel {
 	}
 
 	return ViewModel{
-		Text: text,
+		Text:  text,
+		Media: buildCatalogLeafMedia(node),
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
