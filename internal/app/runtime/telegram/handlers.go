@@ -72,6 +72,25 @@ func (r *Runner) callbackHandler(
 			return
 		}
 
+		r.log.Debug(
+			"telegram callback resolved",
+			"bot_id", spec.ID,
+			"action_id", actionID,
+			"chat_id", msg.Chat.ID,
+			"message_id", msg.ID,
+			"callback_data", update.CallbackQuery.Data,
+		)
+
+		r.log.Debug(
+			"telegram callback render view",
+			"bot_id", spec.ID,
+			"action_id", actionID,
+			"chat_id", msg.Chat.ID,
+			"message_id", msg.ID,
+			"view_has_media", hasImage(vm),
+			"text_len", len(vm.Text),
+		)
+
 		if err := r.editView(ctx, b, msg, vm); err != nil {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "render failed")
 			r.log.Error(

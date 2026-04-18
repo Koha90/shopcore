@@ -92,11 +92,25 @@ func (r *Runner) editView(
 	vm flow.ViewModel,
 ) error {
 	const op = "edit telegram view"
+
 	if msg == nil {
 		return fmt.Errorf("%s: message is nil", op)
 	}
 
-	switch classifyRenderTransition(msg, vm) {
+	oldHasImage := messageHasImage(msg)
+	newHasImage := hasImage(vm)
+	transition := classifyRenderTransition(msg, vm)
+
+	r.log.Debug(
+		"telegram render transition",
+		"chat_id", msg.Chat.ID,
+		"message_id", msg.ID,
+		"transition", transition.Sting(),
+		"old_has_image", oldHasImage,
+		"new_has_image", newHasImage,
+	)
+
+	switch transition {
 	case renderTransitionEditText:
 		return r.editTextView(ctx, b, msg, vm)
 
@@ -190,6 +204,12 @@ func (r *Runner) replaceImageWithText(
 		return fmt.Errorf("%s: message is nil", op)
 	}
 
+	r.log.Debug(
+		"telegram replace image with text start",
+		"chat_id", msg.Chat.ID,
+		"message_id", msg.ID,
+	)
+
 	if _, err := r.sendTextMessage(ctx, b, msg.Chat.ID, vm); err != nil {
 		return fmt.Errorf("%s: send text: %w", op, err)
 	}
@@ -206,6 +226,12 @@ func (r *Runner) replaceImageWithText(
 			"err", err,
 		)
 	}
+
+	r.log.Debug(
+		"telegram replace image with text done",
+		"chat_id", msg.Chat.ID,
+		"message_id", msg.ID,
+	)
 
 	return nil
 }
@@ -381,6 +407,19 @@ func classifyRenderTransition(msg *models.Message, vm flow.ViewModel) renderTran
 
 	default:
 		return renderTransitionReplaceImageWithText
+	}
+}
+
+func (t renderTransition) Sting() string {
+	switch t {
+	case renderTransitionEditText:
+		return "edit_text"
+	case renderTransitionEditImage:
+		return "edit_image"
+	case renderTransitionReplaceImageWithText:
+		return "replace_image_with_text"
+	default:
+		return "unknown"
 	}
 }
 
