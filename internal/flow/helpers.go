@@ -28,11 +28,11 @@ func normalizeColumns(v int) int {
 }
 
 func catalogChildButtonLabel(node CatalogNode) string {
-	if node.Level != LevelVariant {
-		return node.Label
+	label := node.Label
+
+	if node.Level == LevelVariant && node.PriceText != "" {
+		return node.Label + " - " + node.PriceText
 	}
-	if node.PriceText == "" {
-		return node.Label
-	}
-	return node.Label + " • " + node.PriceText
+
+	return label
 }

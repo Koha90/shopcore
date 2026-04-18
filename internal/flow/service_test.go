@@ -412,7 +412,7 @@ func TestHandleAction_ProductScreen_ShowsVariantButtonsWithPrice(t *testing.T) {
 
 	require.Equal(t, "Rose Box\n\nКомпозиция из роз для центрального района.\n\nВыберите вариант:", vm.Text)
 	require.NotNil(t, vm.Inline)
-	require.True(t, hasInlineActionLabel(vm, "L / 25 шт • 5900 ₽"))
+	require.True(t, hasInlineActionLabel(vm, "L / 25 шт - 5900 ₽"))
 }
 
 func TestHandleAction_NonVariantButtons_KeepPlainLabels(t *testing.T) {
