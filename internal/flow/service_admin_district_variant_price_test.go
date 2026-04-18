@@ -16,15 +16,6 @@ func (s *flowDistrictListerStub) ListDistricts(ctx context.Context) ([]DistrictL
 	return s.items, s.err
 }
 
-type flowVariantListerStub struct {
-	items []VariantListItem
-	err   error
-}
-
-func (s *flowVariantListerStub) ListVariants(ctx context.Context) ([]VariantListItem, error) {
-	return s.items, s.err
-}
-
 type flowDistrictVariantPriceUpdaterStub struct {
 	called bool
 	params UpdateDistrictVariantPriceParams

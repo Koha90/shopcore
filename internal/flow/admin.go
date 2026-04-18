@@ -119,9 +119,10 @@ type CreateVariantParams struct {
 
 // VariantListItem contains one variant option for admin selection flows.
 type VariantListItem struct {
-	ID    int
-	Code  string
-	Label string
+	ID           int
+	Code         string
+	Label        string
+	ProductLabel string
 }
 
 // DistrictPlacementVariantListItem contains one placed variant option

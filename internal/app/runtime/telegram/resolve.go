@@ -86,19 +86,3 @@ func (r *Runner) resolveCallbackView(
 
 	return vm, actionID, true, nil
 }
-
-func messageUserID(msg *models.Message) (int64, bool) {
-	if msg == nil || msg.From == nil {
-		return 0, false
-	}
-
-	return msg.From.ID, true
-}
-
-func callbackUserID(cq *models.CallbackQuery) (int64, bool) {
-	if cq == nil {
-		return 0, false
-	}
-
-	return cq.From.ID, true
-}

@@ -59,3 +59,17 @@ func parseAdminDistrictVariantSelectVariantAction(actionID ActionID) (int, bool)
 
 	return id, true
 }
+
+func buildAdminVariantOptionLabel(item VariantListItem) string {
+	productLabel := strings.TrimSpace(item.ProductLabel)
+	variantLabel := strings.TrimSpace(item.Label)
+
+	switch {
+	case productLabel == "":
+		return variantLabel
+	case variantLabel == "":
+		return productLabel
+	default:
+		return productLabel + " - " + variantLabel
+	}
+}

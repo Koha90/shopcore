@@ -867,9 +867,12 @@ func buildAdminDistrictVariantVariantSelectView(
 
 	actions := make([]ActionButton, 0, len(variants)+1)
 	for _, variant := range variants {
+
+		variantDisplayLabel := buildAdminVariantOptionLabel(variant)
+
 		actions = append(actions, ActionButton{
 			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
-			Label: variant.Label,
+			Label: variantDisplayLabel,
 		})
 	}
 	actions = append(actions, ActionButton{

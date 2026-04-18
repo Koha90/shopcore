@@ -534,6 +534,8 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, ErrUnknownAction
 			}
 
+			variantDisplayLabel := buildAdminVariantOptionLabel(*selected)
+
 			next := ScreenAdminDistrictVariantPrice
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -545,12 +547,12 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 					PendingValueDistrictID:   strconv.Itoa(districtID),
 					PendingValueDistrictName: districtName,
 					PendingValueVariantID:    strconv.Itoa(selected.ID),
-					PendingValueVariantName:  selected.Label,
+					PendingValueVariantName:  variantDisplayLabel,
 				},
 			}
 			s.store.Put(req.SessionKey, session)
 
-			return buildAdminDistrictVariantPriceInputView(districtName, selected.Label, ""), nil
+			return buildAdminDistrictVariantPriceInputView(districtName, variantDisplayLabel, ""), nil
 
 		case ScreenAdminDistrictVariantPriceUpdateVariantSelect:
 			if s.districtPlacements == nil {

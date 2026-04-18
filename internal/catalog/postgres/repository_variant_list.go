@@ -22,12 +22,15 @@ func (r *Repository) ListVariants(ctx context.Context) ([]flow.VariantListItem, 
 
 	const q = `
 		select
-			id,
-			code,
-			name
-		from catalog_variants
-		where is_active = true
-		order by sort_order asc, name asc
+			v.id,
+			v.code,
+			v.name,
+			p.name as product_name
+		from catalog_variants v
+		join catalog_products p on p.id = v.product_id
+		where v.is_active = true
+			and p.is_active = true
+		order by p.sort_order asc, p.name asc, v.sort_order asc, v.name asc
 	`
 
 	rows, err := r.pool.Query(ctx, q)
@@ -42,6 +45,7 @@ func (r *Repository) ListVariants(ctx context.Context) ([]flow.VariantListItem, 
 			&item.ID,
 			&item.Code,
 			&item.Label,
+			&item.ProductLabel,
 		)
 		if err != nil {
 			return flow.VariantListItem{}, err
