@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"sync"
 
 	tgbot "github.com/go-telegram/bot"
 
@@ -72,11 +71,21 @@ func NewRunnerWithDeps(
 // Bot token is taken from spec.Token.
 // Shared runtime settings such as proxy and timeouts are taken Runner config.
 func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) error {
+	if r == nil {
+		return fmt.Errorf("telegram runner is nil")
+	}
+
 	if strings.TrimSpace(spec.Token) == "" {
 		return errors.New("telegram token is required")
 	}
 
-	svc, err := r.flowFactory(spec)
+	runner := *r
+	runner.log = r.log.With(
+		"bot_id", spec.ID,
+		"bot_name", spec.Name,
+	)
+
+	svc, err := runner.flowFactory(spec)
 	if err != nil {
 		return fmt.Errorf("build flow service: %w", err)
 	}
@@ -84,16 +93,16 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		return fmt.Errorf("telegram flow service factory returned nil")
 	}
 
-	client, err := NewHTTPClient(r.cfg.ProxyURL)
+	client, err := NewHTTPClient(runner.cfg.ProxyURL)
 	if err != nil {
 		return fmt.Errorf("telegram http client: %w", err)
 	}
 
 	opts := []tgbot.Option{
-		tgbot.WithHTTPClient(r.cfg.PollTimeout, client),
-		tgbot.WithCheckInitTimeout(r.cfg.CheckInitTimeout),
-		tgbot.WithDefaultHandler(r.defaultHandler(spec, svc)),
-		tgbot.WithErrorsHandler(r.errorsHandler(spec)),
+		tgbot.WithHTTPClient(runner.cfg.PollTimeout, client),
+		tgbot.WithCheckInitTimeout(runner.cfg.CheckInitTimeout),
+		tgbot.WithDefaultHandler(runner.defaultHandler(spec, svc)),
+		tgbot.WithErrorsHandler(runner.errorsHandler(spec)),
 		tgbot.WithAllowedUpdates(tgbot.AllowedUpdates{
 			"message",
 			"callback_query",
@@ -101,7 +110,7 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		tgbot.WithNotAsyncHandlers(),
 	}
 
-	if r.cfg.Debug {
+	if runner.cfg.Debug {
 		opts = append(opts, tgbot.WithDebug())
 	}
 
@@ -114,33 +123,27 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		tgbot.HandlerTypeMessageText,
 		"/start",
 		tgbot.MatchTypeExact,
-		r.startHandler(spec, svc),
+		runner.startHandler(spec, svc),
 	)
 
 	b.RegisterHandler(
 		tgbot.HandlerTypeCallbackQueryData,
 		callbackPrefix,
 		tgbot.MatchTypePrefix,
-		r.callbackHandler(spec, svc),
+		runner.callbackHandler(spec, svc),
 	)
 
-	var once sync.Once
-	once.Do(ready)
+	// var once sync.Once
+	// once.Do(ready)
 
-	r.log.Info(
-		"telegram runtime started",
-		"bot_id", spec.ID,
-		"name", spec.Name,
-		"admin_ids", spec.TelegramAdminUserIDs,
-	)
+	runner.log.Info("telegram runtime started")
+	defer runner.log.Info("telegram runtime stopped")
+
+	if ready != nil {
+		ready()
+	}
 
 	b.Start(ctx)
-
-	r.log.Info(
-		"telegram runtime stopped",
-		"bot_id", spec.ID,
-		"name", spec.Name,
-	)
 
 	return nil
 }

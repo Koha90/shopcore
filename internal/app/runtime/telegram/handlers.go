@@ -74,7 +74,6 @@ func (r *Runner) callbackHandler(
 
 		r.log.Debug(
 			"telegram callback resolved",
-			"bot_id", spec.ID,
 			"action_id", actionID,
 			"chat_id", msg.Chat.ID,
 			"message_id", msg.ID,
@@ -83,7 +82,6 @@ func (r *Runner) callbackHandler(
 
 		r.log.Debug(
 			"telegram callback render view",
-			"bot_id", spec.ID,
 			"action_id", actionID,
 			"chat_id", msg.Chat.ID,
 			"message_id", msg.ID,
