@@ -291,7 +291,7 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariant
 	require.Equal(t, "21", session.Pending.Value(PendingValueProductID))
 	require.Equal(t, "Rose Box", session.Pending.Value(PendingValueProductName))
 	require.NotNil(t, vm.Inline)
-	require.True(t, hasInlineActionLabel(vm, "L / 25 шт / 5900 ₽"))
+	require.True(t, hasInlineActionLabel(vm, "Rose Box - L / 25 шт - 5900 ₽"))
 }
 
 func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariantSelect_UsesPriceFallback(t *testing.T) {
@@ -344,7 +344,7 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectProduct_OpensVariant
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.True(t, hasInlineActionLabel(vm, "L / 25 шт / 5900 ₽"))
+	require.True(t, hasInlineActionLabel(vm, "Rose Box - L / 25 шт - 5900 ₽"))
 }
 
 func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceInput(t *testing.T) {
@@ -398,7 +398,7 @@ func TestHandleAction_AdminDistrictVariantPriceUpdate_SelectVariant_OpensPriceIn
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nТекущая цена: 5900 ₽\n\nВведите новую цену сообщением.", vm.Text)
+	require.Equal(t, "Изменение цены варианта\n\nРайон: Центр\n\nВариант: Rose Box - L / 25 шт\n\nТекущая цена: 5900 ₽\n\nВведите новую цену сообщением.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
@@ -462,7 +462,7 @@ func TestHandleText_AdminDistrictVariantPriceUpdate_InvalidPrice(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(
 		t,
-		"Изменение цены варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nТекущая цена: 5900 ₽\n\nЦена должна быть положительным числом.\n\nВведите новую цену сообщением.",
+		"Изменение цены варианта\n\nРайон: Центр\n\nВариант: Rose Box - L / 25 шт\n\nТекущая цена: 5900 ₽\n\nЦена должна быть положительным числом.\n\nВведите новую цену сообщением.",
 		vm.Text,
 	)
 

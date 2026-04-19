@@ -30,7 +30,7 @@ func TestFormatDistrictPlacementVariantActionLabel(t *testing.T) {
 	t.Parallel()
 
 	got := formatDistrictPlacementVariantActionLabel("L / 25 шт", 5900, "")
-	if got != "L / 25 шт / 5900 ₽" {
+	if got != "L / 25 шт - 5900 ₽" {
 		t.Fatalf("unexpected action label: %q", got)
 	}
 }

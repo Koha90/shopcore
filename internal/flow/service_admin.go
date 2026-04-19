@@ -1049,9 +1049,15 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 
 	actions := make([]ActionButton, 0, len(variants)+1)
 	for _, variant := range variants {
+		variantDisplayLabel := buildAdminQualifiedVariantOptionLabel(productName, variant.Label)
+
 		actions = append(actions, ActionButton{
-			ID:    adminDistrictVariantSelectVariantAction(variant.ID),
-			Label: formatDistrictPlacementVariantActionLabel(variant.Label, variant.Price, variant.PriceText),
+			ID: adminDistrictVariantSelectVariantAction(variant.ID),
+			Label: formatDistrictPlacementVariantActionLabel(
+				variantDisplayLabel,
+				variant.Price,
+				variant.PriceText,
+			),
 		})
 	}
 	actions = append(actions, ActionButton{

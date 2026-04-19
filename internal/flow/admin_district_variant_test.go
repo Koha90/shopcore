@@ -187,7 +187,7 @@ func TestHandleText_AdminDistrictVariantPrice_Success(t *testing.T) {
 				PendingValueDistrictID:   "7",
 				PendingValueDistrictName: "Центр",
 				PendingValueVariantID:    "9",
-				PendingValueVariantName:  "L / 25 шт",
+				PendingValueVariantName:  "Rose Box - L / 25 шт",
 			},
 		},
 	})

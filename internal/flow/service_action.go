@@ -564,6 +564,11 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, errors.New("pending product id is invalid")
 			}
 
+			productName := session.Pending.Value(PendingValueProductName)
+			if productName == "" {
+				return ViewModel{}, errors.New("pending product name is empty")
+			}
+
 			variants, err := s.districtPlacements.ListDistrictVariants(ctx, districtID, productID)
 			if err != nil {
 				return ViewModel{}, err
@@ -580,6 +585,8 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, ErrUnknownAction
 			}
 
+			variantDisplayLabel := buildAdminQualifiedVariantOptionLabel(productName, selected.Label)
+
 			next := ScreenAdminDistrictVariantPriceUpdatePrice
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -591,15 +598,20 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 					PendingValueDistrictID:   strconv.Itoa(districtID),
 					PendingValueDistrictName: districtName,
 					PendingValueProductID:    strconv.Itoa(productID),
-					PendingValueProductName:  session.Pending.Value(PendingValueProductName),
+					PendingValueProductName:  productName,
 					PendingValueVariantID:    strconv.Itoa(selected.ID),
-					PendingValueVariantName:  selected.Label,
+					PendingValueVariantName:  variantDisplayLabel,
 					PendingValueCurrentPrice: strconv.Itoa(selected.Price),
 				},
 			}
 			s.store.Put(req.SessionKey, session)
 
-			return buildAdminDistrictVariantPriceUpdateInputView(districtName, selected.Label, formatDistrictPlacementVariantPrice(selected.Price, selected.PriceText), ""), nil
+			return buildAdminDistrictVariantPriceUpdateInputView(
+				districtName,
+				variantDisplayLabel,
+				formatDistrictPlacementVariantPrice(selected.Price, selected.PriceText),
+				"",
+			), nil
 
 		default:
 			return ViewModel{}, ErrUnknownAction

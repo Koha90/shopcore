@@ -8,7 +8,7 @@ import (
 const (
 	adminSectionSeparator                  = "\n\n"
 	adminFieldLabelSeparator               = ": "
-	districtPlacementVariantLabelSeparator = " / "
+	districtPlacementVariantLabelSeparator = " - "
 	adminCurrencySuffix                    = " ₽"
 )
 
