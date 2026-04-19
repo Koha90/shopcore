@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/koha90/shopcore/internal/app/bootstrap"
+	"github.com/koha90/shopcore/internal/app/runtime/runtimelog"
 	"github.com/koha90/shopcore/internal/app/runtime/telegram"
 	"github.com/koha90/shopcore/internal/app/seed"
 	"github.com/koha90/shopcore/internal/app/tuiapp"
@@ -34,7 +35,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	runtimeLogger, err := logger.NewFileLogger("logs/runtime.log", slog.LevelInfo)
+	runtimeLogs := runtimelog.NewStore(300)
+
+	runtimeWrap := func(next slog.Handler) slog.Handler {
+		return runtimelog.NewHandler(next, runtimeLogs)
+	}
+
+	runtimeLogger, err := logger.NewFileLoggerWithHandler(
+		"logs/runtime.log",
+		slog.LevelInfo,
+		runtimeWrap,
+	)
 	if err != nil {
 		appLogger.Error("setup runtime logger", "err", err)
 		os.Exit(1)
