@@ -23,7 +23,7 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	appLogger, err := logger.Setup(cfg.Env)
+	appLogger, err := logger.SetupForTUI(cfg.Env)
 	if err != nil {
 		log.Fatalf("setup logger: %v", err)
 	}
@@ -43,7 +43,7 @@ func main() {
 
 	runtimeLogger, err := logger.NewFileLoggerWithHandler(
 		"logs/runtime.log",
-		slog.LevelInfo,
+		slog.LevelDebug,
 		runtimeWrap,
 	)
 	if err != nil {
@@ -105,7 +105,7 @@ func main() {
 		appLogger.Error("bootstrap finished with errors", "err", err)
 	}
 
-	if err = tui.Run(app.Manager, app.BotConfig); err != nil {
+	if err = tui.Run(app.Manager, app.BotConfig, runtimeLogs); err != nil {
 		appLogger.Error("tui exited with error", "err", err)
 		os.Exit(1)
 	}

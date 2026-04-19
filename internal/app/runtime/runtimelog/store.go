@@ -55,7 +55,7 @@ func (s *Store) List(botID string) []Entry {
 	}
 
 	s.mu.RLock()
-	defer s.mu.Unlock()
+	defer s.mu.RUnlock()
 
 	src := s.byBotID[botID]
 	if len(src) == 0 {

@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/koha90/shopcore/internal/app/runtime/runtimelog"
 	"github.com/koha90/shopcore/internal/botconfig"
 	"github.com/koha90/shopcore/internal/manager"
 )
@@ -88,6 +89,11 @@ type BotManager interface {
 	UpdateSpec(spec manager.BotSpec) error
 }
 
+// RuntimeLogReader expose recent per-bot runtime log entries for TUI views.
+type RuntimeLogReader interface {
+	List(botID string) []runtimelog.Entry
+}
+
 // Summary contains aggregated runtime counters for bots.
 type Summary struct {
 	Total    int
@@ -123,9 +129,10 @@ const (
 
 // Model represents Bubble Tea application model.
 type Model struct {
-	manager BotManager
-	config  BotConfigService
-	theme   Theme
+	manager     BotManager
+	config      BotConfigService
+	runtimeLogs RuntimeLogReader
+	theme       Theme
 
 	layout LayoutMode
 	screen ScreenMode
@@ -168,10 +175,11 @@ type Model struct {
 }
 
 // NewModel creates new TUI model.
-func NewModel(mgr BotManager, cfg BotConfigService, theme Theme) Model {
+func NewModel(mgr BotManager, cfg BotConfigService, logs RuntimeLogReader, theme Theme) Model {
 	model := Model{
 		manager:      mgr,
 		config:       cfg,
+		runtimeLogs:  logs,
 		theme:        theme,
 		pageSize:     defaultPageSize,
 		layout:       LayoutDesktop,

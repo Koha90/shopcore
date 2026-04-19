@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -285,6 +286,9 @@ func (m Model) renderDetails() string {
 
 		lines = append(lines, "")
 		lines = append(lines, m.theme.ListHeader.Render("Config"))
+		lines = append(lines, "")
+		lines = append(lines, m.theme.ListHeader.Render("Runtime log"))
+		lines = append(lines, m.renderRuntimeLogLines(info.ID)...)
 
 		switch {
 		case m.selectedBotConfigLoading:
@@ -578,4 +582,38 @@ func (m Model) renderStatusText(status string) string {
 	default:
 		return m.theme.Muted.Render(status)
 	}
+}
+
+func (m Model) renderRuntimeLogLines(botID string) []string {
+	if m.runtimeLogs == nil || botID == "" {
+		return []string{m.theme.Muted.Render("runtime log unavailable")}
+	}
+
+	entries := m.runtimeLogs.List(botID)
+	if len(entries) == 0 {
+		return []string{m.theme.Muted.Render("no runtime log entries")}
+	}
+
+	const limit = 8
+	start := 0
+	if len(entries) > limit {
+		start = len(entries) - limit
+	}
+
+	lines := make([]string, 0, len(entries[start:]))
+	for _, entry := range entries[start:] {
+		level := strings.ToUpper(entry.Level.String())
+		line := fmt.Sprintf("%s %-5s %s", entry.Time.Format("15:05:05"), level, entry.Message)
+
+		switch {
+		case entry.Level >= slog.LevelError:
+			lines = append(lines, m.theme.Error.Render(line))
+		case entry.Level >= slog.LevelWarn:
+			lines = append(lines, m.theme.Failed.Render(line))
+		default:
+			lines = append(lines, line)
+		}
+	}
+
+	return lines
 }
