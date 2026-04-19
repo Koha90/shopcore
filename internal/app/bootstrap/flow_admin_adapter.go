@@ -94,6 +94,14 @@ func (a *flowCatalogAdminAdapter) ListDistricts(ctx context.Context) ([]flow.Dis
 	return a.districts.ListDistricts(ctx)
 }
 
+func (a *flowCatalogAdminAdapter) ListDistrictsByCity(ctx context.Context, cityID int) ([]flow.DistrictListItem, error) {
+	if a == nil || a.districts == nil {
+		return nil, nil
+	}
+
+	return a.districts.ListDistrictsByCity(ctx, cityID)
+}
+
 func (a *flowCatalogAdminAdapter) ListProducts(ctx context.Context) ([]flow.ProductListItem, error) {
 	if a == nil {
 		return nil, errors.New("flow catalog admin adapter is nil")

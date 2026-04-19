@@ -13,6 +13,16 @@ type flowDistrictListerStub struct {
 }
 
 func (s *flowDistrictListerStub) ListDistricts(ctx context.Context) ([]DistrictListItem, error) {
+	if s == nil {
+		return nil, nil
+	}
+	return s.items, s.err
+}
+
+func (s *flowDistrictListerStub) ListDistrictsByCity(ctx context.Context, cityID int) ([]DistrictListItem, error) {
+	if s == nil {
+		return nil, nil
+	}
 	return s.items, s.err
 }
 

@@ -117,8 +117,16 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 	case ScreenAdminVariantCreateDone:
 		return buildAdminVariantCreateDoneView()
 
+	case ScreenAdminDistrictVariantCitySelect:
+		return s.buildAdminDistrictVariantCitySelectScreen()
+
 	case ScreenAdminDistrictVariantDistrictSelect:
-		return s.buildAdminDistrictVariantDistrictSelectScreen()
+		cityID, ok := pendingCityID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+		cityName := session.Pending.Value(PendingValueCityName)
+		return s.buildAdminDistrictVariantDistrictSelectScreen(cityID, cityName)
 
 	case ScreenAdminDistrictVariantVariantSelect:
 		return s.buildAdminDistrictVariantVariantSelectScreen("")

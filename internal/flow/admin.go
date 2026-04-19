@@ -69,15 +69,17 @@ type CreateDistrictParams struct {
 
 // DistrictListItem contains one district option for admon selection flows.
 type DistrictListItem struct {
-	ID    int
-	Code  string
-	Label string
+	ID     int
+	Code   string
+	Label  string
+	CityID int
 }
 
 // DistrictLister defines the admin read use case required by flow
 // to select an existing district before nested catalog creation steps.
 type DistrictLister interface {
 	ListDistricts(ctx context.Context) ([]DistrictListItem, error)
+	ListDistrictsByCity(ctx context.Context, cityID int) ([]DistrictListItem, error)
 }
 
 // ProductCreator defines the admin write use case required by flow.

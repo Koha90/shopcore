@@ -147,11 +147,11 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
 	case ActionAdminDistrictVariantCreateStart:
-		if s.districtLister == nil {
-			return ViewModel{}, errors.New("flow district lister is nil")
+		if s.cityLister == nil {
+			return ViewModel{}, errors.New("flow city lister is nil")
 		}
 
-		next := ScreenAdminDistrictVariantDistrictSelect
+		next := ScreenAdminDistrictVariantCitySelect
 		if next != session.Current {
 			session.History = append(session.History, session.Current)
 		}
@@ -216,6 +216,50 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return buildAdminDistrictCreateInputView(selected.Label, ""), nil
+	}
+
+	if cityID, ok := parseAdminDistrictVariantSelectCityAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.cityLister == nil {
+			return ViewModel{}, errors.New("flow city listre is nil")
+		}
+		if session.Current != ScreenAdminDistrictVariantCitySelect {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		cities, err := s.cityLister.ListCities(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *CityListItem
+		for i := range cities {
+			if cities[i].ID == cityID {
+				selected = &cities[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		next := ScreenAdminDistrictVariantDistrictSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueCityID:   strconv.Itoa(selected.ID),
+				PendingValueCityName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return s.buildAdminDistrictVariantDistrictSelectScreen(selected.ID, selected.Label), nil
 	}
 
 	if categoryID, ok := parseAdminProductSelectCategoryAction(req.ActionID); ok {
@@ -461,6 +505,9 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, errors.New("flow variant lister is nil")
 			}
 
+			cityID := session.Pending.Value(PendingValueCityID)
+			cityName := session.Pending.Value(PendingValueCityName)
+
 			next := ScreenAdminDistrictVariantVariantSelect
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
@@ -469,6 +516,8 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			session.Pending = PendingInput{
 				Kind: PendingInputNone,
 				Payload: PendingInputPayload{
+					PendingValueCityID:       cityID,
+					PendingValueCityName:     cityName,
 					PendingValueDistrictID:   strconv.Itoa(selected.ID),
 					PendingValueDistrictName: selected.Label,
 				},
@@ -585,7 +634,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 				return ViewModel{}, ErrUnknownAction
 			}
 
-			variantDisplayLabel := buildAdminQualifiedVariantOptionLabel(productName, selected.Label)
+			variantDisplayLabel := buildAdminQualifiedVariantLabel(productName, selected.Label)
 
 			next := ScreenAdminDistrictVariantPriceUpdatePrice
 			if next != session.Current {
@@ -746,7 +795,10 @@ func shouldPreservePendingOnBack(screen ScreenID) bool {
 	case ScreenAdminDistrictVariantPriceUpdateCategorySelect,
 		ScreenAdminDistrictVariantPriceUpdateProductSelect,
 		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
-		ScreenAdminDistrictVariantPriceUpdatePrice:
+		ScreenAdminDistrictVariantPriceUpdatePrice,
+		ScreenAdminDistrictVariantDistrictSelect,
+		ScreenAdminDistrictVariantVariantSelect,
+		ScreenAdminDistrictVariantPrice:
 		return true
 	default:
 		return false

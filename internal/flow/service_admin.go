@@ -817,10 +817,50 @@ func pendingProductID(p PendingInput) (int, bool) {
 	return id, true
 }
 
-func buildAdminDistrictVariantDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
+func buildAdminDistrictVariantCitySelectView(cities []CityListItem, validation string) ViewModel {
 	text := buildAdminSelectText(
 		"Размещение варианта",
 		nil,
+		validation,
+		"Выберите город:",
+	)
+
+	actions := make([]ActionButton, 0, len(cities)+1)
+	for _, city := range cities {
+		actions = append(actions, ActionButton{
+			ID:    adminDistrictVariantSelectCityAction(city.ID),
+			Label: city.Label,
+		})
+	}
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		},
+		RemoveReply: true,
+	}
+}
+
+func buildAdminDistrictVariantDistrictSelectView(
+	cityName string,
+	districts []DistrictListItem,
+	validation string,
+) ViewModel {
+	text := buildAdminSelectText(
+		"Размещение варианта",
+		[]string{
+			formatAdminFieldLine("Город", cityName),
+		},
 		validation,
 		"Выберите район:",
 	)
@@ -938,20 +978,39 @@ func buildAdminDistrictVariantCreateDoneView() ViewModel {
 	}
 }
 
-func (s *Service) buildAdminDistrictVariantDistrictSelectScreen() ViewModel {
-	if s == nil || s.districtLister == nil {
-		return buildAdminDistrictVariantDistrictSelectView(nil, "Не удалось загрузить список районов.")
+func (s *Service) buildAdminDistrictVariantCitySelectScreen() ViewModel {
+	if s == nil || s.cityLister == nil {
+		return buildAdminDistrictVariantCitySelectView(nil, "Не удалось загрузить список городов.")
 	}
 
-	districts, err := s.districtLister.ListDistricts(context.Background())
+	cities, err := s.cityLister.ListCities(context.Background())
 	if err != nil {
-		return buildAdminDistrictVariantDistrictSelectView(nil, "Не удалось загрузить список районов.")
+		return buildAdminDistrictVariantCitySelectView(nil, "Не удалось загрузить список городов.")
+	}
+	if len(cities) == 0 {
+		return buildAdminDistrictVariantCitySelectView(nil, "Нет доступных городов.")
+	}
+
+	return buildAdminDistrictVariantCitySelectView(cities, "")
+}
+
+func (s *Service) buildAdminDistrictVariantDistrictSelectScreen(cityID int, cityName string) ViewModel {
+	if s == nil || s.districtLister == nil {
+		return buildAdminDistrictVariantDistrictSelectView(cityName, nil, "Не удалось загрузить список районов.")
+	}
+	if cityID <= 0 {
+		return buildAdminDistrictVariantDistrictSelectView(cityName, nil, "Город не выбран.")
+	}
+
+	districts, err := s.districtLister.ListDistrictsByCity(context.Background(), cityID)
+	if err != nil {
+		return buildAdminDistrictVariantDistrictSelectView(cityName, nil, "Не удалось загрузить список районов.")
 	}
 	if len(districts) == 0 {
-		return buildAdminDistrictVariantDistrictSelectView(nil, "Нет доступных районов.")
+		return buildAdminDistrictVariantDistrictSelectView(cityName, nil, "Нет доступных районов.")
 	}
 
-	return buildAdminDistrictVariantDistrictSelectView(districts, "")
+	return buildAdminDistrictVariantDistrictSelectView(cityName, districts, "")
 }
 
 func (s *Service) buildAdminDistrictVariantVariantSelectScreen(districtName string) ViewModel {
@@ -1049,7 +1108,7 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 
 	actions := make([]ActionButton, 0, len(variants)+1)
 	for _, variant := range variants {
-		variantDisplayLabel := buildAdminQualifiedVariantOptionLabel(productName, variant.Label)
+		variantDisplayLabel := buildAdminQualifiedVariantLabel(productName, variant.Label)
 
 		actions = append(actions, ActionButton{
 			ID: adminDistrictVariantSelectVariantAction(variant.ID),
@@ -1359,6 +1418,9 @@ func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictVariantSelectVariantAction(actionID); ok {
 		return true
 	}
+	if _, ok := parseAdminDistrictVariantSelectCityAction(actionID); ok {
+		return true
+	}
 
 	switch actionID {
 	case ActionAdminOpen,
@@ -1398,6 +1460,7 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminVariantCreate,
 		ScreenAdminVariantCode,
 		ScreenAdminVariantCreateDone,
+		ScreenAdminDistrictVariantCitySelect,
 		ScreenAdminDistrictVariantDistrictSelect,
 		ScreenAdminDistrictVariantVariantSelect,
 		ScreenAdminDistrictVariantPrice,

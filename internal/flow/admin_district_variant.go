@@ -60,7 +60,32 @@ func parseAdminDistrictVariantSelectVariantAction(actionID ActionID) (int, bool)
 	return id, true
 }
 
-func buildAdminQualifiedVariantOptionLabel(productLabel, variantLabel string) string {
+func adminDistrictVariantSelectCityAction(cityID int) ActionID {
+	return ActionID(fmt.Sprintf("admin:district_variant:city:%d", cityID))
+}
+
+func parseAdminDistrictVariantSelectCityAction(actionID ActionID) (int, bool) {
+	const prefix = "admin:district_variant:city:"
+
+	raw := strings.TrimSpace(string(actionID))
+	if !strings.HasPrefix(raw, prefix) {
+		return 0, false
+	}
+
+	idPart := strings.TrimPrefix(raw, prefix)
+	if idPart == "" {
+		return 0, false
+	}
+
+	id, err := strconv.Atoi(idPart)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+
+	return id, true
+}
+
+func buildAdminQualifiedVariantLabel(productLabel, variantLabel string) string {
 	productLabel = strings.TrimSpace(productLabel)
 	variantLabel = strings.TrimSpace(variantLabel)
 
@@ -75,5 +100,5 @@ func buildAdminQualifiedVariantOptionLabel(productLabel, variantLabel string) st
 }
 
 func buildAdminVariantOptionLabel(item VariantListItem) string {
-	return buildAdminQualifiedVariantOptionLabel(item.ProductLabel, item.Label)
+	return buildAdminQualifiedVariantLabel(item.ProductLabel, item.Label)
 }
