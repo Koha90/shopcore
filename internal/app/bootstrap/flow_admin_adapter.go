@@ -132,6 +132,17 @@ func (a *flowCatalogAdminAdapter) ListVariants(ctx context.Context) ([]flow.Vari
 	return a.variants.ListVariants(ctx)
 }
 
+func (a *flowCatalogAdminAdapter) ListVariantsByProduct(ctx context.Context, productID int) ([]flow.VariantListItem, error) {
+	if a == nil {
+		return nil, errors.New("flow catalog admin adapter is nil")
+	}
+	if a.variants == nil {
+		return nil, errors.New("flow variant lister is nil inside admin adapter")
+	}
+
+	return a.variants.ListVariantsByProduct(ctx, productID)
+}
+
 func (a *flowCatalogAdminAdapter) CreateDistrictVariant(ctx context.Context, params flow.CreateDistrictVariantParams) error {
 	return a.svc.CreateDistrictVariant(ctx, catalogservice.CreateDistrictVariantParams{
 		DistrictID: params.DistrictID,

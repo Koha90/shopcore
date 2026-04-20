@@ -141,6 +141,7 @@ type DistrictPlacementVariantListItem struct {
 // to select an existing variant before nested catalog creation steps.
 type VariantLister interface {
 	ListVariants(ctx context.Context) ([]VariantListItem, error)
+	ListVariantsByProduct(ctx context.Context, productID int) ([]VariantListItem, error)
 }
 
 // DistrictVariantCreator defines the admin write use case required by flow.

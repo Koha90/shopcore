@@ -35,6 +35,13 @@ func (s *variantListStub) ListVariants(ctx context.Context) ([]VariantListItem, 
 	return s.items, s.err
 }
 
+func (s *variantListStub) ListVariantsByProduct(ctx context.Context, productID int) ([]VariantListItem, error) {
+	if s == nil {
+		return nil, nil
+	}
+	return s.items, s.err
+}
+
 type districtVariantCreatorStub struct {
 	called bool
 	params CreateDistrictVariantParams
@@ -108,7 +115,7 @@ func TestHandleAction_AdminDistrictVariantCreateStart_ShowsCitySelect(t *testing
 	require.Equal(t, "Москва", vm.Inline.Sections[0].Actions[0].Label)
 }
 
-func TestHandleAction_AdminDistrictVariantSelectDistrict_ShowsVariantSelect(t *testing.T) {
+func TestHandleAction_AdminDistrictVariantSelectDistrict_ShowsCategorySelect(t *testing.T) {
 	t.Parallel()
 
 	store := NewMemoryStore()
@@ -122,21 +129,16 @@ func TestHandleAction_AdminDistrictVariantSelectDistrict_ShowsVariantSelect(t *t
 			{ID: 7, Code: "center", Label: "Центр"},
 		},
 	}
-	variants := &variantListStub{
-		items: []VariantListItem{
-			{
-				ID:           9,
-				Code:         "large",
-				Label:        "L / 25 шт",
-				ProductLabel: "Rose Box",
-			},
+	categories := &categoryListerStub{
+		items: []CategoryListItem{
+			{ID: 10, Code: "flowers", Label: "Цветы"},
 		},
 	}
 
 	svc := NewServiceWithDeps(store, nil, ServiceDeps{
 		CityLister:     cities,
 		DistrictLister: districts,
-		VariantLister:  variants,
+		CategoryLister: categories,
 	})
 	key := testSessionKey("shop-admin-district-variant")
 
@@ -159,13 +161,102 @@ func TestHandleAction_AdminDistrictVariantSelectDistrict_ShowsVariantSelect(t *t
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Размещение варианта\n\nРайон: Центр\n\nВыберите вариант:", vm.Text)
+	require.Equal(
+		t,
+		"Размещение варианта\n\nГород: Москва\n\nРайон: Центр\n\nВыберите категорию:",
+		vm.Text,
+	)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
-	require.Equal(t, ScreenAdminDistrictVariantVariantSelect, session.Current)
+	require.Equal(t, ScreenAdminDistrictVariantCategorySelect, session.Current)
+	require.Equal(t, "1", session.Pending.Value(PendingValueCityID))
+	require.Equal(t, "Москва", session.Pending.Value(PendingValueCityName))
 	require.Equal(t, "7", session.Pending.Value(PendingValueDistrictID))
 	require.Equal(t, "Центр", session.Pending.Value(PendingValueDistrictName))
+}
+
+func TestHandleAction_AdminDistrictVariantSelectCategory_ShowsProductSelect(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	cities := &cityListerStub{
+		items: []CityListItem{
+			{ID: 1, Code: "moscow", Label: "Москва"},
+		},
+	}
+	districts := &districtListStub{
+		items: []DistrictListItem{
+			{ID: 7, Code: "center", Label: "Центр"},
+		},
+	}
+	categories := &categoryListerStub{
+		items: []CategoryListItem{
+			{ID: 10, Code: "flowers", Label: "Цветы"},
+		},
+	}
+	products := &productListerStub{
+		items: []ProductListItem{
+			{ID: 2, Code: "buket", Label: "Букет"},
+		},
+	}
+
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{
+		CityLister:     cities,
+		DistrictLister: districts,
+		CategoryLister: categories,
+		ProductLister:  products,
+	})
+	key := testSessionKey("shop-admin-district-variant")
+
+	openAdminDistrictVariantCreate(t, svc, key)
+
+	_, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantSelectCityAction(1),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantSelectDistrictAction(7),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-admin",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      adminDistrictVariantSelectCategoryAction(10),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	require.Equal(
+		t,
+		"Размещение варианта\n\nГород: Москва\n\nРайон: Центр\n\nКатегория: Цветы\n\nВыберите товар:",
+		vm.Text,
+	)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 2)
+	require.Equal(t, "Букет", vm.Inline.Sections[0].Actions[0].Label)
+	require.Equal(t, ScreenAdminDistrictVariantProductSelect, session.Current)
+	require.Equal(t, "1", session.Pending.Value(PendingValueCityID))
+	require.Equal(t, "Москва", session.Pending.Value(PendingValueCityName))
+	require.Equal(t, "7", session.Pending.Value(PendingValueDistrictID))
+	require.Equal(t, "Центр", session.Pending.Value(PendingValueDistrictName))
+	require.Equal(t, "10", session.Pending.Value(PendingValueCategoryID))
+	require.Equal(t, "Цветы", session.Pending.Value(PendingValueCategoryName))
 }
 
 func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *testing.T) {
@@ -200,7 +291,9 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 		CanAdmin:      true,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "Размещение варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nВведите цену сообщением.", vm.Text)
+	require.Equal(
+		t,
+		"Размещение варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nВведите цену сообщением.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
@@ -248,7 +341,7 @@ func TestHandleText_AdminDistrictVariantPrice_Success(t *testing.T) {
 }
 
 func TestBuildAdminDistrictVariantVariantSelectView_UsesVariantAction(t *testing.T) {
-	vm := buildAdminDistrictVariantVariantSelectView("Центр", []VariantListItem{
+	vm := buildAdminDistrictVariantVariantSelectView("Москва", "Центр", "Цветы", "Rose Box", []VariantListItem{
 		{ID: 9, Code: "large", Label: "L / 25 шт"},
 	}, "")
 

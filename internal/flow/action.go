@@ -45,6 +45,8 @@ const (
 
 	ScreenAdminDistrictVariantCitySelect     ScreenID = "admin_district_variant_city_select"
 	ScreenAdminDistrictVariantDistrictSelect ScreenID = "admin_district_variant_district_select"
+	ScreenAdminDistrictVariantCategorySelect ScreenID = "admin_district_variant_category_select"
+	ScreenAdminDistrictVariantProductSelect  ScreenID = "admin_district_variant_product_select"
 	ScreenAdminDistrictVariantVariantSelect  ScreenID = "admin_district_variant_variant_select"
 	ScreenAdminDistrictVariantPrice          ScreenID = "admin_district_variant_price"
 	ScreenAdminDistrictVariantCreateDone     ScreenID = "admin_district_variant_create_done"

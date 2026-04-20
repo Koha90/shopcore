@@ -223,7 +223,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return ViewModel{}, ErrUnknownAction
 		}
 		if s.cityLister == nil {
-			return ViewModel{}, errors.New("flow city listre is nil")
+			return ViewModel{}, errors.New("flow city lister is nil")
 		}
 		if session.Current != ScreenAdminDistrictVariantCitySelect {
 			return ViewModel{}, ErrUnknownAction
@@ -260,6 +260,66 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.buildAdminDistrictVariantDistrictSelectScreen(selected.ID, selected.Label), nil
+	}
+
+	if categoryID, ok := parseAdminDistrictVariantSelectCategoryAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if session.Current != ScreenAdminDistrictVariantCategorySelect {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.categoryLister == nil {
+			return ViewModel{}, errors.New("flow category lister is nil")
+		}
+		if s.productLister == nil {
+			return ViewModel{}, errors.New("flow product lister is nil")
+		}
+
+		categories, err := s.categoryLister.ListCategories(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *CategoryListItem
+		for i := range categories {
+			if categories[i].ID == categoryID {
+				selected = &categories[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		cityID := session.Pending.Value(PendingValueCityID)
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtID := session.Pending.Value(PendingValueDistrictID)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+
+		next := ScreenAdminDistrictVariantProductSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueCityID:       cityID,
+				PendingValueCityName:     cityName,
+				PendingValueDistrictID:   districtID,
+				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   strconv.Itoa(selected.ID),
+				PendingValueCategoryName: selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		return s.buildAdminDistrictVariantProductSelectScreen(
+			cityName,
+			districtName,
+			selected.Label,
+		), nil
 	}
 
 	if categoryID, ok := parseAdminProductSelectCategoryAction(req.ActionID); ok {
@@ -501,14 +561,14 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 
 		switch session.Current {
 		case ScreenAdminDistrictVariantDistrictSelect:
-			if s.variantLister == nil {
-				return ViewModel{}, errors.New("flow variant lister is nil")
+			if s.categoryLister == nil {
+				return ViewModel{}, errors.New("flow category lister is nil")
 			}
 
 			cityID := session.Pending.Value(PendingValueCityID)
 			cityName := session.Pending.Value(PendingValueCityName)
 
-			next := ScreenAdminDistrictVariantVariantSelect
+			next := ScreenAdminDistrictVariantCategorySelect
 			if next != session.Current {
 				session.History = append(session.History, session.Current)
 			}
@@ -524,7 +584,7 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			}
 			s.store.Put(req.SessionKey, session)
 
-			return s.buildAdminDistrictVariantVariantSelectScreen(selected.Label), nil
+			return s.buildAdminDistrictVariantCategorySelectScreen(cityName, selected.Label), nil
 
 		case ScreenAdminDistrictVariantPriceUpdateDistrictSelect:
 			next := ScreenAdminDistrictVariantPriceUpdateCategorySelect
@@ -547,6 +607,75 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 			return ViewModel{}, ErrUnknownAction
 		}
 	}
+
+	if productID, ok := parseAdminDistrictVariantSelectProductAction(req.ActionID); ok {
+		if !session.CanAdmin {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if session.Current != ScreenAdminDistrictVariantProductSelect {
+			return ViewModel{}, ErrUnknownAction
+		}
+		if s.productLister == nil {
+			return ViewModel{}, errors.New("flow product lister is nil")
+		}
+		if s.variantLister == nil {
+			return ViewModel{}, errors.New("flow variant lister is nil")
+		}
+
+		products, err := s.productLister.ListProducts(ctx)
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		var selected *ProductListItem
+		for i := range products {
+			if products[i].ID == productID {
+				selected = &products[i]
+				break
+			}
+		}
+		if selected == nil {
+			return ViewModel{}, ErrUnknownAction
+		}
+
+		cityID := session.Pending.Value(PendingValueCityID)
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtID := session.Pending.Value(PendingValueDistrictID)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		categoryID := session.Pending.Value(PendingValueCategoryID)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+
+		next := ScreenAdminDistrictVariantVariantSelect
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+		}
+		session.Current = next
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueCityID:       cityID,
+				PendingValueCityName:     cityName,
+				PendingValueDistrictID:   districtID,
+				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   categoryID,
+				PendingValueCategoryName: categoryName,
+				PendingValueProductID:    strconv.Itoa(selected.ID),
+				PendingValueProductName:  selected.Label,
+			},
+		}
+		s.store.Put(req.SessionKey, session)
+
+		productIDInt := selected.ID
+
+		return s.buildAdminDistrictVariantVariantSelectScreen(
+			cityName,
+			districtName,
+			categoryName,
+			productIDInt,
+			selected.Label,
+		), nil
+	}
+
 	if variantID, ok := parseAdminDistrictVariantSelectVariantAction(req.ActionID); ok {
 		if !session.CanAdmin {
 			return ViewModel{}, ErrUnknownAction
@@ -796,7 +925,10 @@ func shouldPreservePendingOnBack(screen ScreenID) bool {
 		ScreenAdminDistrictVariantPriceUpdateProductSelect,
 		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
 		ScreenAdminDistrictVariantPriceUpdatePrice,
+		ScreenAdminDistrictVariantCitySelect,
 		ScreenAdminDistrictVariantDistrictSelect,
+		ScreenAdminDistrictVariantCategorySelect,
+		ScreenAdminDistrictVariantProductSelect,
 		ScreenAdminDistrictVariantVariantSelect,
 		ScreenAdminDistrictVariantPrice:
 		return true

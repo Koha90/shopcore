@@ -13,7 +13,16 @@ type categoryListerStub struct {
 	err   error
 }
 
+type productListerStub struct {
+	items []ProductListItem
+	err   error
+}
+
 func (s *categoryListerStub) ListCategories(ctx context.Context) ([]CategoryListItem, error) {
+	return s.items, s.err
+}
+
+func (s *productListerStub) ListProducts(ctx context.Context) ([]ProductListItem, error) {
 	return s.items, s.err
 }
 

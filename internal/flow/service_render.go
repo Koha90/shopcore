@@ -128,8 +128,41 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 		cityName := session.Pending.Value(PendingValueCityName)
 		return s.buildAdminDistrictVariantDistrictSelectScreen(cityID, cityName)
 
+	case ScreenAdminDistrictVariantCategorySelect:
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+
+		return s.buildAdminDistrictVariantCategorySelectScreen(cityName, districtName)
+
+	case ScreenAdminDistrictVariantProductSelect:
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+
+		return s.buildAdminDistrictVariantProductSelectScreen(
+			cityName,
+			districtName,
+			categoryName,
+		)
+
 	case ScreenAdminDistrictVariantVariantSelect:
-		return s.buildAdminDistrictVariantVariantSelectScreen("")
+		productID, ok := pendingProductID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView()
+		}
+
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		productName := session.Pending.Value(PendingValueProductName)
+
+		return s.buildAdminDistrictVariantVariantSelectScreen(
+			cityName,
+			districtName,
+			categoryName,
+			productID,
+			productName,
+		)
 
 	case ScreenAdminDistrictVariantPrice:
 		return buildAdminDistrictVariantPriceInputView("", "", "")
