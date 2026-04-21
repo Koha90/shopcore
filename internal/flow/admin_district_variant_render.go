@@ -136,7 +136,7 @@ func buildAdminDistrictVariantProductSelectView(
 	actions := make([]ActionButton, 0, len(products)+1)
 	for _, product := range products {
 		actions = append(actions, ActionButton{
-			ID:    adminDistrictVariantSelectCategoryAction(product.ID),
+			ID:    adminDistrictVariantSelectProductAction(product.ID),
 			Label: product.Label,
 		})
 	}

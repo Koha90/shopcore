@@ -265,7 +265,12 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 	store := NewMemoryStore()
 	variants := &variantListStub{
 		items: []VariantListItem{
-			{ID: 9, Code: "large", Label: "L / 25 шт"},
+			{
+				ID:           9,
+				Code:         "large",
+				Label:        "L / 25 шт",
+				ProductLabel: "Rose Box",
+			},
 		},
 	}
 	svc := NewServiceWithDeps(store, nil, ServiceDeps{VariantLister: variants})
@@ -279,6 +284,8 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 			Payload: PendingInputPayload{
 				PendingValueDistrictID:   "7",
 				PendingValueDistrictName: "Центр",
+				PendingValueProductID:    "2",
+				PendingValueProductName:  "Rose Box",
 			},
 		},
 	})
@@ -293,7 +300,7 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 	require.NoError(t, err)
 	require.Equal(
 		t,
-		"Размещение варианта\n\nРайон: Центр\n\nВариант: L / 25 шт\n\nВведите цену сообщением.", vm.Text)
+		"Размещение варианта\n\nРайон: Центр\n\nВариант: Rose Box - L / 25 шт\n\nВведите цену сообщением.", vm.Text)
 
 	session, ok := store.Get(key)
 	require.True(t, ok)
