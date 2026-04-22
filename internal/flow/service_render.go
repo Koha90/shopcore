@@ -117,118 +117,14 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 	case ScreenAdminVariantCreateDone:
 		return buildAdminVariantCreateDoneView()
 
-	case ScreenAdminDistrictVariantCitySelect:
-		return s.buildAdminDistrictVariantCitySelectScreen()
-
-	case ScreenAdminDistrictVariantDistrictSelect:
-		cityID, ok := pendingCityID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		cityName := session.Pending.Value(PendingValueCityName)
-		return s.buildAdminDistrictVariantDistrictSelectScreen(cityID, cityName)
-
-	case ScreenAdminDistrictVariantCategorySelect:
-		cityName := session.Pending.Value(PendingValueCityName)
-		districtName := session.Pending.Value(PendingValueDistrictName)
-
-		return s.buildAdminDistrictVariantCategorySelectScreen(cityName, districtName)
-
-	case ScreenAdminDistrictVariantProductSelect:
-		cityName := session.Pending.Value(PendingValueCityName)
-		districtName := session.Pending.Value(PendingValueDistrictName)
-		categoryName := session.Pending.Value(PendingValueCategoryName)
-
-		return s.buildAdminDistrictVariantProductSelectScreen(
-			cityName,
-			districtName,
-			categoryName,
-		)
-
-	case ScreenAdminDistrictVariantVariantSelect:
-		productID, ok := pendingProductID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-
-		cityName := session.Pending.Value(PendingValueCityName)
-		districtName := session.Pending.Value(PendingValueDistrictName)
-		categoryName := session.Pending.Value(PendingValueCategoryName)
-		productName := session.Pending.Value(PendingValueProductName)
-
-		return s.buildAdminDistrictVariantVariantSelectScreen(
-			cityName,
-			districtName,
-			categoryName,
-			productID,
-			productName,
-		)
-
-	case ScreenAdminDistrictVariantPrice:
-		return buildAdminDistrictVariantPriceInputView("", "", "")
-
-	case ScreenAdminDistrictVariantCreateDone:
-		return buildAdminDistrictVariantCreateDoneView()
-
-	case ScreenAdminDistrictVariantPriceUpdateDistrictSelect:
-		return s.buildAdminDistrictVariantPriceUpdateDistrictSelectScreen()
-
-	case ScreenAdminDistrictVariantPriceUpdateCategorySelect:
-		districtID, ok := pendingDistrictID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		districtName := session.Pending.Value(PendingValueDistrictName)
-		return s.buildAdminDistrictVariantPriceUpdateCategorySelectScreen(districtID, districtName)
-
-	case ScreenAdminDistrictVariantPriceUpdateProductSelect:
-		districtID, ok := pendingDistrictID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		categoryID, ok := pendingCategoryID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		districtName := session.Pending.Value(PendingValueDistrictName)
-		categoryName := session.Pending.Value(PendingValueCategoryName)
-		return s.buildAdminDistrictVariantPriceUpdateProductSelectScreen(
-			districtID,
-			districtName,
-			categoryID,
-			categoryName,
-		)
-
-	case ScreenAdminDistrictVariantPriceUpdateVariantSelect:
-		districtID, ok := pendingDistrictID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		productID, ok := pendingProductID(session.Pending)
-		if !ok {
-			return buildAdminCatalogView()
-		}
-		districtName := session.Pending.Value(PendingValueDistrictName)
-		productName := session.Pending.Value(PendingValueProductName)
-		return s.buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
-			districtID,
-			districtName,
-			productID,
-			productName,
-		)
-
-	case ScreenAdminDistrictVariantPriceUpdatePrice:
-		return buildAdminDistrictVariantPriceUpdateInputView(
-			session.Pending.Value(PendingValueDistrictName),
-			session.Pending.Value(PendingValueVariantName),
-			currentPlacementPriceTextFromPending(session.Pending),
-			"",
-		)
-
-	case ScreenAdminDistrictVariantPriceUpdateDone:
-		return buildAdminDistrictVariantPriceUpdateDoneView()
+	}
+	if vm, handled := s.renderAdminDistrictVariantScreen(session); handled {
+		return vm
 	}
 
+	if vm, handled := s.renderAdminDistrictVariantPriceUpdateScreen(session); handled {
+		return vm
+	}
 	path, ok := parseCatalogScreen(screen)
 	if !ok {
 		return buildReplyWelcomeStart()
