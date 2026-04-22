@@ -477,3 +477,42 @@ func hasInlineActionLabel(vm ViewModel, want string) bool {
 
 	return false
 }
+
+func TestSyncSessionAccess_UpdatesAdminFlagWhenGranted(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewService(store)
+
+	key := testSessionKey("shop-inline")
+	session := Session{
+		Current:  ScreenRootExtended,
+		CanAdmin: false,
+	}
+
+	got := svc.syncSessionAccess(key, session, true, string(StartScenarioInlineCatalog))
+	require.True(t, got.CanAdmin)
+}
+
+func TestSyncSessionAccess_DropsAdminStateWhenRevoked(t *testing.T) {
+	t.Parallel()
+
+	store := NewMemoryStore()
+	svc := NewService(store)
+
+	key := testSessionKey("shop-inline")
+	session := Session{
+		Current:  ScreenAdminCatalog,
+		CanAdmin: true,
+		Pending: PendingInput{
+			Kind: PendingInputCategoryName,
+		},
+	}
+
+	got := svc.syncSessionAccess(key, session, false, string(StartScenarioInlineCatalog))
+
+	require.False(t, got.CanAdmin)
+	require.Equal(t, ScreenRootExtended, got.Current)
+	require.Nil(t, got.History)
+	require.Equal(t, PendingInputNone, got.Pending.Kind)
+}

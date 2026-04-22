@@ -145,7 +145,7 @@ func (s *Service) syncSessionAccess(
 ) Session {
 	changed := false
 
-	if session.CanAdmin == canAdmin {
+	if session.CanAdmin != canAdmin {
 		session.CanAdmin = canAdmin
 		changed = true
 	}
