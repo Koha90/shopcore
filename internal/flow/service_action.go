@@ -2,8 +2,6 @@ package flow
 
 import (
 	"context"
-	"errors"
-	"strconv"
 )
 
 // HandleAction resolve the next flow view for an action.
@@ -68,83 +66,6 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, session, req.CanAdmin), nil
-
-	case ActionAdminCategoryCreateStart:
-		next := ScreenAdminCategoryCreate
-
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind:    PendingInputCategoryName,
-			Payload: nil,
-		}
-		s.store.Put(req.SessionKey, session)
-
-		return s.renderScreen(catalog, session, req.CanAdmin), nil
-
-	case ActionAdminCityCreateStart:
-		next := ScreenAdminCityCreate
-
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind:    PendingInputCityName,
-			Payload: nil,
-		}
-		s.store.Put(req.SessionKey, session)
-
-		return s.renderScreen(catalog, session, req.CanAdmin), nil
-
-	case ActionAdminDistrictCreateStart:
-		if s.cityLister == nil {
-			return ViewModel{}, errors.New("flow city lister is nil")
-		}
-		next := ScreenAdminDistrictCitySelect
-
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{}
-		s.store.Put(req.SessionKey, session)
-
-		return s.renderScreen(catalog, session, req.CanAdmin), nil
-
-	case ActionAdminProductCreateStart:
-		if s.categoryLister == nil {
-			return ViewModel{}, errors.New("flow category lister is nil")
-		}
-
-		next := ScreenAdminProductCategorySelect
-
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{}
-		s.store.Put(req.SessionKey, session)
-
-		return s.renderScreen(catalog, session, req.CanAdmin), nil
-
-	case ActionAdminVariantCreateStart:
-		if s.productLister == nil {
-			return ViewModel{}, errors.New("flow product lister is nil")
-		}
-
-		next := ScreenAdminVariantProductSelect
-
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{}
-		s.store.Put(req.SessionKey, session)
-
-		return s.renderScreen(catalog, session, req.CanAdmin), nil
 	}
 
 	if vm, nextSession, handled, err := s.handleAdminDistrictVariantAction(ctx, session, req); handled {
@@ -165,127 +86,13 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return vm, nil
 	}
 
-	if cityID, ok := parseAdminDistrictSelectCityAction(req.ActionID); ok {
-		if !session.CanAdmin {
-			return ViewModel{}, ErrUnknownAction
-		}
-		if s.cityLister == nil {
-			return ViewModel{}, errors.New("flow city lister is nil")
-		}
-
-		cities, err := s.cityLister.ListCities(ctx)
+	if vm, nextSession, handled, err := s.handleAdminCatalogCreateAction(ctx, session, req); handled {
 		if err != nil {
 			return ViewModel{}, err
 		}
 
-		var selected *CityListItem
-		for i := range cities {
-			if cities[i].ID == cityID {
-				selected = &cities[i]
-				break
-			}
-		}
-		if selected == nil {
-			return ViewModel{}, ErrUnknownAction
-		}
-
-		next := ScreenAdminDistrictCreate
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind: PendingInputDistrictName,
-			Payload: PendingInputPayload{
-				PendingValueCityID:   strconv.Itoa(selected.ID),
-				PendingValueCityName: selected.Label,
-			},
-		}
-		s.store.Put(req.SessionKey, session)
-
-		return buildAdminDistrictCreateInputView(selected.Label, ""), nil
-	}
-
-	if categoryID, ok := parseAdminProductSelectCategoryAction(req.ActionID); ok {
-		if !session.CanAdmin {
-			return ViewModel{}, ErrUnknownAction
-		}
-		if s.categoryLister == nil {
-			return ViewModel{}, errors.New("flow category lister is nil")
-		}
-
-		categories, err := s.categoryLister.ListCategories(ctx)
-		if err != nil {
-			return ViewModel{}, err
-		}
-
-		var selected *CategoryListItem
-		for i := range categories {
-			if categories[i].ID == categoryID {
-				selected = &categories[i]
-				break
-			}
-		}
-		if selected == nil {
-			return ViewModel{}, ErrUnknownAction
-		}
-
-		next := ScreenAdminProductCreate
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind: PendingInputProductName,
-			Payload: PendingInputPayload{
-				PendingValueCategoryID:   strconv.Itoa(selected.ID),
-				PendingValueCategoryName: selected.Label,
-			},
-		}
-		s.store.Put(req.SessionKey, session)
-
-		return buildAdminProductCreateInputView(selected.Label, ""), nil
-	}
-
-	if productID, ok := parseAdminVariantSelectProductAction(req.ActionID); ok {
-		if !session.CanAdmin {
-			return ViewModel{}, ErrUnknownAction
-		}
-		if s.productLister == nil {
-			return ViewModel{}, errors.New("flow product lister is nil")
-		}
-
-		products, err := s.productLister.ListProducts(ctx)
-		if err != nil {
-			return ViewModel{}, err
-		}
-
-		var selected *ProductListItem
-		for i := range products {
-			if products[i].ID == productID {
-				selected = &products[i]
-				break
-			}
-		}
-		if selected == nil {
-			return ViewModel{}, ErrUnknownAction
-		}
-
-		next := ScreenAdminVariantCreate
-		if next != session.Current {
-			session.History = append(session.History, session.Current)
-		}
-		session.Current = next
-		session.Pending = PendingInput{
-			Kind: PendingInputVariantName,
-			Payload: PendingInputPayload{
-				PendingValueProductID:   strconv.Itoa(selected.ID),
-				PendingValueProductName: selected.Label,
-			},
-		}
-		s.store.Put(req.SessionKey, session)
-
-		return buildAdminVariantCreateInputView(selected.Label, ""), nil
+		s.store.Put(req.SessionKey, nextSession)
+		return vm, nil
 	}
 
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
