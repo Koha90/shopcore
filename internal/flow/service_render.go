@@ -62,62 +62,11 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 
 	case ScreenAdminCatalog:
 		return buildAdminCatalogView()
-
-	case ScreenAdminCategoryCreate:
-		return buildAdminCategoryCreateInputView("")
-
-	case ScreenAdminCategoryCode:
-		return buildAdminCategoryCodeInputView("", "")
-
-	case ScreenAdminCategoryCreateDone:
-		return buildAdminCategoryCreateDoneView()
-
-	case ScreenAdminCityCreate:
-		return buildAdminCityCreateInputView("")
-
-	case ScreenAdminCityCode:
-		return buildAdminCityCodeInputView("", "")
-
-	case ScreenAdminCityCreateDone:
-		return buildAdminCityCreateDoneView()
-
-	case ScreenAdminDistrictCitySelect:
-		return s.buildAdminDistrictCitySelectScreen()
-
-	case ScreenAdminDistrictCreate:
-		return buildAdminDistrictCreateInputView("", "")
-
-	case ScreenAdminDistrictCode:
-		return buildAdminDistrictCodeInputView("", "", "")
-
-	case ScreenAdminDistrictCreateDone:
-		return buildAdminDistrictCreateDoneView()
-
-	case ScreenAdminProductCategorySelect:
-		return s.buildAdminProductCategorySelectScreen()
-
-	case ScreenAdminProductCreate:
-		return buildAdminProductCreateInputView("", "")
-
-	case ScreenAdminProductCode:
-		return buildAdminProductCodeInputView("", "", "")
-
-	case ScreenAdminProductCreateDone:
-		return buildAdminProductCreateDoneView()
-
-	case ScreenAdminVariantProductSelect:
-		return s.buildAdminVariantProductSelectScreen()
-
-	case ScreenAdminVariantCreate:
-		return buildAdminVariantCreateInputView("", "")
-
-	case ScreenAdminVariantCode:
-		return buildAdminVariantCodeInputView("", "", "")
-
-	case ScreenAdminVariantCreateDone:
-		return buildAdminVariantCreateDoneView()
-
 	}
+	if vm, handled := s.renderAdminCatalogCreateScreen(session); handled {
+		return vm
+	}
+
 	if vm, handled := s.renderAdminDistrictVariantScreen(session); handled {
 		return vm
 	}
