@@ -10,12 +10,13 @@ import (
 
 // flowCatalogAdminAdapter adapts catalog application service to flow admin ports.
 type flowCatalogAdminAdapter struct {
-	svc        *catalogservice.Service
-	cities     flow.CityLister
-	categories flow.CategoryLister
-	districts  flow.DistrictLister
-	products   flow.ProductLister
-	variants   flow.VariantLister
+	svc                *catalogservice.Service
+	cities             flow.CityLister
+	categories         flow.CategoryLister
+	districts          flow.DistrictLister
+	products           flow.ProductLister
+	variants           flow.VariantLister
+	districtPlacements flow.DistrictPlacementReader
 }
 
 func newFlowCatalogAdminAdapter(
@@ -25,18 +26,26 @@ func newFlowCatalogAdminAdapter(
 	districts flow.DistrictLister,
 	products flow.ProductLister,
 	variants flow.VariantLister,
+	districtPlacements flow.DistrictPlacementReader,
 ) *flowCatalogAdminAdapter {
-	if svc == nil && cities == nil && categories == nil && districts == nil && products == nil && variants == nil {
+	if svc == nil &&
+		cities == nil &&
+		categories == nil &&
+		districts == nil &&
+		products == nil &&
+		variants == nil &&
+		districtPlacements == nil {
 		return nil
 	}
 
 	return &flowCatalogAdminAdapter{
-		svc:        svc,
-		cities:     cities,
-		categories: categories,
-		districts:  districts,
-		products:   products,
-		variants:   variants,
+		svc:                svc,
+		cities:             cities,
+		categories:         categories,
+		districts:          districts,
+		products:           products,
+		variants:           variants,
+		districtPlacements: districtPlacements,
 	}
 }
 
@@ -152,6 +161,17 @@ func (a *flowCatalogAdminAdapter) ListVariantsByProduct(ctx context.Context, pro
 	}
 
 	return a.variants.ListVariantsByProduct(ctx, productID)
+}
+
+func (a *flowCatalogAdminAdapter) ListAvailableVariantsForDistrictProduct(ctx context.Context, districtID, productID int) ([]flow.VariantListItem, error) {
+	if a == nil {
+		return nil, errors.New("flow catalog admin adapter is nil")
+	}
+	if a.districtPlacements == nil {
+		return nil, errors.New("flow variant lister is nil inside admin adapter")
+	}
+
+	return a.districtPlacements.ListAvailableVariantsForDistrictProduct(ctx, districtID, productID)
 }
 
 func (a *flowCatalogAdminAdapter) CreateDistrictVariant(ctx context.Context, params flow.CreateDistrictVariantParams) error {

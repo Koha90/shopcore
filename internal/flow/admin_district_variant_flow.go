@@ -190,8 +190,8 @@ func (s *Service) handleAdminDistrictVariantAction(
 		if s.productLister == nil {
 			return ViewModel{}, session, true, errors.New("flow product lister is nil")
 		}
-		if s.variantLister == nil {
-			return ViewModel{}, session, true, errors.New("flow variant lister is nil")
+		if s.districtPlacements == nil {
+			return ViewModel{}, session, true, errors.New("flow district placement reader is nil")
 		}
 
 		categoryID, ok := pendingCategoryID(session.Pending)
@@ -221,7 +221,10 @@ func (s *Service) handleAdminDistrictVariantAction(
 
 		cityID := session.Pending.Value(PendingValueCityID)
 		cityName := session.Pending.Value(PendingValueCityName)
-		districtID := session.Pending.Value(PendingValueDistrictID)
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return ViewModel{}, session, true, errors.New("pending district id is invalid")
+		}
 		districtName := session.Pending.Value(PendingValueDistrictName)
 
 		next := ScreenAdminDistrictVariantVariantSelect
@@ -234,7 +237,7 @@ func (s *Service) handleAdminDistrictVariantAction(
 			Payload: PendingInputPayload{
 				PendingValueCityID:       cityID,
 				PendingValueCityName:     cityName,
-				PendingValueDistrictID:   districtID,
+				PendingValueDistrictID:   strconv.Itoa(districtID),
 				PendingValueDistrictName: districtName,
 				PendingValueCategoryID:   strconv.Itoa(categoryID),
 				PendingValueCategoryName: categoryName,
@@ -244,20 +247,13 @@ func (s *Service) handleAdminDistrictVariantAction(
 		}
 
 		return s.buildAdminDistrictVariantVariantSelectScreen(
-			cityName,
-			districtName,
-			categoryName,
-			selected.ID,
-			selected.Label,
+			cityName, districtName, categoryName, districtID, selected.ID, selected.Label,
 		), session, true, nil
 	}
 
 	if variantID, ok := parseAdminDistrictVariantSelectVariantAction(req.ActionID); ok {
 		if session.Current != ScreenAdminDistrictVariantVariantSelect {
 			return ViewModel{}, session, false, nil
-		}
-		if s.variantLister == nil {
-			return ViewModel{}, session, true, errors.New("flow variant lister is nil")
 		}
 
 		districtID, ok := pendingDistrictID(session.Pending)
@@ -286,8 +282,11 @@ func (s *Service) handleAdminDistrictVariantAction(
 		if productName == "" {
 			return ViewModel{}, session, true, errors.New("pending product name is empty")
 		}
+		if s.districtPlacements == nil {
+			return ViewModel{}, session, true, errors.New("flow district placement reader is nil")
+		}
 
-		variants, err := s.variantLister.ListVariantsByProduct(ctx, productID)
+		variants, err := s.districtPlacements.ListAvailableVariantsForDistrictProduct(ctx, districtID, productID)
 		if err != nil {
 			return ViewModel{}, session, true, err
 		}

@@ -205,7 +205,9 @@ func buildAdminDistrictVariantVariantSelectView(
 	}
 }
 
-func buildAdminDistrictVariantPriceInputView(districtName, variantName, validation string) ViewModel {
+func buildAdminDistrictVariantPriceInputView(
+	districtName, variantName, validation string,
+) ViewModel {
 	text := buildAdminTextWithValidation(
 		"Размещение варианта",
 		[]string{
@@ -241,6 +243,7 @@ func buildAdminDistrictVariantCreateDoneView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionBack, Label: "Назад"},
+						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},
 			},
@@ -357,23 +360,52 @@ func (s *Service) buildAdminDistrictVariantProductSelectScreen(
 
 func (s *Service) buildAdminDistrictVariantVariantSelectScreen(
 	cityName, districtName, categoryName string,
-	productID int,
+	districtID, productID int,
 	productName string,
 ) ViewModel {
-	if s == nil || s.variantLister == nil {
+	if s == nil || s.districtPlacements == nil {
 		return buildAdminDistrictVariantVariantSelectView(
-			cityName, districtName, categoryName, productName, nil, "Не удалось загрузить список вариантов.")
+			cityName,
+			districtName,
+			categoryName,
+			productName,
+			nil,
+			"Не удалось загрузить список вариантов.",
+		)
 	}
 
-	variants, err := s.variantLister.ListVariantsByProduct(context.Background(), productID)
+	variants, err := s.districtPlacements.ListAvailableVariantsForDistrictProduct(
+		context.Background(),
+		districtID,
+		productID,
+	)
 	if err != nil {
 		return buildAdminDistrictVariantVariantSelectView(
-			cityName, districtName, categoryName, productName, nil, "Не удалось загрузить список вариантов.")
+			cityName,
+			districtName,
+			categoryName,
+			productName,
+			nil,
+			"Не удалось загрузить список вариантов.",
+		)
 	}
 	if len(variants) == 0 {
 		return buildAdminDistrictVariantVariantSelectView(
-			cityName, districtName, categoryName, productName, nil, "Не удалось загрузить список вариантов.")
+			cityName,
+			districtName,
+			categoryName,
+			productName,
+			nil,
+			"Не удалось загрузить список вариантов.",
+		)
 	}
 
-	return buildAdminDistrictVariantVariantSelectView(cityName, districtName, categoryName, productName, variants, "")
+	return buildAdminDistrictVariantVariantSelectView(
+		cityName,
+		districtName,
+		categoryName,
+		productName,
+		variants,
+		"",
+	)
 }

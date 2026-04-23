@@ -75,13 +75,15 @@ func openAdminCatalog(t *testing.T, svc *Service, key SessionKey) {
 }
 
 type flowDistrictPlacementReaderStub struct {
-	categories []CategoryListItem
-	products   []ProductListItem
-	variants   []DistrictPlacementVariantListItem
+	categories        []CategoryListItem
+	products          []ProductListItem
+	variants          []DistrictPlacementVariantListItem
+	availableVariants []VariantListItem
 
-	categoriesErr error
-	productsErr   error
-	variantsErr   error
+	categoriesErr        error
+	productsErr          error
+	variantsErr          error
+	availableVariantsErr error
 }
 
 func (s *flowDistrictPlacementReaderStub) ListDistrictCategories(
@@ -103,6 +105,17 @@ func (s *flowDistrictPlacementReaderStub) ListDistrictVariants(
 	districtID, productID int,
 ) ([]DistrictPlacementVariantListItem, error) {
 	return s.variants, s.variantsErr
+}
+
+func (s *flowDistrictPlacementReaderStub) ListAvailableVariantsForDistrictProduct(
+	ctx context.Context,
+	districtID, productID int,
+) ([]VariantListItem, error) {
+	if s == nil {
+		return nil, nil
+	}
+
+	return s.availableVariants, s.availableVariantsErr
 }
 
 func openAdminDistrictVariantPriceUpdate(t *testing.T, svc *Service, key SessionKey) {

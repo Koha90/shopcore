@@ -151,6 +151,7 @@ func buildAdminCategoryCreateDoneView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionBack, Label: "Назад"},
+						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},
 			},
@@ -979,6 +980,7 @@ func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionBack, Label: "Назад"},
+						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},
 			},

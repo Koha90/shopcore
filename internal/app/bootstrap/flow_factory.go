@@ -57,7 +57,7 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		var districtVariantCreator flow.DistrictVariantCreator
 		var districtVariantPriceUpdater flow.DistrictVariantPriceUpdater
 
-		if admin := newFlowCatalogAdminAdapter(catalog, repo, repo, repo, repo, repo); admin != nil {
+		if admin := newFlowCatalogAdminAdapter(catalog, repo, repo, repo, repo, repo, repo); admin != nil {
 			categoryCreator = admin
 			cityCreator = admin
 			cityLister = admin

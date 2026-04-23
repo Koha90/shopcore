@@ -263,8 +263,8 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 	t.Parallel()
 
 	store := NewMemoryStore()
-	variants := &variantListStub{
-		items: []VariantListItem{
+	placements := &flowDistrictPlacementReaderStub{
+		availableVariants: []VariantListItem{
 			{
 				ID:           9,
 				Code:         "large",
@@ -273,7 +273,7 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 			},
 		},
 	}
-	svc := NewServiceWithDeps(store, nil, ServiceDeps{VariantLister: variants})
+	svc := NewServiceWithDeps(store, nil, ServiceDeps{DistrictPlacements: placements})
 	key := testSessionKey("shop-admin-district-variant")
 
 	store.Put(key, Session{

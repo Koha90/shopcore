@@ -36,6 +36,10 @@ func (s *Service) renderAdminDistrictVariantScreen(session Session) (ViewModel, 
 		), true
 
 	case ScreenAdminDistrictVariantVariantSelect:
+		districtID, ok := pendingDistrictID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView(), true
+		}
 		productID, ok := pendingProductID(session.Pending)
 		if !ok {
 			return buildAdminCatalogView(), true
@@ -50,6 +54,7 @@ func (s *Service) renderAdminDistrictVariantScreen(session Session) (ViewModel, 
 			cityName,
 			districtName,
 			categoryName,
+			districtID,
 			productID,
 			productName,
 		), true

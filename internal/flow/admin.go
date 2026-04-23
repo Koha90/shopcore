@@ -175,4 +175,6 @@ type DistrictPlacementReader interface {
 	ListDistrictCategories(ctx context.Context, districtID int) ([]CategoryListItem, error)
 	ListDistrictProducts(ctx context.Context, districtID, categoryID int) ([]ProductListItem, error)
 	ListDistrictVariants(ctx context.Context, districtID, productID int) ([]DistrictPlacementVariantListItem, error)
+
+	ListAvailableVariantsForDistrictProduct(ctx context.Context, districtID, productID int) ([]VariantListItem, error)
 }
