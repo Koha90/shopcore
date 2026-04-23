@@ -26,6 +26,10 @@ func (s *productListerStub) ListProducts(ctx context.Context) ([]ProductListItem
 	return s.items, s.err
 }
 
+func (s *productListerStub) ListProductsByCategory(ctx context.Context, categoryID int) ([]ProductListItem, error) {
+	return s.items, s.err
+}
+
 type productCreatorStub struct {
 	called bool
 	params CreateProductParams

@@ -113,6 +113,17 @@ func (a *flowCatalogAdminAdapter) ListProducts(ctx context.Context) ([]flow.Prod
 	return a.products.ListProducts(ctx)
 }
 
+func (a *flowCatalogAdminAdapter) ListProductsByCategory(ctx context.Context, categoryID int) ([]flow.ProductListItem, error) {
+	if a == nil {
+		return nil, errors.New("flow catalog admin adapter is nil")
+	}
+	if a.products == nil {
+		return nil, errors.New("flow product lister is nil inside admin adapter")
+	}
+
+	return a.products.ListProductsByCategory(ctx, categoryID)
+}
+
 func (a *flowCatalogAdminAdapter) CreateVariant(ctx context.Context, params flow.CreateVariantParams) error {
 	return a.svc.CreateVariant(ctx, catalogservice.CreateVariantParams{
 		ProductID: params.ProductID,

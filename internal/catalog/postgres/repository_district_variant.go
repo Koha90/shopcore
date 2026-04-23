@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5/pgconn"
 
 	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 )
@@ -41,6 +44,12 @@ func (r *Repository) CreateDistrictVariant(
 		params.Price,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "catalog_district_variants_district_id_variant_id_key" {
+			return catalogservice.ErrDistrictVariantAlreadyExists
+		}
 		return fmt.Errorf(
 			"create district variant for district %d and variant %d: %w",
 			params.DistrictID,

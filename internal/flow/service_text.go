@@ -553,15 +553,42 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 			Price:      price,
 		})
 		if err != nil {
+			validation := "Не удалось разместить вариант в районе."
+
+			if errors.Is(err, catalogservice.ErrDistrictVariantAlreadyExists) {
+				validation = "Вариант уже размещён в выбранном районе. Используйте обновление цены."
+			}
 			return buildAdminDistrictVariantPriceInputView(
 				session.Pending.Value(PendingValueDistrictName),
 				session.Pending.Value(PendingValueVariantName),
-				"Не удалось разместить вариант в районе.",
+				validation,
 			), nil
 		}
 
-		session.Pending = PendingInput{}
+		cityID := session.Pending.Value(PendingValueCityID)
+		cityName := session.Pending.Value(PendingValueCityName)
+		districtIDStr := strconv.Itoa(districtID)
+		districtName := session.Pending.Value(PendingValueDistrictName)
+		categoryID := session.Pending.Value(PendingValueCategoryID)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		productID := session.Pending.Value(PendingValueProductID)
+		productName := session.Pending.Value(PendingValueProductName)
+
+		session.Pending = PendingInput{
+			Kind: PendingInputNone,
+			Payload: PendingInputPayload{
+				PendingValueCityID:       cityID,
+				PendingValueCityName:     cityName,
+				PendingValueDistrictID:   districtIDStr,
+				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   categoryID,
+				PendingValueCategoryName: categoryName,
+				PendingValueProductID:    productID,
+				PendingValueProductName:  productName,
+			},
+		}
 		session.Current = ScreenAdminDistrictVariantCreateDone
+		session.History = trimHistoryToScreen(session.History, ScreenAdminDistrictVariantVariantSelect)
 		s.store.Put(req.SessionKey, session)
 
 		return s.renderScreen(catalog, session, req.CanAdmin), nil

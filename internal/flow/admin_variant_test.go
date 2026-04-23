@@ -17,6 +17,10 @@ func (s *variantProductListerStub) ListProducts(ctx context.Context) ([]ProductL
 	return s.items, s.err
 }
 
+func (s *variantProductListerStub) ListProductsByCategory(ctx context.Context, categoryID int) ([]ProductListItem, error) {
+	return s.items, s.err
+}
+
 type variantCreatorStub struct {
 	called bool
 	params CreateVariantParams

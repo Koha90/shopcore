@@ -25,7 +25,7 @@ func (r *Runner) sendView(
 	b *tgbot.Bot,
 	chatID int64,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	if hasImage(vm) {
 		return r.sendImageView(ctx, b, chatID, vm)
 	}
@@ -38,9 +38,13 @@ func (r *Runner) sendTextView(
 	b *tgbot.Bot,
 	chatID int64,
 	vm flow.ViewModel,
-) error {
-	_, err := r.sendTextMessage(ctx, b, chatID, vm)
-	return err
+) (int, error) {
+	msg, err := r.sendTextMessage(ctx, b, chatID, vm)
+	if err != nil {
+		return 0, err
+	}
+
+	return msg.ID, nil
 }
 
 func (r *Runner) sendImageView(
@@ -48,16 +52,16 @@ func (r *Runner) sendImageView(
 	b *tgbot.Bot,
 	chatID int64,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	const op = "send telegram image view"
 
 	if vm.Media == nil {
-		return fmt.Errorf("%s: media is nil", op)
+		return 0, fmt.Errorf("%s: media is nil", op)
 	}
 
 	photo, err := buildTelegramPhotoInput(vm.Media.Source)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	params := &tgbot.SendPhotoParams{
@@ -68,18 +72,19 @@ func (r *Runner) sendImageView(
 
 	replyMarkup, err := r.buildReplyMarkup(vm)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if inline, ok := replyMarkup.(*models.InlineKeyboardMarkup); ok {
 		params.ReplyMarkup = inline
 	}
 
-	if _, err := b.SendPhoto(ctx, params); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	msg, err := b.SendPhoto(ctx, params)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	return msg.ID, nil
 }
 
 // editView edits an existing Telegram message rendered from flow.ViewModel.
@@ -90,11 +95,11 @@ func (r *Runner) editView(
 	b *tgbot.Bot,
 	msg *models.Message,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	const op = "edit telegram view"
 
 	if msg == nil {
-		return fmt.Errorf("%s: message is nil", op)
+		return 0, fmt.Errorf("%s: message is nil", op)
 	}
 
 	oldHasImage := messageHasImage(msg)
@@ -121,7 +126,7 @@ func (r *Runner) editView(
 		return r.replaceImageWithText(ctx, b, msg, vm)
 
 	default:
-		return fmt.Errorf("%s: unsupported render transition", op)
+		return 0, fmt.Errorf("%s: unsupported render transition", op)
 	}
 }
 
@@ -130,7 +135,7 @@ func (r *Runner) editTextView(
 	b *tgbot.Bot,
 	msg *models.Message,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	params := &tgbot.EditMessageTextParams{
 		ChatID:    msg.Chat.ID,
 		MessageID: msg.ID,
@@ -139,7 +144,7 @@ func (r *Runner) editTextView(
 
 	replyMarkup, err := r.buildReplyMarkup(vm)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if inline, ok := replyMarkup.(*models.InlineKeyboardMarkup); ok {
@@ -147,10 +152,10 @@ func (r *Runner) editTextView(
 	}
 
 	if _, err := b.EditMessageText(ctx, params); err != nil {
-		return fmt.Errorf("edit telegram text view: %w", err)
+		return 0, fmt.Errorf("edit telegram text view: %w", err)
 	}
 
-	return nil
+	return msg.ID, nil
 }
 
 func (r *Runner) editImageView(
@@ -158,16 +163,16 @@ func (r *Runner) editImageView(
 	b *tgbot.Bot,
 	msg *models.Message,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	const op = "edit telegram image view"
 
 	if vm.Media == nil {
-		return fmt.Errorf("%s: media is nil", op)
+		return 0, fmt.Errorf("%s: media is nil", op)
 	}
 
 	media, err := buildTelegramInputMediaPhoto(vm.Media.Source, vm.Text)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	params := &tgbot.EditMessageMediaParams{
@@ -178,7 +183,7 @@ func (r *Runner) editImageView(
 
 	replyMarkup, err := r.buildReplyMarkup(vm)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if inline, ok := replyMarkup.(*models.InlineKeyboardMarkup); ok {
@@ -186,10 +191,10 @@ func (r *Runner) editImageView(
 	}
 
 	if _, err := b.EditMessageMedia(ctx, params); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	return msg.ID, nil
 }
 
 func (r *Runner) replaceImageWithText(
@@ -197,11 +202,11 @@ func (r *Runner) replaceImageWithText(
 	b *tgbot.Bot,
 	msg *models.Message,
 	vm flow.ViewModel,
-) error {
+) (int, error) {
 	const op = "replace telegram image with text"
 
 	if msg == nil {
-		return fmt.Errorf("%s: message is nil", op)
+		return 0, fmt.Errorf("%s: message is nil", op)
 	}
 
 	r.log.Debug(
@@ -210,11 +215,12 @@ func (r *Runner) replaceImageWithText(
 		"message_id", msg.ID,
 	)
 
-	if _, err := r.sendTextMessage(ctx, b, msg.Chat.ID, vm); err != nil {
-		return fmt.Errorf("%s: send text: %w", op, err)
+	sent, err := r.sendTextMessage(ctx, b, msg.Chat.ID, vm)
+	if err != nil {
+		return 0, fmt.Errorf("%s: send text: %w", op, err)
 	}
 
-	_, err := b.DeleteMessage(ctx, &tgbot.DeleteMessageParams{
+	_, err = b.DeleteMessage(ctx, &tgbot.DeleteMessageParams{
 		ChatID:    msg.Chat.ID,
 		MessageID: msg.ID,
 	})
@@ -233,7 +239,7 @@ func (r *Runner) replaceImageWithText(
 		"message_id", msg.ID,
 	)
 
-	return nil
+	return sent.ID, nil
 }
 
 func (r *Runner) sendTextMessage(

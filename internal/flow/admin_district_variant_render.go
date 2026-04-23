@@ -318,7 +318,9 @@ func (s *Service) buildAdminDistrictVariantCategorySelectScreen(
 }
 
 func (s *Service) buildAdminDistrictVariantProductSelectScreen(
-	cityName, districtName, categoryName string,
+	cityName, districtName string,
+	categoryID int,
+	categoryName string,
 ) ViewModel {
 	if s == nil || s.productLister == nil {
 		return buildAdminDistrictVariantProductSelectView(
@@ -330,7 +332,7 @@ func (s *Service) buildAdminDistrictVariantProductSelectScreen(
 		)
 	}
 
-	products, err := s.productLister.ListProducts(context.Background())
+	products, err := s.productLister.ListProductsByCategory(context.Background(), categoryID)
 	if err != nil {
 		return buildAdminDistrictVariantProductSelectView(
 			cityName,

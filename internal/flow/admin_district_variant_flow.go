@@ -178,6 +178,7 @@ func (s *Service) handleAdminDistrictVariantAction(
 		return s.buildAdminDistrictVariantProductSelectScreen(
 			cityName,
 			districtName,
+			selected.ID,
 			selected.Label,
 		), session, true, nil
 	}
@@ -193,7 +194,16 @@ func (s *Service) handleAdminDistrictVariantAction(
 			return ViewModel{}, session, true, errors.New("flow variant lister is nil")
 		}
 
-		products, err := s.productLister.ListProducts(ctx)
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return ViewModel{}, session, true, errors.New("pending category id is invalid")
+		}
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		if categoryName == "" {
+			return ViewModel{}, session, true, errors.New("pending category name is empty")
+		}
+
+		products, err := s.productLister.ListProductsByCategory(ctx, categoryID)
 		if err != nil {
 			return ViewModel{}, session, true, err
 		}
@@ -213,8 +223,6 @@ func (s *Service) handleAdminDistrictVariantAction(
 		cityName := session.Pending.Value(PendingValueCityName)
 		districtID := session.Pending.Value(PendingValueDistrictID)
 		districtName := session.Pending.Value(PendingValueDistrictName)
-		categoryID := session.Pending.Value(PendingValueCategoryID)
-		categoryName := session.Pending.Value(PendingValueCategoryName)
 
 		next := ScreenAdminDistrictVariantVariantSelect
 		if next != session.Current {
@@ -228,7 +236,7 @@ func (s *Service) handleAdminDistrictVariantAction(
 				PendingValueCityName:     cityName,
 				PendingValueDistrictID:   districtID,
 				PendingValueDistrictName: districtName,
-				PendingValueCategoryID:   categoryID,
+				PendingValueCategoryID:   strconv.Itoa(categoryID),
 				PendingValueCategoryName: categoryName,
 				PendingValueProductID:    strconv.Itoa(selected.ID),
 				PendingValueProductName:  selected.Label,
@@ -266,6 +274,19 @@ func (s *Service) handleAdminDistrictVariantAction(
 			return ViewModel{}, session, true, errors.New("pending product id is invalid")
 		}
 
+		cityID := session.Pending.Value(PendingValueCityID)
+		cityName := session.Pending.Value(PendingValueCityName)
+		categoryID := session.Pending.Value(PendingValueCategoryID)
+		categoryName := session.Pending.Value(PendingValueCategoryName)
+		productName := session.Pending.Value(PendingValueProductName)
+
+		if categoryName == "" {
+			return ViewModel{}, session, true, errors.New("pending category name is empty")
+		}
+		if productName == "" {
+			return ViewModel{}, session, true, errors.New("pending product name is empty")
+		}
+
 		variants, err := s.variantLister.ListVariantsByProduct(ctx, productID)
 		if err != nil {
 			return ViewModel{}, session, true, err
@@ -292,8 +313,14 @@ func (s *Service) handleAdminDistrictVariantAction(
 		session.Pending = PendingInput{
 			Kind: PendingInputDistrictVariantPrice,
 			Payload: PendingInputPayload{
+				PendingValueCityID:       cityID,
+				PendingValueCityName:     cityName,
 				PendingValueDistrictID:   strconv.Itoa(districtID),
 				PendingValueDistrictName: districtName,
+				PendingValueCategoryID:   categoryID,
+				PendingValueCategoryName: categoryName,
+				PendingValueProductID:    strconv.Itoa(productID),
+				PendingValueProductName:  productName,
 				PendingValueVariantID:    strconv.Itoa(selected.ID),
 				PendingValueVariantName:  variantDisplayLabel,
 			},

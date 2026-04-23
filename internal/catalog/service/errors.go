@@ -24,4 +24,5 @@ var (
 	ErrDistrictVariantDistrictIDInvalid = errors.New("catalog district variant district id is invalid")
 	ErrDistrictVariantVariantIDInvalid  = errors.New("catalog district variant variant id is invalid")
 	ErrDistrictVariantPriceInvalid      = errors.New("catalog district variant price is invalid")
+	ErrDistrictVariantAlreadyExists     = errors.New("catalog district variant already exists")
 )

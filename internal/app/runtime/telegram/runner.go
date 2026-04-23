@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 
 	tgbot "github.com/go-telegram/bot"
 
@@ -20,10 +21,12 @@ type FlowServiceFactory func(spec manager.BotSpec) (*flow.Service, error)
 
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
-	cfg         Config
-	log         *slog.Logger
-	flowFactory FlowServiceFactory
-	adminAccess AdminAccessResolver
+	cfg             Config
+	log             *slog.Logger
+	flowFactory     FlowServiceFactory
+	adminAccess     AdminAccessResolver
+	activeMessageMu sync.RWMutex
+	activeMessageID map[flow.SessionKey]int
 }
 
 // NewRunner cunstructs Telegram runtime runner with default flow wiring.
@@ -80,6 +83,9 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 	}
 
 	runner := *r
+	runner.activeMessageMu = sync.RWMutex{}
+	runner.activeMessageID = make(map[flow.SessionKey]int)
+
 	runner.log = r.log.With(
 		"bot_id", spec.ID,
 		"bot_name", spec.Name,

@@ -105,6 +105,7 @@ type ProductListItem struct {
 // to select an existing product before nested catalog creation steps.
 type ProductLister interface {
 	ListProducts(ctx context.Context) ([]ProductListItem, error)
+	ListProductsByCategory(ctx context.Context, categoryID int) ([]ProductListItem, error)
 }
 
 // VariantCreator defines the admin write use case required by flow.

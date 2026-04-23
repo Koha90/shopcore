@@ -282,8 +282,12 @@ func TestHandleAction_AdminDistrictVariantSelectVariant_StartsPriceInput(t *test
 		Pending: PendingInput{
 			Kind: PendingInputNone,
 			Payload: PendingInputPayload{
+				PendingValueCityID:       "1",
+				PendingValueCityName:     "Москва",
 				PendingValueDistrictID:   "7",
 				PendingValueDistrictName: "Центр",
+				PendingValueCategoryID:   "10",
+				PendingValueCategoryName: "Цветы",
 				PendingValueProductID:    "2",
 				PendingValueProductName:  "Rose Box",
 			},

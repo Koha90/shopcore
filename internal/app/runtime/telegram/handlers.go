@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"errors"
+	"strings"
 
 	tgbot "github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -30,12 +31,22 @@ func (r *Runner) startHandler(
 			return
 		}
 
-		if err := r.sendView(ctx, b, update.Message.Chat.ID, vm); err != nil {
+		activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+		if err != nil {
 			r.log.Error(
 				"telegram send start view failed",
 				"bot_id", spec.ID,
 				"err", err,
 			)
+			return
+		}
+
+		if update.Message.From != nil {
+			r.rememberActiveMessage(flow.SessionKey{
+				BotID:  spec.ID,
+				ChatID: update.Message.Chat.ID,
+				UserID: update.Message.From.ID,
+			}, activeID)
 		}
 	}
 }
@@ -72,6 +83,30 @@ func (r *Runner) callbackHandler(
 			return
 		}
 
+		key := callbackSessionKey(spec.ID, update.CallbackQuery)
+
+		if activeID, ok := r.activeMessageFor(key); ok && activeID != 0 && activeID != msg.ID {
+			r.answerCallback(ctx, b, update.CallbackQuery.ID, "Это старый экран. Используйте последнее сообщение.")
+			return
+		}
+
+		activeID, err := r.editView(ctx, b, msg, vm)
+		if err != nil {
+			if isTelegramMessageNotModified(err) {
+				r.answerCallback(ctx, b, update.CallbackQuery.ID, "")
+				return
+			}
+
+			r.answerCallback(ctx, b, update.CallbackQuery.ID, "render failed")
+			r.log.Error(
+				"telegram edit callback view failed",
+				"bot_id", spec.ID,
+				"action_id", actionID,
+				"err", err,
+			)
+			return
+		}
+
 		r.log.Debug(
 			"telegram callback resolved",
 			"action_id", actionID,
@@ -89,17 +124,7 @@ func (r *Runner) callbackHandler(
 			"text_len", len(vm.Text),
 		)
 
-		if err := r.editView(ctx, b, msg, vm); err != nil {
-			r.answerCallback(ctx, b, update.CallbackQuery.ID, "render failed")
-			r.log.Error(
-				"telegram edit callback view failed",
-				"bot_id", spec.ID,
-				"action_id", actionID,
-				"err", err,
-			)
-			return
-		}
-
+		r.rememberActiveMessage(key, activeID)
 		r.answerCallback(ctx, b, update.CallbackQuery.ID, "")
 	}
 }
@@ -124,12 +149,22 @@ func (r *Runner) defaultHandler(
 			return
 		}
 		if ok {
-			if err := r.sendView(ctx, b, update.Message.Chat.ID, vm); err != nil {
+			activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+			if err != nil {
 				r.log.Error(
 					"telegram send reply action view failed",
 					"bot_id", spec.ID,
 					"err", err,
 				)
+				return
+			}
+
+			if update.Message.From != nil {
+				r.rememberActiveMessage(flow.SessionKey{
+					BotID:  spec.ID,
+					ChatID: update.Message.Chat.ID,
+					UserID: update.Message.From.ID,
+				}, activeID)
 			}
 			return
 		}
@@ -171,13 +206,17 @@ func (r *Runner) defaultHandler(
 			return
 		}
 
-		if err := r.sendView(ctx, b, update.Message.Chat.ID, vm); err != nil {
+		activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+		if err != nil {
 			r.log.Error(
 				"telegram send reply action view failed",
 				"bot_id", spec.ID,
 				"err", err,
 			)
+			return
 		}
+
+		r.rememberActiveMessage(key, activeID)
 	}
 }
 
@@ -214,6 +253,7 @@ func (r *Runner) resolveTextView(
 	if msg.From == nil {
 		return flow.ViewModel{}, errors.New("telegram message sender is nil")
 	}
+
 	return svc.HandleText(ctx, flow.TextRequest{
 		BotID:         spec.ID,
 		BotName:       spec.Name,
@@ -224,6 +264,7 @@ func (r *Runner) resolveTextView(
 			ChatID: msg.Chat.ID,
 			UserID: msg.From.ID,
 		},
+		CanAdmin: r.canAdminTelegram(spec, msg.From.ID),
 	})
 }
 
@@ -242,4 +283,12 @@ func callbackMessageContext(update *models.Update) (*models.Message, bool) {
 	}
 
 	return msg, true
+}
+
+func isTelegramMessageNotModified(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	return strings.Contains(err.Error(), "message is not modified")
 }

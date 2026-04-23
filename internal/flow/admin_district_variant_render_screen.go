@@ -19,12 +19,19 @@ func (s *Service) renderAdminDistrictVariantScreen(session Session) (ViewModel, 
 		return s.buildAdminDistrictVariantCategorySelectScreen(cityName, districtName), true
 
 	case ScreenAdminDistrictVariantProductSelect:
+		categoryID, ok := pendingCategoryID(session.Pending)
+		if !ok {
+			return buildAdminCatalogView(), true
+		}
+
 		cityName := session.Pending.Value(PendingValueCityName)
 		districtName := session.Pending.Value(PendingValueDistrictName)
 		categoryName := session.Pending.Value(PendingValueCategoryName)
+
 		return s.buildAdminDistrictVariantProductSelectScreen(
 			cityName,
 			districtName,
+			categoryID,
 			categoryName,
 		), true
 
