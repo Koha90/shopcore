@@ -137,6 +137,7 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 		DatabaseID:           params.DatabaseID,
 		StartScenario:        params.StartScenario,
 		TelegramAdminUserIDs: params.TelegramAdminUserIDs,
+		AdminOrdersChatID:    params.AdminOrdersChatID,
 		IsEnabled:            params.IsEnabled,
 		UpdatedAt:            time.Now(),
 	}
@@ -177,6 +178,7 @@ func (s *Service) UpdateBot(ctx context.Context, params UpdateBotParams) error {
 	bot.StartScenario = params.StartScenario
 	bot.IsEnabled = params.IsEnabled
 	bot.TelegramAdminUserIDs = params.TelegramAdminUserIDs
+	bot.AdminOrdersChatID = params.AdminOrdersChatID
 	bot.UpdatedAt = time.Now()
 
 	if params.Token != nil {

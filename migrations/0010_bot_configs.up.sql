@@ -8,6 +8,7 @@ create table if not exists bot_configs (
     on delete restrict,
   start_scenario text not null default 'reply_welcome',
   telegram_admin_user_ids bigint[] not null default '{}',
+  admin_orders_chat_id bigint not null default 0,
   is_enabled boolean not null default true,
   updated_at timestamptz not null default now()
 );

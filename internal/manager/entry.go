@@ -13,6 +13,7 @@ type BotSpec struct {
 	Token                string
 	DatabaseID           string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	StartScenario        string
 }
 

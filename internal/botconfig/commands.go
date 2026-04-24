@@ -8,6 +8,7 @@ type CreateBotParams struct {
 	DatabaseID           string
 	StartScenario        string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	IsEnabled            bool
 }
 
@@ -19,6 +20,7 @@ type UpdateBotParams struct {
 	DatabaseID           string
 	StartScenario        string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	IsEnabled            bool
 }
 

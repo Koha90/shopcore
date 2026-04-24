@@ -11,6 +11,7 @@ type BotConfig struct {
 	DatabaseID           string
 	StartScenario        string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	IsEnabled            bool
 	UpdatedAt            time.Time
 }

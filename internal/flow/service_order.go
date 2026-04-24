@@ -1,6 +1,14 @@
 package flow
 
-import "fmt"
+import (
+	"context"
+	"errors"
+	"fmt"
+)
+
+// ErrOrderContextUnavailable is returned when current session state does not
+// contains resolved order context.
+var ErrOrderContextUnavailable = errors.New("order context unavailable")
 
 // OrderContext contains catalog data required to render confirmation.
 //
@@ -23,6 +31,37 @@ type OrderContext struct {
 	// Numeric base price should be added as a sepparate small step before
 	// payment/promo quote logic is introduced.
 	BasePriceText string
+}
+
+// CurrentOrderContext returns current order context for provided session key.
+//
+// It is intended for outer application/runtime layer that need to react to
+// successful order confirmation without coupling transport logic to internal
+// flow state representation.
+func (s *Service) CurrentOrderContext(
+	ctx context.Context,
+	key SessionKey,
+) (OrderContext, error) {
+	if s == nil {
+		return OrderContext{}, ErrOrderContextUnavailable
+	}
+
+	session, ok := s.store.Get(key)
+	if !ok {
+		return OrderContext{}, ErrOrderContextUnavailable
+	}
+
+	catalog, err := s.provider.Catalog(ctx)
+	if err != nil {
+		return OrderContext{}, err
+	}
+
+	orderCtx, ok := orderContext(catalog, session)
+	if !ok {
+		return OrderContext{}, ErrOrderContextUnavailable
+	}
+
+	return orderCtx, nil
 }
 
 // handleOrderAction resolves order-specific flow actions.

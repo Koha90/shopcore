@@ -37,7 +37,7 @@ func (r *Repository) ListDistrictVariants(
 			and dv.is_active = true
 			and v.is_active = true
 			and p.is_active = true
-		order by v.sort_order asc, v.name asc
+		order by v.created_at asc, v.id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q, districtID, productID)

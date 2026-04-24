@@ -46,7 +46,7 @@ func (r *Repository) ListAvailableVariantsForDistrictProduct(
 					and dv.variant_id = v.id
 					and dv.is_active = true
 			)
-		order by v.sort_order asc, v.name asc
+		order by v.created_at asc, v.id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q, districtID, productID)

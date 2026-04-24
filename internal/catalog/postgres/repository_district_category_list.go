@@ -35,7 +35,7 @@ func (r *Repository) ListDistrictCategories(ctx context.Context, districtID int)
 			and p.is_active = true
 			and c.is_active = true
 		group by c.id, c.code, c.name, c.sort_order
-		order by c.sort_order asc, c.name asc
+		order by c.created_at asc, c.id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q, districtID)

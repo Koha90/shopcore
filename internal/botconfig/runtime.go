@@ -15,6 +15,7 @@ type RuntimeBot struct {
 	Token                string
 	DatabaseID           string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	StartScenario        string
 	IsEnabled            bool
 }
@@ -50,6 +51,7 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 			StartScenario:        bot.StartScenario,
 			DatabaseID:           bot.DatabaseID,
 			TelegramAdminUserIDs: bot.TelegramAdminUserIDs,
+			AdminOrdersChatID:    bot.AdminOrdersChatID,
 			IsEnabled:            bot.IsEnabled,
 		})
 	}

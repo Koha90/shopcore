@@ -27,7 +27,7 @@ func (r *Repository) ListProducts(ctx context.Context) ([]flow.ProductListItem, 
 			name
 		from catalog_products
 		where is_active = true
-		order by sort_order asc, name asc
+		order by created_at asc, id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q)

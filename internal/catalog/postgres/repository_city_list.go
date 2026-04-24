@@ -27,7 +27,7 @@ func (r *Repository) ListCities(ctx context.Context) ([]flow.CityListItem, error
 			name
 		from cities
 		where is_active = true
-		order by sort_order asc, name asc
+		order by created_at asc, id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q)

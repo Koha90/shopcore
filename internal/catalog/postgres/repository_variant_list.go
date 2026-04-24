@@ -30,7 +30,7 @@ func (r *Repository) ListVariants(ctx context.Context) ([]flow.VariantListItem, 
 		join catalog_products p on p.id = v.product_id
 		where v.is_active = true
 			and p.is_active = true
-		order by p.sort_order asc, p.name asc, v.sort_order asc, v.name asc
+		order by p.created_at asc, p.id asc, v.created_at asc, v.id asc
 	`
 
 	rows, err := r.pool.Query(ctx, q)

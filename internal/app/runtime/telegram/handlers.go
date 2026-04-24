@@ -126,6 +126,33 @@ func (r *Runner) callbackHandler(
 
 		r.rememberActiveMessage(key, activeID)
 		r.answerCallback(ctx, b, update.CallbackQuery.ID, "")
+
+		if actionID == flow.ActionOrderConfirm {
+			notifyErr := r.notifyOrderConfirmed(
+				ctx,
+				b,
+				spec,
+				svc,
+				key,
+				OrderNotificationMeta{
+					BotUsername: "",
+					UserID:      update.CallbackQuery.From.ID,
+					ChatID:      msg.Chat.ID,
+					UserName:    buildTelegramDisplayName(&update.CallbackQuery.From),
+					UserLogin:   update.CallbackQuery.From.Username,
+				},
+			)
+			if notifyErr != nil {
+				r.log.Error(
+					"send admin order notification",
+					"bot_id", spec.ID,
+					"admin_orders_chat_id", spec.AdminOrdersChatID,
+					"user_id", update.CallbackQuery.From.ID,
+					"chat_id", msg.Chat.ID,
+					"err", notifyErr,
+				)
+			}
+		}
 	}
 }
 

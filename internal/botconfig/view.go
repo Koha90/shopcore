@@ -11,6 +11,7 @@ type BotView struct {
 	DatabaseName         string
 	StartScenario        string
 	TelegramAdminUserIDs []int64
+	AdminOrdersChatID    int64
 	IsEnabled            bool
 	UpdatedAt            time.Time
 }
