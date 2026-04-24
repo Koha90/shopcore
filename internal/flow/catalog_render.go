@@ -17,9 +17,14 @@ func buildCatalogNodeView(node CatalogNode) ViewModel {
 	actions := make([]ActionButton, 0, len(node.Children)+1)
 
 	for _, child := range node.Children {
+		label := child.Label
+		if child.Level == LevelVariant && child.PriceText != "" {
+			label += " - " + child.PriceText
+		}
+
 		actions = append(actions, ActionButton{
 			ID:    catalogSelectAction(child.Level, child.ID),
-			Label: catalogChildButtonLabel(child),
+			Label: label,
 		})
 	}
 
@@ -29,7 +34,6 @@ func buildCatalogNodeView(node CatalogNode) ViewModel {
 	})
 
 	text := node.Label
-
 	if node.Description != "" {
 		text += "\n\n" + node.Description
 	}
@@ -39,8 +43,7 @@ func buildCatalogNodeView(node CatalogNode) ViewModel {
 	}
 
 	return ViewModel{
-		Text:  text,
-		Media: buildCatalogNodeMediaView(node),
+		Text: text,
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
@@ -50,6 +53,7 @@ func buildCatalogNodeView(node CatalogNode) ViewModel {
 			},
 		},
 		RemoveReply: true,
+		Media:       buildCatalogNodeMediaView(node),
 	}
 }
 
@@ -104,29 +108,38 @@ func buildCatalogNodeMediaView(node CatalogNode) *MediaView {
 
 // buildCatalogLeafView renders one terminal catalog node.
 //
-// Leaf nodes display final product or variant information
-// and provide only back navigation.
+// Variant leaf may start order flow.
+// Other leaf kinds, if they appear in the future, keep regular back navigation.
 func buildCatalogLeafView(node CatalogNode) ViewModel {
-	text := node.Label
+	actions := make([]ActionButton, 0, 2)
 
+	if node.Level == LevelVariant {
+		actions = append(actions, ActionButton{
+			ID:    ActionOrderStart,
+			Label: "Заказать",
+		})
+	}
+
+	actions = append(actions, ActionButton{
+		ID:    ActionBack,
+		Label: "Назад",
+	})
+
+	text := node.Label
 	if node.PriceText != "" {
 		text += "\n\n" + node.PriceText
 	}
-
 	if node.Description != "" {
 		text += "\n\n" + node.Description
 	}
 
 	return ViewModel{
-		Text:  text,
-		Media: buildCatalogNodeMediaView(node),
+		Text: text,
 		Inline: &InlineKeyboardView{
 			Sections: []ActionSection{
 				{
 					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
-					},
+					Actions: actions,
 				},
 			},
 		},

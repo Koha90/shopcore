@@ -74,6 +74,11 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 	if vm, handled := s.renderAdminDistrictVariantPriceUpdateScreen(session); handled {
 		return vm
 	}
+
+	if vm, handled := s.renderOrderScreen(catalog, session); handled {
+		return vm
+	}
+
 	path, ok := parseCatalogScreen(screen)
 	if !ok {
 		return buildReplyWelcomeStart()

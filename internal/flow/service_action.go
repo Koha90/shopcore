@@ -95,6 +95,15 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return vm, nil
 	}
 
+	if vm, nextSession, handled, err := s.handleOrderAction(catalog, session, req); handled {
+		if err != nil {
+			return ViewModel{}, err
+		}
+
+		s.store.Put(req.SessionKey, nextSession)
+		return vm, nil
+	}
+
 	if next, err := s.resolveCatalogScreen(catalog, session.Current, req.ActionID); err == nil {
 		if next != session.Current {
 			session.History = append(session.History, session.Current)

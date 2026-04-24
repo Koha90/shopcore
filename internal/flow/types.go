@@ -52,6 +52,11 @@ const (
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
 
+	// ActionOrderStart starts order flow from selected catalog variant leaf.
+	ActionOrderStart ActionID = "order:start"
+	// ActionOrderConfirm confirms current order request in flow-only MVP.
+	ActionOrderConfirm ActionID = "order:confirm"
+
 	ActionBack ActionID = "nav:back"
 )
 

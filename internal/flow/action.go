@@ -18,6 +18,11 @@ const (
 	ScreenBotsMine  ScreenID = "bots_mine"
 	ScreenOrderLast ScreenID = "order_last"
 
+	// ScreenOrderConfirm renders order confirmation details for selected catalog variant.
+	ScreenOrderConfirm ScreenID = "order_confirm"
+	// ScreenOrderDone renders terminal success screen for order request floe.
+	ScreenOrderDone ScreenID = "order_done"
+
 	ScreenAdminRoot               ScreenID = "admin_root"
 	ScreenAdminCatalog            ScreenID = "admin_catalog"
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
