@@ -147,6 +147,12 @@ func (m Model) handleEditEnter() (tea.Model, tea.Cmd) {
 	case EditFieldName:
 		return m, nil
 
+	case EditFieldTelegramAdminUserIDs:
+		return m, nil
+
+	case EditFieldAdminOrdersChatID:
+		return m, nil
+
 	case EditFieldEnabled:
 		m.editForm.IsEnabled = !m.editForm.IsEnabled
 		m.editDirty = true

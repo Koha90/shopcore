@@ -98,6 +98,14 @@ func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) t
 			}
 		}
 
+		adminOrdersChatID, err := parseAdminOrdersChateID(form.AdminOrdersChatID)
+		if err != nil {
+			return botConfigSavedMsg{
+				id:  id,
+				err: err,
+			}
+		}
+
 		err = cfg.UpdateBot(context.Background(), botconfig.UpdateBotParams{
 			ID:                   id,
 			Name:                 form.Name,
@@ -105,6 +113,7 @@ func saveBotConfigCmd(cfg BotConfigService, id string, form BotConfigEditForm) t
 			DatabaseID:           form.DatabaseID,
 			StartScenario:        form.StartScenario,
 			TelegramAdminUserIDs: ids,
+			AdminOrdersChatID:    adminOrdersChatID,
 			IsEnabled:            form.IsEnabled,
 		})
 
@@ -191,6 +200,7 @@ func syncRuntimeSpecCmd(cfg BotConfigService, mgr BotManager, id string) tea.Cmd
 			DatabaseID:           view.DatabaseID,
 			StartScenario:        view.StartScenario,
 			TelegramAdminUserIDs: view.TelegramAdminUserIDs,
+			AdminOrdersChatID:    view.AdminOrdersChatID,
 		})
 
 		return runtimeSpecSyncedMsg{

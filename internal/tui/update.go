@@ -142,6 +142,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.message = "telegram admin user ids updated"
 					m.lastErr = nil
 					return m, nil
+
+				case InputModeEditAdminOrdersChatID:
+					m.editForm.AdminOrdersChatID = value
+					m.editDirty = true
+					m.resetTextInput()
+					m.message = "admin orders chat id updated"
+					m.lastErr = nil
+					return m, nil
 				}
 			}
 
@@ -263,6 +271,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textInput.SetValue(m.editForm.TelegramAdminUserIDs)
 					m.textInput.Focus()
 					m.message = "editing telegram admin user ids (enter to apply, esc to cancel)"
+					m.lastErr = nil
+					return m, nil
+				}
+				if m.editCursor == EditFieldAdminOrdersChatID {
+					m.textInput = newTextInput()
+					m.inputMode = InputModeEditAdminOrdersChatID
+					m.textInput.SetValue(m.editForm.AdminOrdersChatID)
+					m.textInput.Focus()
+					m.message = "editing admin orders chat id (enter to apply, esc to cancel)"
 					m.lastErr = nil
 					return m, nil
 				}
@@ -538,6 +555,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			DatabaseID:           cfg.DatabaseID,
 			StartScenario:        cfg.StartScenario,
 			TelegramAdminUserIDs: formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs),
+			AdminOrdersChatID:    formatAdminOrdersChatID(cfg.AdminOrdersChatID),
 		}
 		m.editCursor = EditFieldName
 		m.editDirty = false

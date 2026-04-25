@@ -85,3 +85,25 @@ func parseTelegramAdminUserIDs(input string) ([]int64, error) {
 
 	return result, nil
 }
+
+func formatAdminOrdersChatID(id int64) string {
+	if id == 0 {
+		return "0"
+	}
+
+	return strconv.FormatInt(id, 10)
+}
+
+func parseAdminOrdersChateID(input string) (int64, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return 0, nil
+	}
+
+	id, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid admin orders chat id %q", input)
+	}
+
+	return id, nil
+}

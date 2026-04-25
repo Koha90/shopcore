@@ -53,6 +53,7 @@ const (
 	InputModeEditName
 	InputModeEditToken
 	InputModeEditTelegramAdminUserIDs
+	InputModeEditAdminOrdersChatID
 )
 
 type BotRow struct {
@@ -112,6 +113,7 @@ type BotConfigEditForm struct {
 	DatabaseID           string
 	StartScenario        string
 	TelegramAdminUserIDs string
+	AdminOrdersChatID    string
 }
 
 // EditField identifies currently selected field in bot config edit screen.
@@ -123,6 +125,7 @@ const (
 	EditFieldDatabase
 	EditFieldStartScenario
 	EditFieldTelegramAdminUserIDs
+	EditFieldAdminOrdersChatID
 	EditFieldSave
 	EditFieldCancel
 )
