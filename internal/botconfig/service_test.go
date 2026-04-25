@@ -56,12 +56,13 @@ func TestService_CreateBot(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "123456:abcdef-token",
-		DatabaseID:    "main-db",
-		StartScenario: "reply_welcome",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "123456:abcdef-token",
+		DatabaseID:        "main-db",
+		StartScenario:     "reply_welcome",
+		AdminOrdersChatID: -1002085259881,
+		IsEnabled:         true,
 	})
 	require.NoError(t, err)
 
@@ -72,6 +73,7 @@ func TestService_CreateBot(t *testing.T) {
 	require.Equal(t, "main-db", got.DatabaseID)
 	require.Equal(t, "Main DB", got.DatabaseName)
 	require.Equal(t, "reply_welcome", got.StartScenario)
+	require.Equal(t, int64(-1002085259881), got.AdminOrdersChatID)
 	require.True(t, got.IsEnabled)
 	require.NotEmpty(t, got.TokenMasked)
 	require.NotEqual(t, "123456:abcdef-token", got.TokenMasked)
@@ -83,12 +85,13 @@ func TestService_CreateBot_ProfileNotFound(t *testing.T) {
 	svc := botconfig.NewService(bots, dbs, nil)
 
 	err := svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "123456:abcdef-token",
-		DatabaseID:    "missing-db",
-		StartScenario: "reply_welcome",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "123456:abcdef-token",
+		DatabaseID:        "missing-db",
+		StartScenario:     "reply_welcome",
+		AdminOrdersChatID: -1002085259881,
+		IsEnabled:         true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrDatabaseProfileNotFound)
 }
@@ -108,12 +111,13 @@ func TestService_CreateBot_StartScenarioEmpty(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "token-123456",
-		DatabaseID:    "main-db",
-		StartScenario: "",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "token-123456",
+		DatabaseID:        "main-db",
+		StartScenario:     "",
+		AdminOrdersChatID: -1002085259881,
+		IsEnabled:         true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioEmpty)
 }
@@ -133,12 +137,13 @@ func TestService_CreateBot_StartScenarioInvalid(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "token-123456",
-		DatabaseID:    "main-db",
-		StartScenario: "abracadabra",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "token-123456",
+		DatabaseID:        "main-db",
+		StartScenario:     "abracadabra",
+		AdminOrdersChatID: -1002085259881,
+		IsEnabled:         true,
 	})
 	require.ErrorIs(t, err, botconfig.ErrBotStartScenarioInvalid)
 }
@@ -167,12 +172,13 @@ func TestService_UpdateBot(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "123456:abcdef-token",
-		DatabaseID:    "main-db",
-		StartScenario: "reply_welcome",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "123456:abcdef-token",
+		DatabaseID:        "main-db",
+		StartScenario:     "reply_welcome",
+		AdminOrdersChatID: -1002085259881,
+		IsEnabled:         true,
 	})
 	require.NoError(t, err)
 
@@ -209,29 +215,33 @@ func TestService_UpdateBot_ReplaceToken(t *testing.T) {
 	require.NoError(t, err)
 
 	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "old-token-123456",
-		DatabaseID:    "main-db",
-		StartScenario: "reply_welcome",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "old-token-123456",
+		DatabaseID:        "main-db",
+		StartScenario:     "reply_welcome",
+		AdminOrdersChatID: 0,
+		IsEnabled:         true,
 	})
 	require.NoError(t, err)
 
 	newToken := "new-token-654321"
+	newChatOrdersChatID := int64(-1002085259881)
 	err = svc.UpdateBot(context.Background(), botconfig.UpdateBotParams{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         &newToken,
-		DatabaseID:    "main-db",
-		StartScenario: "reply_welcome",
-		IsEnabled:     true,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             &newToken,
+		DatabaseID:        "main-db",
+		StartScenario:     "reply_welcome",
+		AdminOrdersChatID: newChatOrdersChatID,
+		IsEnabled:         true,
 	})
 	require.NoError(t, err)
 
 	raw, err := bots.ByID(context.Background(), "shop-main")
 	require.NoError(t, err)
 	require.Equal(t, newToken, raw.Token)
+	require.Equal(t, newChatOrdersChatID, raw.AdminOrdersChatID)
 }
 
 func TestService_UpdateBot_StartScenarioEmpty(t *testing.T) {

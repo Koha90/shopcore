@@ -19,15 +19,24 @@ type BotRepository struct {
 func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) error {
 	const q = `
 		INSERT INTO bot_configs (
-			id, name, token, database_id, start_scenario, telegram_admin_user_ids, is_enabled, updated_at
+			id,
+			name,
+			token,
+			database_id,
+			start_scenario,
+			telegram_admin_user_ids,
+			admin_orders_chat_id,
+			is_enabled,
+			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp())
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp())
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			token = EXCLUDED.token,
 			database_id = EXCLUDED.database_id,
 			start_scenario = EXCLUDED.start_scenario,
 			telegram_admin_user_ids = EXCLUDED.telegram_admin_user_ids,
+			admin_orders_chat_id = EXCLUDED.admin_orders_chat_id,
 			is_enabled = EXCLUDED.is_enabled,
 			updated_at = clock_timestamp()
 	`
@@ -46,6 +55,7 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 		cfg.DatabaseID,
 		cfg.StartScenario,
 		adminUserIDs,
+		cfg.AdminOrdersChatID,
 		cfg.IsEnabled,
 	)
 	return err
@@ -61,6 +71,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 			database_id,
 			start_scenario,
 			telegram_admin_user_ids,
+			admin_orders_chat_id,
 			is_enabled,
 			updated_at
 		FROM bot_configs
@@ -75,6 +86,7 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 		&bot.DatabaseID,
 		&bot.StartScenario,
 		&bot.TelegramAdminUserIDs,
+		&bot.AdminOrdersChatID,
 		&bot.IsEnabled,
 		&bot.UpdatedAt,
 	)
@@ -98,6 +110,7 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			database_id,
 			start_scenario,
 			telegram_admin_user_ids,
+			admin_orders_chat_id,
 			is_enabled,
 			updated_at
 		FROM bot_configs
@@ -120,6 +133,7 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			&bot.DatabaseID,
 			&bot.StartScenario,
 			&bot.TelegramAdminUserIDs,
+			&bot.AdminOrdersChatID,
 			&bot.IsEnabled,
 			&bot.UpdatedAt,
 		); err != nil {

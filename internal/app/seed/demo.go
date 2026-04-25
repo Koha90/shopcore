@@ -75,6 +75,7 @@ func EnsureDemoData(ctx context.Context, svc BotConfigSeedService, params DemoDa
 		DatabaseID:           "main-db",
 		StartScenario:        botconfig.StartScenarioInlineCatalog,
 		TelegramAdminUserIDs: []int64{311485249},
+		AdminOrdersChatID:    -1002085259881,
 		IsEnabled:            isEnabled,
 	}); err != nil {
 		return err

@@ -21,13 +21,14 @@ func TestBotRepository_SaveAndByID(t *testing.T) {
 	now := time.Now().UTC().Round(time.Second)
 
 	bot := &botconfig.BotConfig{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "123456:demo-token-main",
-		DatabaseID:    "main-db",
-		StartScenario: "main scenario",
-		IsEnabled:     true,
-		UpdatedAt:     now,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "123456:demo-token-main",
+		DatabaseID:        "main-db",
+		StartScenario:     "main scenario",
+		AdminOrdersChatID: int64(-100),
+		IsEnabled:         true,
+		UpdatedAt:         now,
 	}
 
 	// Foreign key requires existing database profile.
@@ -87,13 +88,14 @@ func TestBotRepository_SaveUpdatesExistingBot(t *testing.T) {
 	require.NoError(t, err)
 
 	bot := &botconfig.BotConfig{
-		ID:            "shop-main",
-		Name:          "Shop Main",
-		Token:         "123456:demo-token-main",
-		DatabaseID:    "main-db",
-		StartScenario: "Main Start Scenario",
-		IsEnabled:     true,
-		UpdatedAt:     now,
+		ID:                "shop-main",
+		Name:              "Shop Main",
+		Token:             "123456:demo-token-main",
+		DatabaseID:        "main-db",
+		StartScenario:     "Main Start Scenario",
+		AdminOrdersChatID: int64(-100),
+		IsEnabled:         true,
+		UpdatedAt:         now,
 	}
 
 	err = repo.Save(ctx, bot)
