@@ -138,6 +138,9 @@ func (s *Service) CreateBot(ctx context.Context, params CreateBotParams) error {
 		StartScenario:        params.StartScenario,
 		TelegramAdminUserIDs: params.TelegramAdminUserIDs,
 		AdminOrdersChatID:    params.AdminOrdersChatID,
+		TelegramBotID:        params.TelegramBotID,
+		TelegramUsername:     params.TelegramUsername,
+		TelegramBotName:      params.TelegramBotName,
 		IsEnabled:            params.IsEnabled,
 		UpdatedAt:            time.Now(),
 	}

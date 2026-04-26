@@ -78,6 +78,9 @@ func (s *Starter) StartEnabled(ctx context.Context) ([]Result, error) {
 			StartScenario:        bot.StartScenario,
 			TelegramAdminUserIDs: bot.TelegramAdminUserIDs,
 			AdminOrdersChatID:    bot.AdminOrdersChatID,
+			TelegramBotID:        bot.TelegramBotID,
+			TelegramUsername:     bot.TelegramUsername,
+			TelegramBotName:      bot.TelegramBotName,
 		}
 
 		err := s.manager.Register(spec)

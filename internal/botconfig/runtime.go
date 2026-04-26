@@ -16,6 +16,9 @@ type RuntimeBot struct {
 	DatabaseID           string
 	TelegramAdminUserIDs []int64
 	AdminOrdersChatID    int64
+	TelegramBotID        int64
+	TelegramUsername     string
+	TelegramBotName      string
 	StartScenario        string
 	IsEnabled            bool
 }

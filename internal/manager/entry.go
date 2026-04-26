@@ -8,13 +8,19 @@ import "context"
 // Token is runtime configuration and must not be treated
 // as bot identity.
 type BotSpec struct {
-	ID                   string
-	Name                 string
-	Token                string
-	DatabaseID           string
+	ID         string
+	Name       string
+	Token      string
+	DatabaseID string
+
+	StartScenario string
+
 	TelegramAdminUserIDs []int64
 	AdminOrdersChatID    int64
-	StartScenario        string
+
+	TelegramBotID    int64
+	TelegramUsername string
+	TelegramBotName  string
 }
 
 // Entry stores bot runtime state managed by Manager.

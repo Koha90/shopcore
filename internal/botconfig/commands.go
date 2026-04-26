@@ -9,6 +9,9 @@ type CreateBotParams struct {
 	StartScenario        string
 	TelegramAdminUserIDs []int64
 	AdminOrdersChatID    int64
+	TelegramBotID        int64
+	TelegramUsername     string
+	TelegramBotName      string
 	IsEnabled            bool
 }
 
@@ -21,6 +24,9 @@ type UpdateBotParams struct {
 	StartScenario        string
 	TelegramAdminUserIDs []int64
 	AdminOrdersChatID    int64
+	TelegramBotID        int64
+	TelegramUsername     string
+	TelegramBotName      string
 	IsEnabled            bool
 }
 
