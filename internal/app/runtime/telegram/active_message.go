@@ -27,14 +27,3 @@ func (r *Runner) activeMessageFor(key flow.SessionKey) (int, bool) {
 	id, ok := r.activeMessageID[key]
 	return id, ok
 }
-
-func (r *Runner) clearActiveMessage(key flow.SessionKey) {
-	if r == nil {
-		return
-	}
-
-	r.activeMessageMu.Lock()
-	defer r.activeMessageMu.Unlock()
-
-	delete(r.activeMessageID, key)
-}

@@ -26,22 +26,6 @@ func (s *districtListStub) ListDistrictsByCity(ctx context.Context, cityID int) 
 	return s.items, s.err
 }
 
-type variantListStub struct {
-	items []VariantListItem
-	err   error
-}
-
-func (s *variantListStub) ListVariants(ctx context.Context) ([]VariantListItem, error) {
-	return s.items, s.err
-}
-
-func (s *variantListStub) ListVariantsByProduct(ctx context.Context, productID int) ([]VariantListItem, error) {
-	if s == nil {
-		return nil, nil
-	}
-	return s.items, s.err
-}
-
 type districtVariantCreatorStub struct {
 	called bool
 	params CreateDistrictVariantParams

@@ -90,19 +90,19 @@ func TestRepository_ListCities_ReturnsOnlyActiveCitiesOrdered(t *testing.T) {
 	require.Len(t, got, 3)
 
 	require.Equal(t, flow.CityListItem{
-		ID:    id1,
+		ID:    id3,
 		Code:  code1,
 		Label: name1,
 	}, got[0])
 
 	require.Equal(t, flow.CityListItem{
-		ID:    id2,
+		ID:    id1,
 		Code:  code2,
 		Label: name2,
 	}, got[1])
 
 	require.Equal(t, flow.CityListItem{
-		ID:    id3,
+		ID:    id2,
 		Code:  code3,
 		Label: name3,
 	}, got[2])

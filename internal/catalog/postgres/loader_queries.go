@@ -7,7 +7,7 @@ func (l *Loader) loadCities(ctx context.Context) ([]cityRow, error) {
 		select id, code, name, name_latin, sort_order
 		from cities
 		where is_active = true
-		order by sort_order, id
+		order by id asc
 	`)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (l *Loader) loadCategories(ctx context.Context) ([]categoryRow, error) {
 		select id, code, name, name_latin, description, sort_order
 		from catalog_categories
 		where is_active = true
-		order by sort_order, id
+		order by id asc
 	`)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (l *Loader) loadDistricts(ctx context.Context) ([]districtRow, error) {
 		select id, city_id, code, name, name_latin, sort_order
 		from catalog_districts
 		where is_active = true
-		order by sort_order, id
+		order by id asc
 	`)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (l *Loader) loadProducts(ctx context.Context) ([]productRow, error) {
 			sort_order
 		from catalog_products
 		where is_active = true
-		order by sort_order, id
+		order by id asc
 	`)
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (l *Loader) loadVariants(ctx context.Context) ([]variantRow, error) {
 			sort_order
 		from catalog_variants
 		where is_active = true
-		order by sort_order, id
+		order by id asc
 	`)
 	if err != nil {
 		return nil, err

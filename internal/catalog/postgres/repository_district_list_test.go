@@ -105,13 +105,13 @@ func TestRepository_ListDistricts_ReturnsOnlyActiveDistrictsOrdered(t *testing.T
 	require.Len(t, got, 3)
 
 	require.Equal(t, flow.DistrictListItem{
-		ID:    id1,
+		ID:    id3,
 		Code:  code1,
 		Label: name1,
 	}, got[0])
 
 	require.Equal(t, flow.DistrictListItem{
-		ID:    id2,
+		ID:    id1,
 		Code:  code2,
 		Label: name2,
 	}, got[1])
