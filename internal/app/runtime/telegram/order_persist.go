@@ -10,7 +10,7 @@ import (
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
-// OrderCreateFactory builds one order creator for one bot runtime instance.
+// OrderCreatorFactory builds one order creator for one bot runtime instance.
 //
 // Factory uses bot runtime spec to choose the correct database wiring.
 type OrderCreatorFactory func(spec manager.BotSpec) (ordersvc.OrderCreator, error)

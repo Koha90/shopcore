@@ -91,9 +91,10 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 			"bot_id", spec.ID,
 			"bot_name", spec.Name,
 		),
-		flowFactory:     r.flowFactory,
-		adminAccess:     r.adminAccess,
-		activeMessageID: make(map[flow.SessionKey]int),
+		flowFactory:         r.flowFactory,
+		adminAccess:         r.adminAccess,
+		orderCreatorFactory: r.orderCreatorFactory,
+		activeMessageID:     make(map[flow.SessionKey]int),
 	}
 
 	svc, err := runner.flowFactory(spec)

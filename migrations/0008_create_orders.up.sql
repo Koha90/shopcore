@@ -25,7 +25,7 @@ create table if not exists orders (
 
   status text not null,
   created_at timestamptz not null default now()
-)
+);
 
 create index if not exists idx_orders_created_at_desc
     on orders (created_at desc);

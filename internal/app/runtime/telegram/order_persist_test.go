@@ -12,11 +12,13 @@ import (
 )
 
 type orderCreatorStub struct {
+	called bool
 	params ordersvc.CreateOrderParams
 	err    error
 }
 
 func (s *orderCreatorStub) Create(ctx context.Context, params ordersvc.CreateOrderParams) error {
+	s.called = true
 	s.params = params
 	return s.err
 }
@@ -33,23 +35,28 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 		UserID: 202,
 	}
 
+	// Prepare order-confirmation state with catalog leaf in history.
+	store.Put(key, flow.Session{
+		Current: flow.ScreenOrderConfirm,
+		History: []flow.ScreenID{
+			flow.ScreenID("catalog:screen:city=moscow;category=flowers;district=center;product=rose-box;variant=small"),
+		},
+	})
+
 	ctx := context.Background()
 
-	_, err := svc.Start(ctx, flow.StartRequest{
-		SessionKey:    key,
-		StartScenario: "inline_catalog",
-	})
-	require.NoError(t, err)
-
-	// use existing helper from flow tests or inline drill-down if you already have one
-	// to reach variant leaf and order confirm screen
-
 	creator := &orderCreatorStub{}
-	runner := NewRunnerWithDeps(Config{}, nil, nil, func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
-		return creator, nil
-	}, nil)
+	runner := NewRunnerWithDeps(
+		Config{},
+		nil,
+		nil,
+		func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
+			return creator, nil
+		},
+		nil,
+	)
 
-	err = runner.persistConfirmedOrder(
+	err := runner.persistConfirmedOrder(
 		ctx,
 		manager.BotSpec{
 			ID:   "shop-main",
@@ -66,7 +73,22 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	require.True(t, creator.called)
 	require.Equal(t, "shop-main", creator.params.BotID)
+	require.Equal(t, "Shop Main", creator.params.BotName)
 	require.Equal(t, int64(101), creator.params.ChatID)
 	require.Equal(t, int64(202), creator.params.UserID)
+	require.Equal(t, "Алексей", creator.params.UserName)
+	require.Equal(t, "koha90", creator.params.UserUsername)
+
+	require.Equal(t, "moscow", creator.params.CityID)
+	require.Equal(t, "Москва", creator.params.CityName)
+	require.Equal(t, "center", creator.params.DistrictID)
+	require.Equal(t, "Центр", creator.params.DistrictName)
+	require.Equal(t, "rose-box", creator.params.ProductID)
+	require.Equal(t, "Rose Box", creator.params.ProductName)
+	require.Equal(t, "small", creator.params.VariantID)
+	require.Equal(t, "S / 9 шт", creator.params.VariantName)
+	require.Equal(t, "2500 ₽", creator.params.PriceText)
 }
+

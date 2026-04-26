@@ -41,6 +41,7 @@ func buildRunner(
 	poolRegistry := pgapp.NewPoolRegistry(ctx, profilesRepo)
 
 	flowFactory := bootstrap.NewTelegramFlowFactory(poolRegistry)
+	orderFactory := bootstrap.NewTelegramOrderFactory(poolRegistry)
 
 	adminAccess := telegram.SpecAdminAccessResolver{}
 
@@ -48,6 +49,7 @@ func buildRunner(
 		tgCfg,
 		runtimeLog,
 		flowFactory,
+		orderFactory,
 		adminAccess,
 	)
 
