@@ -10,6 +10,7 @@ import (
 	"github.com/koha90/shopcore/internal/app/bootstrap"
 	"github.com/koha90/shopcore/internal/app/pgapp"
 	"github.com/koha90/shopcore/internal/app/runtime/telegram"
+	"github.com/koha90/shopcore/internal/botconfig"
 	botconfigpg "github.com/koha90/shopcore/internal/botconfig/postgres"
 	"github.com/koha90/shopcore/internal/manager"
 )
@@ -40,6 +41,9 @@ func buildRunner(
 	profilesRepo := store.DatabaseProfileRepository()
 	poolRegistry := pgapp.NewPoolRegistry(ctx, profilesRepo)
 
+	botsRepo := store.BotRepository()
+	botConfigSvc := botconfig.NewService(botsRepo, profilesRepo, runtimeLog)
+
 	flowFactory := bootstrap.NewTelegramFlowFactory(poolRegistry)
 	orderFactory := bootstrap.NewTelegramOrderFactory(poolRegistry)
 
@@ -50,6 +54,7 @@ func buildRunner(
 		runtimeLog,
 		flowFactory,
 		orderFactory,
+		botConfigSvc,
 		adminAccess,
 	)
 

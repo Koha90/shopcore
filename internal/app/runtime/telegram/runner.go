@@ -19,12 +19,24 @@ import (
 // The factory allows runtime wiring to choose catalog provider per bot spec.
 type FlowServiceFactory func(spec manager.BotSpec) (*flow.Service, error)
 
+// BotMetadataUpdater updates runtime-fetched Telegram bot metadata.
+type BotMetadataUpdater interface {
+	UpdateTelegramBotMetadata(
+		ctx context.Context,
+		id string,
+		telegramBotID int64,
+		telegramUsername string,
+		telegramBotName string,
+	) error
+}
+
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
 	cfg                 Config
 	log                 *slog.Logger
 	flowFactory         FlowServiceFactory
 	orderCreatorFactory OrderCreatorFactory
+	botMetadataUpdater  BotMetadataUpdater
 	adminAccess         AdminAccessResolver
 	activeMessageMu     sync.RWMutex
 	activeMessageID     map[flow.SessionKey]int
@@ -32,7 +44,7 @@ type Runner struct {
 
 // NewRunner cunstructs Telegram runtime runner with default flow wiring.
 func NewRunner(cfg Config, log *slog.Logger) *Runner {
-	return NewRunnerWithDeps(cfg, log, nil, nil, nil)
+	return NewRunnerWithDeps(cfg, log, nil, nil, nil, nil)
 }
 
 // NewRunnerWithFlowFactory constructs Telegram runtime runner
@@ -41,7 +53,7 @@ func NewRunner(cfg Config, log *slog.Logger) *Runner {
 // This constructor is intended for tests and future wiring with
 // per-bot catalog providers.
 func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceFactory) *Runner {
-	return NewRunnerWithDeps(cfg, log, factory, nil, nil)
+	return NewRunnerWithDeps(cfg, log, factory, nil, nil, nil)
 }
 
 // NewRunnerWithDeps constructs Telegram runtime runner with explicit runtime dependecies.
@@ -52,6 +64,7 @@ func NewRunnerWithDeps(
 	log *slog.Logger,
 	flowFactory FlowServiceFactory,
 	orderFactory OrderCreatorFactory,
+	metadataUpdater BotMetadataUpdater,
 	adminAccess AdminAccessResolver,
 ) *Runner {
 	if log == nil {
@@ -68,6 +81,7 @@ func NewRunnerWithDeps(
 		log:                 log,
 		flowFactory:         flowFactory,
 		orderCreatorFactory: orderFactory,
+		botMetadataUpdater:  metadataUpdater,
 		adminAccess:         normalizeAdminAccessResolver(adminAccess),
 	}
 }
@@ -92,8 +106,9 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 			"bot_name", spec.Name,
 		),
 		flowFactory:         r.flowFactory,
-		adminAccess:         r.adminAccess,
 		orderCreatorFactory: r.orderCreatorFactory,
+		botMetadataUpdater:  r.botMetadataUpdater,
+		adminAccess:         r.adminAccess,
 		activeMessageID:     make(map[flow.SessionKey]int),
 	}
 
@@ -129,6 +144,14 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 	b, err := tgbot.New(spec.Token, opts...)
 	if err != nil {
 		return fmt.Errorf("create telegram bot: %w", err)
+	}
+
+	if err := runner.syncBotMetadata(ctx, b, spec); err != nil {
+		runner.log.Warn(
+			"telegram bot metadata sync failed",
+			"bot_id", spec.ID,
+			"err", err,
+		)
 	}
 
 	b.RegisterHandler(

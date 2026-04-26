@@ -54,6 +54,7 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 			return creator, nil
 		},
 		nil,
+		nil,
 	)
 
 	err := runner.persistConfirmedOrder(
@@ -91,4 +92,3 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 	require.Equal(t, "S / 9 шт", creator.params.VariantName)
 	require.Equal(t, "2500 ₽", creator.params.PriceText)
 }
-
