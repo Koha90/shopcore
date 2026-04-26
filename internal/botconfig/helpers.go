@@ -17,6 +17,9 @@ func toBotView(bot BotConfig, dbName string) BotView {
 		StartScenario:        bot.StartScenario,
 		TelegramAdminUserIDs: bot.TelegramAdminUserIDs,
 		AdminOrdersChatID:    bot.AdminOrdersChatID,
+		TelegramBotID:        bot.TelegramBotID,
+		TelegramUsername:     bot.TelegramUsername,
+		TelegramBotName:      bot.TelegramBotName,
 		IsEnabled:            bot.IsEnabled,
 		UpdatedAt:            bot.UpdatedAt,
 	}

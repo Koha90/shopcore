@@ -72,6 +72,9 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 			start_scenario,
 			telegram_admin_user_ids,
 			admin_orders_chat_id,
+			telegram_bot_id,
+			telegram_username,
+			telegram_bot_name,
 			is_enabled,
 			updated_at
 		FROM bot_configs
@@ -87,6 +90,9 @@ func (r *BotRepository) ByID(ctx context.Context, id string) (*botconfig.BotConf
 		&bot.StartScenario,
 		&bot.TelegramAdminUserIDs,
 		&bot.AdminOrdersChatID,
+		&bot.TelegramBotID,
+		&bot.TelegramUsername,
+		&bot.TelegramBotName,
 		&bot.IsEnabled,
 		&bot.UpdatedAt,
 	)
@@ -111,6 +117,9 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			start_scenario,
 			telegram_admin_user_ids,
 			admin_orders_chat_id,
+			telegram_bot_id,
+			telegram_username,
+			telegram_bot_name,
 			is_enabled,
 			updated_at
 		FROM bot_configs
@@ -134,6 +143,9 @@ func (r *BotRepository) List(ctx context.Context) ([]botconfig.BotConfig, error)
 			&bot.StartScenario,
 			&bot.TelegramAdminUserIDs,
 			&bot.AdminOrdersChatID,
+			&bot.TelegramBotID,
+			&bot.TelegramUsername,
+			&bot.TelegramBotName,
 			&bot.IsEnabled,
 			&bot.UpdatedAt,
 		); err != nil {

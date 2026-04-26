@@ -55,6 +55,9 @@ func (s *Service) ListEnabledRuntimeBots(ctx context.Context) ([]RuntimeBot, err
 			DatabaseID:           bot.DatabaseID,
 			TelegramAdminUserIDs: bot.TelegramAdminUserIDs,
 			AdminOrdersChatID:    bot.AdminOrdersChatID,
+			TelegramBotID:        bot.TelegramBotID,
+			TelegramUsername:     bot.TelegramUsername,
+			TelegramBotName:      bot.TelegramBotName,
 			IsEnabled:            bot.IsEnabled,
 		})
 	}
