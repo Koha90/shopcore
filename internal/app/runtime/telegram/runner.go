@@ -21,17 +21,18 @@ type FlowServiceFactory func(spec manager.BotSpec) (*flow.Service, error)
 
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
-	cfg             Config
-	log             *slog.Logger
-	flowFactory     FlowServiceFactory
-	adminAccess     AdminAccessResolver
-	activeMessageMu sync.RWMutex
-	activeMessageID map[flow.SessionKey]int
+	cfg                 Config
+	log                 *slog.Logger
+	flowFactory         FlowServiceFactory
+	orderCreatorFactory OrderCreatorFactory
+	adminAccess         AdminAccessResolver
+	activeMessageMu     sync.RWMutex
+	activeMessageID     map[flow.SessionKey]int
 }
 
 // NewRunner cunstructs Telegram runtime runner with default flow wiring.
 func NewRunner(cfg Config, log *slog.Logger) *Runner {
-	return NewRunnerWithDeps(cfg, log, nil, nil)
+	return NewRunnerWithDeps(cfg, log, nil, nil, nil)
 }
 
 // NewRunnerWithFlowFactory constructs Telegram runtime runner
@@ -40,7 +41,7 @@ func NewRunner(cfg Config, log *slog.Logger) *Runner {
 // This constructor is intended for tests and future wiring with
 // per-bot catalog providers.
 func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceFactory) *Runner {
-	return NewRunnerWithDeps(cfg, log, factory, nil)
+	return NewRunnerWithDeps(cfg, log, factory, nil, nil)
 }
 
 // NewRunnerWithDeps constructs Telegram runtime runner with explicit runtime dependecies.
@@ -49,23 +50,25 @@ func NewRunnerWithFlowFactory(cfg Config, log *slog.Logger, factory FlowServiceF
 func NewRunnerWithDeps(
 	cfg Config,
 	log *slog.Logger,
-	factory FlowServiceFactory,
+	flowFactory FlowServiceFactory,
+	orderFactory OrderCreatorFactory,
 	adminAccess AdminAccessResolver,
 ) *Runner {
 	if log == nil {
 		log = slog.Default()
 	}
-	if factory == nil {
-		factory = func(spec manager.BotSpec) (*flow.Service, error) {
+	if flowFactory == nil {
+		flowFactory = func(spec manager.BotSpec) (*flow.Service, error) {
 			return flow.NewService(nil), nil
 		}
 	}
 
 	return &Runner{
-		cfg:         cfg,
-		log:         log,
-		flowFactory: factory,
-		adminAccess: normalizeAdminAccessResolver(adminAccess),
+		cfg:                 cfg,
+		log:                 log,
+		flowFactory:         flowFactory,
+		orderCreatorFactory: orderFactory,
+		adminAccess:         normalizeAdminAccessResolver(adminAccess),
 	}
 }
 

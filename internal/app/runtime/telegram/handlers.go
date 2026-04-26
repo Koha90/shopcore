@@ -128,20 +128,27 @@ func (r *Runner) callbackHandler(
 		r.answerCallback(ctx, b, update.CallbackQuery.ID, "")
 
 		if actionID == flow.ActionOrderConfirm {
-			notifyErr := r.notifyOrderConfirmed(
-				ctx,
-				b,
-				spec,
-				svc,
-				key,
-				OrderNotificationMeta{
-					BotUsername: "",
-					UserID:      update.CallbackQuery.From.ID,
-					ChatID:      msg.Chat.ID,
-					UserName:    buildTelegramDisplayName(&update.CallbackQuery.From),
-					UserLogin:   update.CallbackQuery.From.Username,
-				},
-			)
+			meta := OrderNotificationMeta{
+				BotUsername: "",
+				UserID:      update.CallbackQuery.From.ID,
+				ChatID:      msg.Chat.ID,
+				UserName:    buildTelegramDisplayName(&update.CallbackQuery.From),
+				UserLogin:   update.CallbackQuery.From.Username,
+			}
+
+			persistErr := r.persistConfirmedOrder(ctx, spec, svc, key, meta)
+			if persistErr != nil {
+				r.log.Error(
+					"persist confirmed order",
+					"bot_id", spec.ID,
+					"user_id", update.CallbackQuery.From.ID,
+					"chat_id", msg.Chat.ID,
+					"err", persistErr,
+				)
+				return
+			}
+
+			notifyErr := r.notifyOrderConfirmed(ctx, b, spec, svc, key, meta)
 			if notifyErr != nil {
 				r.log.Error(
 					"send admin order notification",
