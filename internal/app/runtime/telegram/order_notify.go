@@ -13,7 +13,7 @@ import (
 	"github.com/koha90/shopcore/internal/manager"
 )
 
-// OrderNoficationMeta contains Telegram-side metadata attached to one order notification.
+// OrderNotificationMeta contains Telegram-side metadata attached to one order notification.
 type OrderNotificationMeta struct {
 	BotName     string
 	BotUsername string
@@ -71,11 +71,7 @@ func buildAdminOrderNotificationView(
 	text.WriteString("🛒 Новый заказ\n\n")
 
 	text.WriteString("Бот: ")
-	if spec.Name != "" {
-		text.WriteString(spec.Name)
-	} else {
-		text.WriteString(spec.ID)
-	}
+	text.WriteString(formatBotLabel(spec))
 	text.WriteString("\n")
 
 	if meta.BotUsername != "" {
@@ -145,5 +141,17 @@ func buildTelegramDisplayName(user *models.User) string {
 		return "@" + user.Username
 	default:
 		return ""
+	}
+}
+
+func formatBotLabel(spec manager.BotSpec) string {
+	username := strings.TrimPrefix(strings.TrimSpace(spec.TelegramUsername), "@")
+	switch {
+	case username != "":
+		return "@" + username
+	case strings.TrimSpace(spec.TelegramBotName) != "":
+		return strings.TrimSpace(spec.TelegramBotName)
+	default:
+		return strings.TrimSpace(spec.Name)
 	}
 }

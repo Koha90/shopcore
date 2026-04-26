@@ -15,8 +15,9 @@ func TestBuildAdminOrderNotificationView(t *testing.T) {
 
 	vm := buildAdminOrderNotificationView(
 		manager.BotSpec{
-			ID:   "bot-1",
-			Name: "shop-main-bot",
+			ID:               "bot-1",
+			Name:             "shop-main-bot",
+			TelegramUsername: "Koha90_bot",
 		},
 		OrderNotificationMeta{
 			BotUsername: "shop_main_bot",
@@ -35,10 +36,44 @@ func TestBuildAdminOrderNotificationView(t *testing.T) {
 	)
 
 	assert.Contains(t, vm.Text, "Новый заказ")
-	assert.Contains(t, vm.Text, "shop-main-bot")
+	assert.Contains(t, vm.Text, "Бот: @Koha90_bot")
+	assert.NotContains(t, vm.Text, "Бот: shop-main-bot")
 	assert.Contains(t, vm.Text, "Пермь")
 	assert.Contains(t, vm.Text, "Мотовилихинский")
 	assert.Contains(t, vm.Text, "3000 ₽")
 	assert.Contains(t, vm.Text, "123")
 	assert.Contains(t, vm.Text, "456")
+}
+
+func TestFormatBotLabel_FallbackToTelegramBotName(t *testing.T) {
+	t.Parallel()
+
+	got := formatBotLabel(manager.BotSpec{
+		Name:            "shop-main-bot",
+		TelegramBotName: "Koha90 Bot",
+	})
+
+	assert.Equal(t, "Koha90 Bot", got)
+}
+
+func TestFormatBotLabel_FallbackToSpecName(t *testing.T) {
+	t.Parallel()
+
+	got := formatBotLabel(manager.BotSpec{
+		Name: "shop-main-bot",
+	})
+
+	assert.Equal(t, "shop-main-bot", got)
+}
+
+func TestFormatBotLabel_PrefersTelegramUsername(t *testing.T) {
+	t.Parallel()
+
+	got := formatBotLabel(manager.BotSpec{
+		Name:             "shop-main-bot",
+		TelegramBotName:  "Koha90 Bot",
+		TelegramUsername: "Koha90_bot",
+	})
+
+	assert.Equal(t, "@Koha90_bot", got)
 }
