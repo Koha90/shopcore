@@ -507,3 +507,58 @@ func TestService_ListEnabledRuntimeBots_PropagatesStartScenario(t *testing.T) {
 	require.Len(t, list, 1)
 	require.Equal(t, "inline_catalog", list[0].StartScenario)
 }
+
+func TestService_UpdateTelegramBotMetadata(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.CreateDatabaseProfile(context.Background(), botconfig.CreateDatabaseProfileParams{
+		ID:        "main-db",
+		Name:      "Main DB",
+		Driver:    "postgres",
+		DSN:       "postgres://main",
+		IsEnabled: true,
+	})
+	require.NoError(t, err)
+
+	err = svc.CreateBot(context.Background(), botconfig.CreateBotParams{
+		ID:            "shop-main",
+		Name:          "Shop Main",
+		Token:         "token-123456",
+		DatabaseID:    "main-db",
+		StartScenario: "reply_welcome",
+		IsEnabled:     true,
+	})
+	require.NoError(t, err)
+
+	err = svc.UpdateTelegramBotMetadata(
+		context.Background(),
+		"shop-main",
+		777000123,
+		"shop_main_bot",
+		"Shop Main Bot",
+	)
+	require.NoError(t, err)
+
+	got, err := svc.BotByID(context.Background(), "shop-main")
+	require.NoError(t, err)
+	require.Equal(t, int64(777000123), got.TelegramBotID)
+	require.Equal(t, "shop_main_bot", got.TelegramUsername)
+	require.Equal(t, "Shop Main Bot", got.TelegramBotName)
+}
+
+func TestService_UpdateTelegramBotMetadata_BotNotFound(t *testing.T) {
+	bots := botconfigmem.NewBotRepository()
+	dbs := botconfigmem.NewDatabaseProfileRepository()
+	svc := botconfig.NewService(bots, dbs, nil)
+
+	err := svc.UpdateTelegramBotMetadata(
+		context.Background(),
+		"missing-bot",
+		1,
+		"missing_bot",
+		"Missing Bot",
+	)
+	require.ErrorIs(t, err, botconfig.ErrBotNotFound)
+}

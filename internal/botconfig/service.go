@@ -274,3 +274,31 @@ func (s *Service) UpdateBotToken(ctx context.Context, id string, token string) e
 
 	return s.bots.Save(ctx, bot)
 }
+
+// UpdateTelegramBotMetadata updates runtime-fetched Telegram bot identity fields.
+//
+// This method is intended for Telegram runtime synchronization after successful
+// bot startup. It does not modify operator-managed configuration fields.
+func (s *Service) UpdateTelegramBotMetadata(
+	ctx context.Context,
+	id string,
+	telegramBotID int64,
+	telegramUsername string,
+	telegramBotName string,
+) error {
+	if id == "" {
+		return ErrBotIDEmpty
+	}
+
+	bot, err := s.bots.ByID(ctx, id)
+	if err != nil {
+		return ErrBotNotFound
+	}
+
+	bot.TelegramBotID = telegramBotID
+	bot.TelegramUsername = telegramUsername
+	bot.TelegramBotName = telegramBotName
+	bot.UpdatedAt = time.Now()
+
+	return s.bots.Save(ctx, bot)
+}

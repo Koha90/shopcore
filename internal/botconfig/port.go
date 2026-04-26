@@ -12,4 +12,12 @@ type ServicePort interface {
 	ListDatabaseProfiles(ctx context.Context) ([]DatabaseProfileView, error)
 	DatabaseProfileByID(ctx context.Context, id string) (DatabaseProfileView, error)
 	CreateDatabaseProfile(ctx context.Context, params CreateDatabaseProfileParams) error
+
+	UpdateTelegramBotMetadata(
+		ctx context.Context,
+		id string,
+		telegramBotID int64,
+		telegramUsername string,
+		telegramBotName string,
+	) error
 }
