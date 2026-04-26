@@ -82,14 +82,16 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 		return errors.New("telegram token is required")
 	}
 
-	runner := *r
-	runner.activeMessageMu = sync.RWMutex{}
-	runner.activeMessageID = make(map[flow.SessionKey]int)
-
-	runner.log = r.log.With(
-		"bot_id", spec.ID,
-		"bot_name", spec.Name,
-	)
+	runner := &Runner{
+		cfg: r.cfg,
+		log: r.log.With(
+			"bot_id", spec.ID,
+			"bot_name", spec.Name,
+		),
+		flowFactory:     r.flowFactory,
+		adminAccess:     r.adminAccess,
+		activeMessageID: make(map[flow.SessionKey]int),
+	}
 
 	svc, err := runner.flowFactory(spec)
 	if err != nil {

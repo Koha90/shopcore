@@ -227,7 +227,7 @@ func (m Model) renderList() string {
 
 	visible := m.visibleBots()
 
-	const labelWidth = 25
+	const labelWidth = 30
 
 	if len(visible) == 0 {
 		lines = append(lines, m.theme.Muted.Render("no bots match filter"))
@@ -255,7 +255,7 @@ func (m Model) renderList() string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.theme.Border.GetForeground()).
 		Padding(1, 2).
-		Width(42)
+		Width(50)
 
 	return box.Render(strings.Join(lines, "\n"))
 }
@@ -268,7 +268,7 @@ func (m Model) renderDetails() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Details"))
 
-	const labelWidth = 12
+	const labelWidth = 20
 
 	if info == nil {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
@@ -322,7 +322,7 @@ func (m Model) renderBotActions() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot options"))
 
-	const labelWidth = 12
+	const labelWidth = 20
 
 	if info == nil {
 		lines = append(lines, m.theme.Muted.Render("nothing selected"))
@@ -364,7 +364,7 @@ func (m Model) renderBotConfig() string {
 	var lines []string
 	lines = append(lines, m.theme.ListHeader.Render("Bot config"))
 
-	const labelWidth int = 12
+	const labelWidth int = 20
 
 	if m.selectedBotConfig == nil {
 		lines = append(lines, m.theme.Muted.Render("loading or unavailable"))
@@ -415,7 +415,7 @@ func (m Model) renderEditBotConfig() string {
 		{EditFieldCancel, "Cancel", ""},
 	}
 
-	const labelWidth = 12
+	const labelWidth = 20
 
 	for _, row := range rows {
 		value := row.value
@@ -462,7 +462,7 @@ func (m Model) renderDatabaseProfileSelect() string {
 	if len(m.databaseProfiles) == 0 {
 		lines = append(lines, m.theme.Muted.Render("loading or unavailable"))
 	} else {
-		const labelWidth = 12
+		const labelWidth = 20
 
 		for i, profile := range m.databaseProfiles {
 			name := profile.Name
