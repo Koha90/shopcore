@@ -107,3 +107,20 @@ func parseAdminOrdersChateID(input string) (int64, error) {
 
 	return id, nil
 }
+
+func formatTelegramBotID(id int64) string {
+	if id == 0 {
+		return "unknown"
+	}
+
+	return strconv.FormatInt(id, 10)
+}
+
+func formatTelegramUsername(username string) string {
+	username = strings.TrimPrefix(strings.TrimSpace(username), "@")
+	if username == "" {
+		return "unknown"
+	}
+
+	return "@" + username
+}

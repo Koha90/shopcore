@@ -152,6 +152,11 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 			"bot_id", spec.ID,
 			"err", err,
 		)
+	} else {
+		runner.log.Info(
+			"telegram bot metadata sync completed",
+			"bot_id", spec.ID,
+		)
 	}
 
 	b.RegisterHandler(

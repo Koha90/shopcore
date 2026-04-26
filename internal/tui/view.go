@@ -302,6 +302,9 @@ func (m Model) renderDetails() string {
 			lines = append(lines, renderKeyValue(labelWidth, "Scenario", cfg.StartScenario))
 			lines = append(lines, renderKeyValue(labelWidth, "Admin IDs", formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs)))
 			lines = append(lines, renderKeyValue(labelWidth, "Orders Chat", formatAdminOrdersChatID(cfg.AdminOrdersChatID)))
+			lines = append(lines, renderKeyValue(labelWidth, "TG Bot ID", formatTelegramBotID(cfg.TelegramBotID)))
+			lines = append(lines, renderKeyValue(labelWidth, "TG Username", formatTelegramUsername(cfg.TelegramUsername)))
+			lines = append(lines, renderKeyValue(labelWidth, "TG Name", cfg.TelegramBotName))
 			lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		}
 
@@ -378,6 +381,9 @@ func (m Model) renderBotConfig() string {
 		lines = append(lines, renderKeyValue(labelWidth, "Start Scenario", cfg.StartScenario))
 		lines = append(lines, renderKeyValue(labelWidth, "Admin IDs", formatTelegramAdminUserIDs(cfg.TelegramAdminUserIDs)))
 		lines = append(lines, renderKeyValue(labelWidth, "Orders Chat", formatAdminOrdersChatID(cfg.AdminOrdersChatID)))
+		lines = append(lines, renderKeyValue(labelWidth, "TG Bot ID", formatTelegramBotID(cfg.TelegramBotID)))
+		lines = append(lines, renderKeyValue(labelWidth, "TG Username", formatTelegramUsername(cfg.TelegramUsername)))
+		lines = append(lines, renderKeyValue(labelWidth, "TG Name", cfg.TelegramBotName))
 		lines = append(lines, renderKeyValue(labelWidth, "Enabled", fmt.Sprintf("%t", cfg.IsEnabled)))
 		lines = append(lines, renderKeyValue(labelWidth, "Updated", cfg.UpdatedAt.Format(time.DateTime)))
 	}

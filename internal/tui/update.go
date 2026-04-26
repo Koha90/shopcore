@@ -20,13 +20,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		m.refresh()
-		return m, tickCmd()
+
+		id := m.selectedID()
+		if id == "" || m.config == nil {
+			return m, tickCmd()
+		}
+		return m, tea.Batch(
+			tickCmd(),
+			loadBotConfigCmd(m.config, id),
+		)
 
 	case actionResultMsg:
 		m.message = msg.message
 		m.lastErr = msg.err
 		m.refresh()
-		return m, nil
+
+		id := m.selectedID()
+		if id == "" {
+			return m, nil
+		}
+		return m, loadBotConfigCmd(m.config, id)
 
 	case tea.MouseWheelMsg:
 		if m.screen != ScreenList {

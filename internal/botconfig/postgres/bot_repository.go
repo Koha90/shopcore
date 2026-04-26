@@ -26,10 +26,13 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 			start_scenario,
 			telegram_admin_user_ids,
 			admin_orders_chat_id,
+			telegram_bot_id,
+			telegram_username,
+			telegram_bot_name,
 			is_enabled,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp())
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, clock_timestamp())
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			token = EXCLUDED.token,
@@ -37,6 +40,9 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 			start_scenario = EXCLUDED.start_scenario,
 			telegram_admin_user_ids = EXCLUDED.telegram_admin_user_ids,
 			admin_orders_chat_id = EXCLUDED.admin_orders_chat_id,
+			telegram_bot_id = EXCLUDED.telegram_bot_id,
+			telegram_username = EXCLUDED.telegram_username,
+			telegram_bot_name = EXCLUDED.telegram_bot_name,
 			is_enabled = EXCLUDED.is_enabled,
 			updated_at = clock_timestamp()
 	`
@@ -56,6 +62,9 @@ func (r *BotRepository) Save(ctx context.Context, cfg *botconfig.BotConfig) erro
 		cfg.StartScenario,
 		adminUserIDs,
 		cfg.AdminOrdersChatID,
+		cfg.TelegramBotID,
+		cfg.TelegramUsername,
+		cfg.TelegramBotName,
 		cfg.IsEnabled,
 	)
 	return err

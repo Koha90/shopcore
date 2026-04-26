@@ -201,6 +201,9 @@ func syncRuntimeSpecCmd(cfg BotConfigService, mgr BotManager, id string) tea.Cmd
 			StartScenario:        view.StartScenario,
 			TelegramAdminUserIDs: view.TelegramAdminUserIDs,
 			AdminOrdersChatID:    view.AdminOrdersChatID,
+			TelegramBotID:        view.TelegramBotID,
+			TelegramUsername:     view.TelegramUsername,
+			TelegramBotName:      view.TelegramBotName,
 		})
 
 		return runtimeSpecSyncedMsg{

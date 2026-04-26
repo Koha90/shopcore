@@ -36,6 +36,14 @@ func (r *Runner) syncBotMetadata(
 		return fmt.Errorf("update telegram bot metadata: %w", err)
 	}
 
+	r.log.Info(
+		"telegram bot metadata synced",
+		"bot_id", spec.ID,
+		"telegram_bot_id", meta.ID,
+		"telegram_username", meta.Username,
+		"telegram_bot_name", meta.Name,
+	)
+
 	return nil
 }
 
