@@ -129,14 +129,13 @@ func (r *Runner) callbackHandler(
 
 		if actionID == flow.ActionOrderConfirm {
 			meta := OrderNotificationMeta{
-				BotUsername: "",
-				UserID:      update.CallbackQuery.From.ID,
-				ChatID:      msg.Chat.ID,
-				UserName:    buildTelegramDisplayName(&update.CallbackQuery.From),
-				UserLogin:   update.CallbackQuery.From.Username,
+				UserID:    update.CallbackQuery.From.ID,
+				ChatID:    msg.Chat.ID,
+				UserName:  buildTelegramDisplayName(&update.CallbackQuery.From),
+				UserLogin: update.CallbackQuery.From.Username,
 			}
 
-			persistErr := r.persistConfirmedOrder(ctx, spec, svc, key, meta)
+			order, persistErr := r.persistConfirmedOrder(ctx, spec, svc, key, meta)
 			if persistErr != nil {
 				r.log.Error(
 					"persist confirmed order",
@@ -148,7 +147,7 @@ func (r *Runner) callbackHandler(
 				return
 			}
 
-			notifyErr := r.notifyOrderConfirmed(ctx, b, spec, svc, key, meta)
+			notifyErr := r.notifyOrderConfirmed(ctx, b, spec, order)
 			if notifyErr != nil {
 				r.log.Error(
 					"send admin order notification",
@@ -317,6 +316,27 @@ func callbackMessageContext(update *models.Update) (*models.Message, bool) {
 	}
 
 	return msg, true
+}
+
+// buildTelegramDisplayName returns best-effort human-readable Telegram user name.
+func buildTelegramDisplayName(user *models.User) string {
+	if user == nil {
+		return ""
+	}
+
+	first := strings.TrimSpace(user.FirstName)
+	last := strings.TrimSpace(user.LastName)
+
+	switch {
+	case first != "" && last != "":
+		return first + " " + last
+	case first != "":
+		return first
+	case user.Username != "":
+		return "@" + user.Username
+	default:
+		return ""
+	}
 }
 
 func isTelegramMessageNotModified(err error) bool {

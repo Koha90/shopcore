@@ -2,56 +2,28 @@ package telegram
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	tgbot "github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 
 	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
+	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
-// OrderNotificationMeta contains Telegram-side metadata attached to one order notification.
-type OrderNotificationMeta struct {
-	BotName     string
-	BotUsername string
-
-	UserID    int64
-	ChatID    int64
-	UserName  string
-	UserLogin string
-}
-
-// notifyOrderConfirmed sends order notification to configured admin chat.
-//
-// Notification delivery belongs to Telegram runtime layer.
-// Flow remains transport-agnostic and only provides resolved order context.
+// notifyOrderConfirmed sends persisted order notification to configured admin chat.
 func (r *Runner) notifyOrderConfirmed(
 	ctx context.Context,
 	b *tgbot.Bot,
 	spec manager.BotSpec,
-	svc *flow.Service,
-	key flow.SessionKey,
-	meta OrderNotificationMeta,
+	order ordersvc.Order,
 ) error {
 	if spec.AdminOrdersChatID == 0 {
 		return nil
 	}
-	if svc == nil {
-		return fmt.Errorf("flow service is nil")
-	}
 
-	orderCtx, err := svc.CurrentOrderContext(ctx, key)
-	if err != nil {
-		if errors.Is(err, flow.ErrOrderContextUnavailable) {
-			return nil
-		}
-		return fmt.Errorf("resolve order context: %w", err)
-	}
-
-	vm := buildAdminOrderNotificationView(spec, meta, orderCtx)
+	vm := buildAdminOrderNotificationView(spec, order)
 
 	if _, err := r.sendTextMessage(ctx, b, spec.AdminOrdersChatID, vm); err != nil {
 		return fmt.Errorf("send admin order notification: %w", err)
@@ -63,37 +35,34 @@ func (r *Runner) notifyOrderConfirmed(
 // buildAdminOrderNotificationView builds one admin-facing order notification card.
 func buildAdminOrderNotificationView(
 	spec manager.BotSpec,
-	meta OrderNotificationMeta,
-	order flow.OrderContext,
+	order ordersvc.Order,
 ) flow.ViewModel {
 	var text strings.Builder
 
 	text.WriteString("🛒 Новый заказ\n\n")
+	text.WriteString(fmt.Sprintf("Заказ: #%d\n", order.ID))
+	text.WriteString("Статус: ")
+	text.WriteString(formatOrderStatusLabel(order.Status))
+	text.WriteString("\n")
 
 	text.WriteString("Бот: ")
 	text.WriteString(formatBotLabel(spec))
-	text.WriteString("\n")
+	text.WriteString("\n\n")
 
-	if meta.BotUsername != "" {
-		text.WriteString("Username бота: @")
-		text.WriteString(strings.TrimPrefix(meta.BotUsername, "@"))
-		text.WriteString("\n")
-	}
-
-	if meta.UserName != "" {
+	if order.UserName != "" {
 		text.WriteString("Пользователь: ")
-		text.WriteString(meta.UserName)
+		text.WriteString(order.UserName)
 		text.WriteString("\n")
 	}
 
-	if meta.UserLogin != "" {
+	if order.UserUsername != "" {
 		text.WriteString("Логин: @")
-		text.WriteString(strings.TrimPrefix(meta.UserLogin, "@"))
+		text.WriteString(strings.TrimPrefix(order.UserUsername, "@"))
 		text.WriteString("\n")
 	}
 
-	text.WriteString(fmt.Sprintf("User ID: %d\n", meta.UserID))
-	text.WriteString(fmt.Sprintf("Chat ID: %d\n\n", meta.ChatID))
+	text.WriteString(fmt.Sprintf("User ID: %d\n", order.UserID))
+	text.WriteString(fmt.Sprintf("Chat ID: %d\n\n", order.ChatID))
 
 	text.WriteString("Город: ")
 	text.WriteString(order.CityName)
@@ -104,48 +73,72 @@ func buildAdminOrderNotificationView(
 	text.WriteString("\n")
 
 	text.WriteString("Товар: ")
-	text.WriteString(order.ProductLabel)
+	text.WriteString(order.ProductName)
 	text.WriteString("\n")
 
 	text.WriteString("Вариант: ")
-	text.WriteString(order.VariantLabel)
+	text.WriteString(order.VariantName)
 	text.WriteString("\n")
 
 	text.WriteString("Цена: ")
-	if order.BasePriceText != "" {
-		text.WriteString(order.BasePriceText)
+	if order.PriceText != "" {
+		text.WriteString(order.PriceText)
 	} else {
 		text.WriteString("уточняется")
 	}
 
-	return flow.ViewModel{
+	actions := buildAdminOrderActions(order)
+
+	vm := flow.ViewModel{
 		Text: text.String(),
 	}
-}
 
-// buildTelegramDisplayName returns best-effort human-readable Telegram user name.
-func buildTelegramDisplayName(user *models.User) string {
-	if user == nil {
-		return ""
+	if len(actions) > 0 {
+		vm.Inline = &flow.InlineKeyboardView{
+			Sections: []flow.ActionSection{
+				{
+					Columns: 1,
+					Actions: actions,
+				},
+			},
+		}
 	}
 
-	first := strings.TrimSpace(user.FirstName)
-	last := strings.TrimSpace(user.LastName)
+	return vm
+}
 
-	switch {
-	case first != "" && last != "":
-		return first + " " + last
-	case first != "":
-		return first
-	case user.Username != "":
-		return "@" + user.Username
+// buildAdminOrderActions returns operator actions allowed for current order status.
+func buildAdminOrderActions(order ordersvc.Order) []flow.ActionButton {
+	switch order.Status {
+	case ordersvc.OrderStatusNew:
+		return []flow.ActionButton{
+			{
+				ID:    buildAdminOrderActionTake(order.ID),
+				Label: "Взять в работу",
+			},
+			{
+				ID:    buildAdminOrderActionClose(order.ID),
+				Label: "Закрыть",
+			},
+		}
+
+	case ordersvc.OrderStatusInProgress:
+		return []flow.ActionButton{
+			{
+				ID:    buildAdminOrderActionClose(order.ID),
+				Label: "Закрыть",
+			},
+		}
+
 	default:
-		return ""
+		return nil
 	}
 }
 
+// formatBotLabel returns best available operator-facing bot label.
 func formatBotLabel(spec manager.BotSpec) string {
 	username := strings.TrimPrefix(strings.TrimSpace(spec.TelegramUsername), "@")
+
 	switch {
 	case username != "":
 		return "@" + username
@@ -153,5 +146,19 @@ func formatBotLabel(spec manager.BotSpec) string {
 		return strings.TrimSpace(spec.TelegramBotName)
 	default:
 		return strings.TrimSpace(spec.Name)
+	}
+}
+
+// formatOrderStatusLabel renders operator-facing order status text.
+func formatOrderStatusLabel(status ordersvc.OrderStatus) string {
+	switch status {
+	case ordersvc.OrderStatusNew:
+		return "new"
+	case ordersvc.OrderStatusInProgress:
+		return "in_progress"
+	case ordersvc.OrderStatusClosed:
+		return "closed"
+	default:
+		return string(status)
 	}
 }

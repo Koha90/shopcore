@@ -1,6 +1,8 @@
 package service
 
-import "context"
+import (
+	"context"
+)
 
 // OrderStatus is persisted operator-visible order state.
 type OrderStatus string
@@ -115,4 +117,10 @@ type OrderRecord struct {
 
 	PriceText string
 	Status    OrderStatus
+}
+
+type RuntimeService interface {
+	OrderCreator
+	OrderReader
+	OrderStatusUpdater
 }

@@ -10,10 +10,10 @@ import (
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
-// OrderCreatorFactory builds one order creator for one bot runtime instance.
+// OrderServiceFactory builds one order runtime service for one bot runtime instance.
 //
 // Factory uses bot runtime spec to choose the correct database wiring.
-type OrderCreatorFactory func(spec manager.BotSpec) (ordersvc.OrderCreator, error)
+type OrderServiceFactory func(spec manager.BotSpec) (ordersvc.RuntimeService, error)
 
 // persistConfirmedOrder stores confirmed order before sending admin notification.
 //
@@ -25,31 +25,31 @@ func (r *Runner) persistConfirmedOrder(
 	svc *flow.Service,
 	key flow.SessionKey,
 	meta OrderNotificationMeta,
-) error {
-	if r == nil || r.orderCreatorFactory == nil {
-		return nil
+) (ordersvc.Order, error) {
+	if r == nil || r.orderFactory == nil {
+		return ordersvc.Order{}, nil
 	}
 	if svc == nil {
-		return fmt.Errorf("flow service is nil")
+		return ordersvc.Order{}, fmt.Errorf("flow service is nil")
 	}
 
-	creator, err := r.orderCreatorFactory(spec)
+	orders, err := r.orderFactory(spec)
 	if err != nil {
-		return fmt.Errorf("build order creator: %w", err)
+		return ordersvc.Order{}, fmt.Errorf("build order creator: %w", err)
 	}
-	if creator == nil {
-		return nil
+	if orders == nil {
+		return ordersvc.Order{}, nil
 	}
 
 	orderCtx, err := svc.CurrentOrderContext(ctx, key)
 	if err != nil {
 		if errors.Is(err, flow.ErrOrderContextUnavailable) {
-			return nil
+			return ordersvc.Order{}, nil
 		}
-		return fmt.Errorf("resolve order context: %w", err)
+		return ordersvc.Order{}, fmt.Errorf("resolve order context: %w", err)
 	}
 
-	_, err = creator.Create(ctx, ordersvc.CreateOrderParams{
+	created, err := orders.Create(ctx, ordersvc.CreateOrderParams{
 		BotID:        spec.ID,
 		BotName:      spec.Name,
 		ChatID:       meta.ChatID,
@@ -67,8 +67,13 @@ func (r *Runner) persistConfirmedOrder(
 		PriceText:    orderCtx.BasePriceText,
 	})
 	if err != nil {
-		return fmt.Errorf("create order: %w", err)
+		return ordersvc.Order{}, fmt.Errorf("create order: %w", err)
 	}
 
-	return nil
+	order, err := orders.ByID(ctx, created.ID)
+	if err != nil {
+		return ordersvc.Order{}, fmt.Errorf("get created order: %w", err)
+	}
+
+	return order, nil
 }

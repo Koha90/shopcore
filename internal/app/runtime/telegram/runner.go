@@ -12,7 +12,6 @@ import (
 
 	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
-	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
 // FlowServiceFactory builds one flow service for one bot runtime instance.
@@ -31,24 +30,16 @@ type BotMetadataUpdater interface {
 	) error
 }
 
-type OrderServiceFactory func(spec manager.BotSpec) (OrderRuntimeService, error)
-
-type OrderRuntimeService interface {
-	ordersvc.OrderCreator
-	ordersvc.OrderReader
-	ordersvc.OrderStatusUpdater
-}
-
 // Runner implements manager.Runner using Telegram Bot API.
 type Runner struct {
-	cfg                 Config
-	log                 *slog.Logger
-	flowFactory         FlowServiceFactory
-	orderCreatorFactory OrderCreatorFactory
-	botMetadataUpdater  BotMetadataUpdater
-	adminAccess         AdminAccessResolver
-	activeMessageMu     sync.RWMutex
-	activeMessageID     map[flow.SessionKey]int
+	cfg                Config
+	log                *slog.Logger
+	flowFactory        FlowServiceFactory
+	orderFactory       OrderServiceFactory
+	botMetadataUpdater BotMetadataUpdater
+	adminAccess        AdminAccessResolver
+	activeMessageMu    sync.RWMutex
+	activeMessageID    map[flow.SessionKey]int
 }
 
 // NewRunner cunstructs Telegram runtime runner with default flow wiring.
@@ -72,7 +63,7 @@ func NewRunnerWithDeps(
 	cfg Config,
 	log *slog.Logger,
 	flowFactory FlowServiceFactory,
-	orderCreatorFactory OrderCreatorFactory,
+	orderFactory OrderServiceFactory,
 	metadataUpdater BotMetadataUpdater,
 	adminAccess AdminAccessResolver,
 ) *Runner {
@@ -86,12 +77,12 @@ func NewRunnerWithDeps(
 	}
 
 	return &Runner{
-		cfg:                 cfg,
-		log:                 log,
-		flowFactory:         flowFactory,
-		orderCreatorFactory: orderCreatorFactory,
-		botMetadataUpdater:  metadataUpdater,
-		adminAccess:         normalizeAdminAccessResolver(adminAccess),
+		cfg:                cfg,
+		log:                log,
+		flowFactory:        flowFactory,
+		orderFactory:       orderFactory,
+		botMetadataUpdater: metadataUpdater,
+		adminAccess:        normalizeAdminAccessResolver(adminAccess),
 	}
 }
 
@@ -114,11 +105,11 @@ func (r *Runner) Run(ctx context.Context, spec manager.BotSpec, ready func()) er
 			"bot_id", spec.ID,
 			"bot_name", spec.Name,
 		),
-		flowFactory:         r.flowFactory,
-		orderCreatorFactory: r.orderCreatorFactory,
-		botMetadataUpdater:  r.botMetadataUpdater,
-		adminAccess:         r.adminAccess,
-		activeMessageID:     make(map[flow.SessionKey]int),
+		flowFactory:        r.flowFactory,
+		orderFactory:       r.orderFactory,
+		botMetadataUpdater: r.botMetadataUpdater,
+		adminAccess:        r.adminAccess,
+		activeMessageID:    make(map[flow.SessionKey]int),
 	}
 
 	svc, err := runner.flowFactory(spec)

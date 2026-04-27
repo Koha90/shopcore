@@ -11,19 +11,26 @@ import (
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
-type orderCreatorStub struct {
-	called bool
-	params ordersvc.CreateOrderParams
-	err    error
+type orderServiceStub struct {
+	called       bool
+	createParams ordersvc.CreateOrderParams
+	createResult ordersvc.CreateResult
+	order        ordersvc.Order
+	err          error
 }
 
-func (s *orderCreatorStub) Create(ctx context.Context, params ordersvc.CreateOrderParams) (ordersvc.CreateResult, error) {
+func (s *orderServiceStub) Create(ctx context.Context, params ordersvc.CreateOrderParams) (ordersvc.CreateResult, error) {
 	s.called = true
-	s.params = params
-	return ordersvc.CreateResult{
-		ID:     1,
-		Status: ordersvc.OrderStatusNew,
-	}, s.err
+	s.createParams = params
+	return s.createResult, s.err
+}
+
+func (s *orderServiceStub) ByID(ctx context.Context, id int64) (ordersvc.Order, error) {
+	return s.order, s.err
+}
+
+func (s *orderServiceStub) UpdateStatus(ctx context.Context, id int64, status ordersvc.OrderStatus) error {
+	return s.err
 }
 
 func TestRunnerPersistConfirmedOrder(t *testing.T) {
@@ -38,7 +45,6 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 		UserID: 202,
 	}
 
-	// Prepare order-confirmation state with catalog leaf in history.
 	store.Put(key, flow.Session{
 		Current: flow.ScreenOrderConfirm,
 		History: []flow.ScreenID{
@@ -46,22 +52,45 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 		},
 	})
 
-	ctx := context.Background()
+	orders := &orderServiceStub{
+		createResult: ordersvc.CreateResult{
+			ID:     42,
+			Status: ordersvc.OrderStatusNew,
+		},
+		order: ordersvc.Order{
+			ID:           42,
+			BotID:        "shop-main",
+			BotName:      "Shop Main",
+			ChatID:       101,
+			UserID:       202,
+			UserName:     "Алексей",
+			UserUsername: "koha90",
+			CityID:       "moscow",
+			CityName:     "Москва",
+			DistrictID:   "center",
+			DistrictName: "Центр",
+			ProductID:    "rose-box",
+			ProductName:  "Rose Box",
+			VariantID:    "small",
+			VariantName:  "S / 9 шт",
+			PriceText:    "2500 ₽",
+			Status:       ordersvc.OrderStatusNew,
+		},
+	}
 
-	creator := &orderCreatorStub{}
 	runner := NewRunnerWithDeps(
 		Config{},
 		nil,
 		nil,
-		func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
-			return creator, nil
+		func(spec manager.BotSpec) (ordersvc.RuntimeService, error) {
+			return orders, nil
 		},
 		nil,
 		nil,
 	)
 
-	err := runner.persistConfirmedOrder(
-		ctx,
+	got, err := runner.persistConfirmedOrder(
+		context.Background(),
 		manager.BotSpec{
 			ID:   "shop-main",
 			Name: "Shop Main",
@@ -77,21 +106,13 @@ func TestRunnerPersistConfirmedOrder(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.True(t, creator.called)
-	require.Equal(t, "shop-main", creator.params.BotID)
-	require.Equal(t, "Shop Main", creator.params.BotName)
-	require.Equal(t, int64(101), creator.params.ChatID)
-	require.Equal(t, int64(202), creator.params.UserID)
-	require.Equal(t, "Алексей", creator.params.UserName)
-	require.Equal(t, "koha90", creator.params.UserUsername)
+	require.True(t, orders.called)
+	require.Equal(t, "shop-main", orders.createParams.BotID)
+	require.Equal(t, int64(101), orders.createParams.ChatID)
+	require.Equal(t, int64(202), orders.createParams.UserID)
 
-	require.Equal(t, "moscow", creator.params.CityID)
-	require.Equal(t, "Москва", creator.params.CityName)
-	require.Equal(t, "center", creator.params.DistrictID)
-	require.Equal(t, "Центр", creator.params.DistrictName)
-	require.Equal(t, "rose-box", creator.params.ProductID)
-	require.Equal(t, "Rose Box", creator.params.ProductName)
-	require.Equal(t, "small", creator.params.VariantID)
-	require.Equal(t, "S / 9 шт", creator.params.VariantName)
-	require.Equal(t, "2500 ₽", creator.params.PriceText)
+	require.Equal(t, int64(42), got.ID)
+	require.Equal(t, ordersvc.OrderStatusNew, got.Status)
+	require.Equal(t, "Москва", got.CityName)
 }
+

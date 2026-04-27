@@ -5,11 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
+	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
-// TestBuildAdminOrderNotificationView verifies admin notification content.
 func TestBuildAdminOrderNotificationView(t *testing.T) {
 	t.Parallel()
 
@@ -19,30 +18,39 @@ func TestBuildAdminOrderNotificationView(t *testing.T) {
 			Name:             "shop-main-bot",
 			TelegramUsername: "Koha90_bot",
 		},
-		OrderNotificationMeta{
-			BotUsername: "shop_main_bot",
-			UserID:      123,
-			ChatID:      456,
-			UserName:    "Алексей",
-			UserLogin:   "koha90",
-		},
-		flow.OrderContext{
-			CityName:      "Пермь",
-			DistrictName:  "Мотовилихинский",
-			ProductLabel:  "«Мишки в лесу 🌳» Шишкин",
-			VariantLabel:  "Мишки 🧸",
-			BasePriceText: "3000 ₽",
+		ordersvc.Order{
+			ID:           42,
+			BotID:        "bot-1",
+			BotName:      "shop-main-bot",
+			UserID:       123,
+			ChatID:       456,
+			UserName:     "Алексей",
+			UserUsername: "koha90",
+			CityName:     "Пермь",
+			DistrictName: "Мотовилихинский",
+			ProductName:  "«Мишки в лесу 🌳» Шишкин",
+			VariantName:  "Мишки 🧸",
+			PriceText:    "3000 ₽",
+			Status:       ordersvc.OrderStatusNew,
 		},
 	)
 
 	assert.Contains(t, vm.Text, "Новый заказ")
+	assert.Contains(t, vm.Text, "Заказ: #42")
+	assert.Contains(t, vm.Text, "Статус: new")
 	assert.Contains(t, vm.Text, "Бот: @Koha90_bot")
-	assert.NotContains(t, vm.Text, "Бот: shop-main-bot")
 	assert.Contains(t, vm.Text, "Пермь")
 	assert.Contains(t, vm.Text, "Мотовилихинский")
 	assert.Contains(t, vm.Text, "3000 ₽")
 	assert.Contains(t, vm.Text, "123")
 	assert.Contains(t, vm.Text, "456")
+
+	if assert.NotNil(t, vm.Inline) {
+		assert.Len(t, vm.Inline.Sections, 1)
+		assert.Len(t, vm.Inline.Sections[0].Actions, 2)
+		assert.Equal(t, "Взять в работу", vm.Inline.Sections[0].Actions[0].Label)
+		assert.Equal(t, "Закрыть", vm.Inline.Sections[0].Actions[1].Label)
+	}
 }
 
 func TestFormatBotLabel_FallbackToTelegramBotName(t *testing.T) {
