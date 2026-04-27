@@ -178,8 +178,8 @@ func (s *Service) ResolveReplyAction(text string) (ActionID, bool) {
 	}
 }
 
-func buildCompactRootSelectionView(roots []CatalogNode) ViewModel {
-	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact, roots, false)
+func buildCompactRootSelectionView(roots []CatalogNode, canAdmin bool) ViewModel {
+	return buildRootSelectionView(DefaultCompactRootColumns, RootVariantCompact, roots, canAdmin)
 }
 
 func buildExtendedRootSelectionView(roots []CatalogNode, canAdmin bool) ViewModel {

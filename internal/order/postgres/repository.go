@@ -98,7 +98,7 @@ func (r *Repository) ByID(ctx context.Context, id int64) (ordersvc.Order, error)
 					variant_id,
 					variant_name,
 					price_text,
-					status,
+					status
 			from orders
 			where id = $1
 	`

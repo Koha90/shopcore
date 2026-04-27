@@ -13,7 +13,7 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 		return buildReplyWelcomeStart()
 
 	case ScreenRootCompact:
-		return buildCompactRootSelectionView(catalog.RootNodes())
+		return buildCompactRootSelectionView(catalog.RootNodes(), canAdmin)
 
 	case ScreenRootExtended:
 		return buildExtendedRootSelectionView(catalog.RootNodes(), canAdmin)
@@ -97,19 +97,21 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 }
 
 func buildReplyWelcomeStart() ViewModel {
+	rows := [][]ReplyButton{
+		{
+			{ID: ActionCatalogStart, Label: "♻️ Каталог"},
+			{ID: ActionCabinetOpen, Label: "⚙️ Мой кабинет"},
+		},
+		{
+			{ID: ActionSupportOpen, Label: "🤷‍♂️ Поддержка"},
+			{ID: ActionReviewsOpen, Label: "📨 Отзывы"},
+		},
+	}
+
 	return ViewModel{
 		Text: "Добро пожаловать 👋\nВыберите раздел:",
 		Reply: &ReplyKeyboardView{
-			Rows: [][]ReplyButton{
-				{
-					{ID: ActionCatalogStart, Label: "♻️ Каталог"},
-					{ID: ActionCabinetOpen, Label: "⚙️ Мой кабинет"},
-				},
-				{
-					{ID: ActionSupportOpen, Label: "🤷‍♂️ Поддержка"},
-					{ID: ActionReviewsOpen, Label: "📨 Отзывы"},
-				},
-			},
+			Rows: rows,
 		},
 	}
 }
@@ -206,6 +208,13 @@ func buildRootSelectionView(columns int, variant RootVariant, roots []CatalogNod
 		sections = append(sections, ActionSection{
 			Columns: 1,
 			Actions: utilityActions,
+		})
+	} else if variant == RootVariantCompact && canAdmin {
+		sections = append(sections, ActionSection{
+			Columns: 1,
+			Actions: []ActionButton{
+				{ID: ActionAdminOpen, Label: "Админка"},
+			},
 		})
 	}
 
