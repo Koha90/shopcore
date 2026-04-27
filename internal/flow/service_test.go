@@ -363,6 +363,38 @@ func TestStart_InlineCatalog_Admin_ShowsAdminButton(t *testing.T) {
 	require.Equal(t, ActionAdminOpen, vm.Inline.Sections[1].Actions[3].ID)
 }
 
+func TestHandleAction_CatalogStart_Admin_ShowsAdminButtonInCompactRoot(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-reply-admin")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-reply-admin",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply-admin",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 2)
+	require.True(t, hasInlineActionLabel(vm, "Админка"))
+	require.Equal(t, ActionAdminOpen, vm.Inline.Sections[1].Actions[0].ID)
+}
+
 func TestHandleAction_AdminOpen_NonAdmin_ReturnsUnknownAction(t *testing.T) {
 	t.Parallel()
 
@@ -376,6 +408,37 @@ func TestHandleAction_AdminOpen_NonAdmin_ReturnsUnknownAction(t *testing.T) {
 		CanAdmin:      false,
 	})
 	require.ErrorIs(t, err, ErrUnknownAction)
+}
+
+func TestHandleAction_CatalogStart_NonAdmin_HidesAdminButtonInCompactRoot(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil)
+	key := testSessionKey("shop-reply-user")
+
+	_, err := svc.Start(context.Background(), StartRequest{
+		BotID:         "shop-reply-user",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		SessionKey:    key,
+		CanAdmin:      false,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(context.Background(), ActionRequest{
+		BotID:         "shop-reply-user",
+		BotName:       "Reply Shop",
+		StartScenario: string(StartScenarioReplyWelcome),
+		ActionID:      ActionCatalogStart,
+		SessionKey:    key,
+		CanAdmin:      false,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, "Каталог\n\nВыберите раздел:", vm.Text)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.False(t, hasInlineActionLabel(vm, "Админка"))
 }
 
 func TestHandleAction_ProductScreen_ShowsVariantButtonsWithPrice(t *testing.T) {
