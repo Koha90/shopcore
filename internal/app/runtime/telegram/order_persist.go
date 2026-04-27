@@ -49,7 +49,7 @@ func (r *Runner) persistConfirmedOrder(
 		return fmt.Errorf("resolve order context: %w", err)
 	}
 
-	err = creator.Create(ctx, ordersvc.CreateOrderParams{
+	_, err = creator.Create(ctx, ordersvc.CreateOrderParams{
 		BotID:        spec.ID,
 		BotName:      spec.Name,
 		ChatID:       meta.ChatID,

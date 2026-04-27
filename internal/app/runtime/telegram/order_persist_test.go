@@ -17,10 +17,13 @@ type orderCreatorStub struct {
 	err    error
 }
 
-func (s *orderCreatorStub) Create(ctx context.Context, params ordersvc.CreateOrderParams) error {
+func (s *orderCreatorStub) Create(ctx context.Context, params ordersvc.CreateOrderParams) (ordersvc.CreateResult, error) {
 	s.called = true
 	s.params = params
-	return s.err
+	return ordersvc.CreateResult{
+		ID:     1,
+		Status: ordersvc.OrderStatusNew,
+	}, s.err
 }
 
 func TestRunnerPersistConfirmedOrder(t *testing.T) {

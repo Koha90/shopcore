@@ -40,7 +40,7 @@ func TestRepositoryCreate(t *testing.T) {
 	pool := openTestPool(t)
 	repo := NewRepository(pool)
 
-	err := repo.Create(context.Background(), ordersvc.OrderRecord{
+	got, err := repo.Create(context.Background(), ordersvc.OrderRecord{
 		BotID:        "shop-main",
 		BotName:      "Shop Main",
 		ChatID:       101,
@@ -56,9 +56,11 @@ func TestRepositoryCreate(t *testing.T) {
 		VariantID:    "large",
 		VariantName:  "L / 25 шт",
 		PriceText:    "5900 ₽",
-		Status:       ordersvc.StatusNew,
+		Status:       ordersvc.OrderStatusNew,
 	})
 	require.NoError(t, err)
+	require.NotZero(t, got.ID)
+	require.Equal(t, ordersvc.OrderStatusNew, got.Status)
 
 	var (
 		botID       string
@@ -82,5 +84,5 @@ func TestRepositoryCreate(t *testing.T) {
 	require.Equal(t, int64(202), userID)
 	require.Equal(t, "Rose Box", productName)
 	require.Equal(t, "5900 ₽", priceText)
-	require.Equal(t, ordersvc.StatusNew, status)
+	require.Equal(t, string(ordersvc.OrderStatusNew), status)
 }

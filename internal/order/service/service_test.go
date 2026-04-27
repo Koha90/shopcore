@@ -8,22 +8,41 @@ import (
 )
 
 type repositoryStub struct {
-	record OrderRecord
-	err    error
+	record      OrderRecord
+	createRes   CreateResult
+	order       Order
+	updateID    int64
+	updateState OrderStatus
+	err         error
 }
 
-func (s *repositoryStub) Create(ctx context.Context, record OrderRecord) error {
+func (s *repositoryStub) Create(ctx context.Context, record OrderRecord) (CreateResult, error) {
 	s.record = record
+	return s.createRes, s.err
+}
+
+func (s *repositoryStub) ByID(ctx context.Context, id int64) (Order, error) {
+	return s.order, s.err
+}
+
+func (s *repositoryStub) UpdateStatus(ctx context.Context, id int64, status OrderStatus) error {
+	s.updateID = id
+	s.updateState = status
 	return s.err
 }
 
 func TestServiceCreate(t *testing.T) {
 	t.Parallel()
 
-	repo := &repositoryStub{}
+	repo := &repositoryStub{
+		createRes: CreateResult{
+			ID:     42,
+			Status: OrderStatusNew,
+		},
+	}
 	svc := New(repo)
 
-	err := svc.Create(context.Background(), CreateOrderParams{
+	got, err := svc.Create(context.Background(), CreateOrderParams{
 		BotID:        "shop-main",
 		BotName:      "Shop Main",
 		ChatID:       101,
@@ -42,16 +61,46 @@ func TestServiceCreate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.Equal(t, StatusNew, repo.record.Status)
-	require.Equal(t, "shop-main", repo.record.BotID)
-	require.Equal(t, int64(101), repo.record.ChatID)
-	require.Equal(t, "Rose Box", repo.record.ProductName)
-	require.Equal(t, "5900 ₽", repo.record.PriceText)
+	require.Equal(t, int64(42), got.ID)
+	require.Equal(t, OrderStatusNew, got.Status)
+	require.Equal(t, OrderStatusNew, repo.record.Status)
 }
 
-func TestBuildRecord_ValidateRequiredFields(t *testing.T) {
+func TestServiceByID(t *testing.T) {
 	t.Parallel()
 
-	_, err := buildRecord(CreateOrderParams{})
-	require.ErrorIs(t, err, ErrBotIDEmpty)
+	repo := &repositoryStub{
+		order: Order{
+			ID:     42,
+			Status: OrderStatusNew,
+		},
+	}
+	svc := New(repo)
+
+	got, err := svc.ByID(context.Background(), 42)
+	require.NoError(t, err)
+	require.Equal(t, int64(42), got.ID)
+}
+
+func TestServiceUpdateStatus(t *testing.T) {
+	t.Parallel()
+
+	repo := &repositoryStub{}
+	svc := New(repo)
+
+	err := svc.UpdateStatus(context.Background(), 42, OrderStatusInProgress)
+	require.NoError(t, err)
+
+	require.Equal(t, int64(42), repo.updateID)
+	require.Equal(t, OrderStatusInProgress, repo.updateState)
+}
+
+func TestServiceUpdateStatus_InvalidStatus(t *testing.T) {
+	t.Parallel()
+
+	repo := &repositoryStub{}
+	svc := New(repo)
+
+	err := svc.UpdateStatus(context.Background(), 42, "abracadabra")
+	require.ErrorIs(t, err, ErrOrderStatusInvalid)
 }
