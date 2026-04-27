@@ -86,3 +86,37 @@ func TestRepositoryCreate(t *testing.T) {
 	require.Equal(t, "5900 ₽", priceText)
 	require.Equal(t, string(ordersvc.OrderStatusNew), status)
 }
+
+func TestRepositoryUpdateStatus(t *testing.T) {
+	t.Parallel()
+
+	pool := openTestPool(t)
+	repo := NewRepository(pool)
+
+	created, err := repo.Create(context.Background(), ordersvc.OrderRecord{
+		BotID:        "shop-main",
+		BotName:      "Shop Main",
+		ChatID:       101,
+		UserID:       202,
+		UserName:     "Алексей",
+		UserUsername: "koha90",
+		CityID:       "moscow",
+		CityName:     "Москва",
+		DistrictID:   "center",
+		DistrictName: "Центр",
+		ProductID:    "rose-box",
+		ProductName:  "Rose Box",
+		VariantID:    "large",
+		VariantName:  "L / 25 шт",
+		PriceText:    "5900 ₽",
+		Status:       ordersvc.OrderStatusNew,
+	})
+	require.NoError(t, err)
+
+	err = repo.UpdateStatus(context.Background(), created.ID, ordersvc.OrderStatusInProgress)
+	require.NoError(t, err)
+
+	got, err := repo.ByID(context.Background(), created.ID)
+	require.NoError(t, err)
+	require.Equal(t, ordersvc.OrderStatusInProgress, got.Status)
+}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/koha90/shopcore/internal/app/runtime/telegram"
 	"github.com/koha90/shopcore/internal/manager"
 	orderpg "github.com/koha90/shopcore/internal/order/postgres"
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
@@ -24,8 +25,8 @@ type OrderPoolResolver interface {
 // postgres order repository -> order service
 func NewTelegramOrderFactory(
 	resolver OrderPoolResolver,
-) func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
-	return func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
+) func(spec manager.BotSpec) (telegram.OrderRuntimeService, error) {
+	return func(spec manager.BotSpec) (telegram.OrderRuntimeService, error) {
 		const op = "new telegram order factory"
 
 		if resolver == nil {

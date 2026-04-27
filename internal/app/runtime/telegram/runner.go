@@ -12,6 +12,7 @@ import (
 
 	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
+	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
 // FlowServiceFactory builds one flow service for one bot runtime instance.
@@ -28,6 +29,14 @@ type BotMetadataUpdater interface {
 		telegramUsername string,
 		telegramBotName string,
 	) error
+}
+
+type OrderServiceFactory func(spec manager.BotSpec) (OrderRuntimeService, error)
+
+type OrderRuntimeService interface {
+	ordersvc.OrderCreator
+	ordersvc.OrderReader
+	ordersvc.OrderStatusUpdater
 }
 
 // Runner implements manager.Runner using Telegram Bot API.
@@ -63,7 +72,7 @@ func NewRunnerWithDeps(
 	cfg Config,
 	log *slog.Logger,
 	flowFactory FlowServiceFactory,
-	orderFactory OrderCreatorFactory,
+	orderCreatorFactory OrderCreatorFactory,
 	metadataUpdater BotMetadataUpdater,
 	adminAccess AdminAccessResolver,
 ) *Runner {
@@ -80,7 +89,7 @@ func NewRunnerWithDeps(
 		cfg:                 cfg,
 		log:                 log,
 		flowFactory:         flowFactory,
-		orderCreatorFactory: orderFactory,
+		orderCreatorFactory: orderCreatorFactory,
 		botMetadataUpdater:  metadataUpdater,
 		adminAccess:         normalizeAdminAccessResolver(adminAccess),
 	}

@@ -134,15 +134,20 @@ func (r *Repository) ByID(ctx context.Context, id int64) (ordersvc.Order, error)
 }
 
 func (r *Repository) UpdateStatus(ctx context.Context, id int64, status ordersvc.OrderStatus) error {
+	const op = "update order status"
+
 	const q = `
 			update orders
 			set status = $2
 			where id = $1
 	`
 
-	_, err := r.pool.Exec(ctx, q, string(status))
+	tag, err := r.pool.Exec(ctx, q, string(status))
 	if err != nil {
-		return fmt.Errorf("update order status: %w", err)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("%s: order %d not found", op, id)
 	}
 
 	return nil

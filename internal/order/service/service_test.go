@@ -85,7 +85,12 @@ func TestServiceByID(t *testing.T) {
 func TestServiceUpdateStatus(t *testing.T) {
 	t.Parallel()
 
-	repo := &repositoryStub{}
+	repo := &repositoryStub{
+		order: Order{
+			ID:     42,
+			Status: OrderStatusNew,
+		},
+	}
 	svc := New(repo)
 
 	err := svc.UpdateStatus(context.Background(), 42, OrderStatusInProgress)
@@ -103,4 +108,52 @@ func TestServiceUpdateStatus_InvalidStatus(t *testing.T) {
 
 	err := svc.UpdateStatus(context.Background(), 42, "abracadabra")
 	require.ErrorIs(t, err, ErrOrderStatusInvalid)
+}
+
+func TestServiceUpdateStatus_AllowsNewToInProgress(t *testing.T) {
+	t.Parallel()
+
+	repo := &repositoryStub{
+		order: Order{
+			ID:     42,
+			Status: OrderStatusNew,
+		},
+	}
+	svc := New(repo)
+
+	err := svc.UpdateStatus(context.Background(), 42, OrderStatusInProgress)
+	require.NoError(t, err)
+	require.Equal(t, int64(42), repo.updateID)
+	require.Equal(t, OrderStatusInProgress, repo.updateState)
+}
+
+func TestServiceUpdateStatus_AllowsNewToClosed(t *testing.T) {
+	t.Parallel()
+
+	repo := &repositoryStub{
+		order: Order{
+			ID:     42,
+			Status: OrderStatusNew,
+		},
+	}
+	svc := New(repo)
+
+	err := svc.UpdateStatus(context.Background(), 42, OrderStatusClosed)
+	require.NoError(t, err)
+	require.Equal(t, OrderStatusClosed, repo.updateState)
+}
+
+func TestServiceUpdateStatus_RejectsClosedToInProgress(t *testing.T) {
+	t.Parallel()
+
+	repo := &repositoryStub{
+		order: Order{
+			ID:     42,
+			Status: OrderStatusClosed,
+		},
+	}
+	svc := New(repo)
+
+	err := svc.UpdateStatus(context.Background(), 42, OrderStatusInProgress)
+	require.ErrorIs(t, err, ErrOrderStatusTransitionDead)
 }

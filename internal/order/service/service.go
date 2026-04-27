@@ -8,20 +8,21 @@ import (
 )
 
 var (
-	ErrRepositoryNil      = errors.New("order repository is nil")
-	ErrBotIDEmpty         = errors.New("order bot id is required")
-	ErrChatIDEmpty        = errors.New("order chat id is required")
-	ErrUserIDEmpty        = errors.New("order user id is required")
-	ErrCityIDEmpty        = errors.New("order city id is required")
-	ErrDistrictIDEmpty    = errors.New("oreder district id is required")
-	ErrProductIDEmpty     = errors.New("order product id is required")
-	ErrVariantIDEmpty     = errors.New("order variant id is required")
-	ErrCityNameEmpty      = errors.New("order city name is required")
-	ErrDistrictNameEmpty  = errors.New("order district name is required")
-	ErrProductNameEmpty   = errors.New("order product name is required")
-	ErrVariantNameEmpty   = errors.New("order variant name is required")
-	ErrOrderIDEmpty       = errors.New("order id is required")
-	ErrOrderStatusInvalid = errors.New("order status is invalid")
+	ErrRepositoryNil             = errors.New("order repository is nil")
+	ErrBotIDEmpty                = errors.New("order bot id is required")
+	ErrChatIDEmpty               = errors.New("order chat id is required")
+	ErrUserIDEmpty               = errors.New("order user id is required")
+	ErrCityIDEmpty               = errors.New("order city id is required")
+	ErrDistrictIDEmpty           = errors.New("oreder district id is required")
+	ErrProductIDEmpty            = errors.New("order product id is required")
+	ErrVariantIDEmpty            = errors.New("order variant id is required")
+	ErrCityNameEmpty             = errors.New("order city name is required")
+	ErrDistrictNameEmpty         = errors.New("order district name is required")
+	ErrProductNameEmpty          = errors.New("order product name is required")
+	ErrVariantNameEmpty          = errors.New("order variant name is required")
+	ErrOrderIDEmpty              = errors.New("order id is required")
+	ErrOrderStatusInvalid        = errors.New("order status is invalid")
+	ErrOrderStatusTransitionDead = errors.New("order status transition is not allowed")
 )
 
 // Service creates persisted orders through one repository.
@@ -82,6 +83,15 @@ func (s *Service) UpdateStatus(ctx context.Context, id int64, status OrderStatus
 	status = normalizeStatus(status)
 	if !isValidStatus(status) {
 		return ErrOrderStatusInvalid
+	}
+
+	current, err := s.repo.ByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get current order: %w", err)
+	}
+
+	if !canTransitionOrderStatus(current.Status, status) {
+		return ErrOrderStatusTransitionDead
 	}
 
 	if err := s.repo.UpdateStatus(ctx, id, status); err != nil {
@@ -148,6 +158,19 @@ func isValidStatus(status OrderStatus) bool {
 	switch status {
 	case OrderStatusNew, OrderStatusInProgress, OrderStatusClosed:
 		return true
+	default:
+		return false
+	}
+}
+
+func canTransitionOrderStatus(from, to OrderStatus) bool {
+	switch from {
+	case OrderStatusNew:
+		return to == OrderStatusInProgress || to == OrderStatusClosed
+	case OrderStatusInProgress:
+		return to == OrderStatusClosed
+	case OrderStatusClosed:
+		return false
 	default:
 		return false
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/koha90/shopcore/internal/botconfig"
 	botconfigpg "github.com/koha90/shopcore/internal/botconfig/postgres"
 	"github.com/koha90/shopcore/internal/manager"
+	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
 
 // buildRunner assembles Telegram runtim runner with database-aware flow factory.
@@ -45,7 +46,21 @@ func buildRunner(
 	botConfigSvc := botconfig.NewService(botsRepo, profilesRepo, runtimeLog)
 
 	flowFactory := bootstrap.NewTelegramFlowFactory(poolRegistry)
-	orderFactory := bootstrap.NewTelegramOrderFactory(poolRegistry)
+	orderRuntimeFactory := bootstrap.NewTelegramFlowFactory(poolRegistry)
+
+	orderFactory := func(spec manager.BotSpec) (ordersvc.OrderCreator, error) {
+		svc, err := orderRuntimeFactory(spec)
+		if err != nil {
+			return nil, err
+		}
+
+		creator, ok := any(svc).(ordersvc.OrderCreator)
+		if !ok {
+			return nil, fmt.Errorf("order runtime service does not implement OrderCreator")
+		}
+
+		return creator, nil
+	}
 
 	adminAccess := telegram.SpecAdminAccessResolver{}
 
