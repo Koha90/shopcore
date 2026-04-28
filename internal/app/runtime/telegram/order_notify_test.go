@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/koha90/shopcore/internal/manager"
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
@@ -84,4 +85,56 @@ func TestFormatBotLabel_PrefersTelegramUsername(t *testing.T) {
 	})
 
 	assert.Equal(t, "@Koha90_bot", got)
+}
+
+func TestBuildAdminOrderNotificationView_InProgress(t *testing.T) {
+	t.Parallel()
+
+	vm := buildAdminOrderNotificationView(
+		manager.BotSpec{
+			Name:             "shop-main",
+			TelegramUsername: "Koha90_bot",
+		},
+		ordersvc.Order{
+			ID:           42,
+			UserID:       123,
+			ChatID:       456,
+			UserName:     "Алексей",
+			UserUsername: "koha90",
+			CityName:     "Пермь",
+			DistrictName: "Мотовилихинский",
+			ProductName:  "Rose Box",
+			VariantName:  "L / 25 шт",
+			PriceText:    "5900 ₽",
+			Status:       ordersvc.OrderStatusInProgress,
+		},
+	)
+
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Equal(t, "Закрыть", vm.Inline.Sections[0].Actions[0].Label)
+}
+
+func TestBuildAdminOrderNotificationView_Closed(t *testing.T) {
+	t.Parallel()
+
+	vm := buildAdminOrderNotificationView(
+		manager.BotSpec{Name: "shop-main"},
+		ordersvc.Order{
+			ID:           42,
+			UserID:       123,
+			ChatID:       456,
+			UserName:     "Алексей",
+			CityName:     "Пермь",
+			DistrictName: "Мотовилихинский",
+			ProductName:  "Rose Box",
+			VariantName:  "L / 25 шт",
+			PriceText:    "5900 ₽",
+			Status:       ordersvc.OrderStatusClosed,
+		},
+	)
+
+	require.Nil(t, vm.Inline)
+	require.Contains(t, vm.Text, "Статус: closed")
 }
