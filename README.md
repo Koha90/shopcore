@@ -34,6 +34,7 @@ It is a sales platform where different interfaces use the same domain and flow i
 - customer-facing catalog flow
 - reply and inline navigation
 - scenario-based start behavior
+- customer plain text notifications to the configured admin chat
 
 ### TUI
 - bot operator panel
@@ -163,6 +164,19 @@ Current catalog drill-down path:
 
 ---
 
+## Telegram customer messages
+
+Telegram runtime treats plain text in two steps:
+
+1. If the current flow session has pending input, text is passed to `flow.HandleText`.
+2. If there is no pending input and the sender is a customer, text is sent to `AdminOrdersChatID` as an operator notification.
+
+Admin users are skipped by customer-text notifications. Their text remains reserved for admin pending input and future admin commands.
+
+The runtime still does not query SQL or mutate catalog data directly. Customer message forwarding is a transport concern and only builds an admin-facing Telegram notification card.
+
+---
+
 ## What already works
 
 ### Flow
@@ -191,6 +205,7 @@ Current catalog drill-down path:
 - `manager.UpdateSpec(...)` already updates runtime spec
 - token/config changes can be picked up without full system restart
 - bot restart is enough to apply updated runtime spec
+- customer plain text messages can be forwarded to the configured admin chat
 
 ### Infra
 - Postgres
