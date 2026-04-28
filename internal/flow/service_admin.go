@@ -1220,6 +1220,9 @@ func isAdminAction(actionID ActionID) bool {
 	if _, _, ok := parseAdminCustomerReplyStartAction(actionID); ok {
 		return true
 	}
+	if _, _, ok := parseAdminCustomerPhotoReplyStartAction(actionID); ok {
+		return true
+	}
 
 	switch actionID {
 	case ActionAdminOpen,
@@ -1273,6 +1276,7 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictVariantPriceUpdatePrice,
 		ScreenAdminDistrictVariantPriceUpdateDone,
 		ScreenAdminCustomerReply,
+		ScreenAdminCustomerPhotoReply,
 		ScreenAdminCustomerReplyDone:
 		return true
 	default:

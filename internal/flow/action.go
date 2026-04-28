@@ -26,8 +26,9 @@ const (
 	ScreenAdminRoot    ScreenID = "admin_root"
 	ScreenAdminCatalog ScreenID = "admin_catalog"
 
-	ScreenAdminCustomerReply     ScreenID = "admin_customer_reply"
-	ScreenAdminCustomerReplyDone ScreenID = "admin_customer_reply_done"
+	ScreenAdminCustomerReply      ScreenID = "admin_customer_reply"
+	ScreenAdminCustomerPhotoReply ScreenID = "admin_customer_photo_reply"
+	ScreenAdminCustomerReplyDone  ScreenID = "admin_customer_reply_done"
 
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
 	ScreenAdminCategoryCode       ScreenID = "admin_category_code"
@@ -93,7 +94,8 @@ const (
 
 	PendingInputDistrictVariantPriceUpdate PendingInputKind = "district_variant_price_update"
 
-	PendingInputAdminCustomerReply PendingInputKind = "admin_customer_reply"
+	PendingInputAdminCustomerReply      PendingInputKind = "admin_customer_reply"
+	PendingInputAdminCustomerPhotoReply PendingInputKind = "admin_customer_photo_reply"
 )
 
 const (

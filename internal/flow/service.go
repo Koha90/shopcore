@@ -199,3 +199,17 @@ func (s *Service) HasPendingInput(key SessionKey) bool {
 
 	return session.Pending.Active()
 }
+
+// ExpectsPhotoInput reports whether the session currently expects photo input.
+func (s *Service) ExpectsPhotoInput(key SessionKey) bool {
+	if s == nil || s.store == nil {
+		return false
+	}
+
+	session, ok := s.store.Get(key)
+	if !ok {
+		return false
+	}
+
+	return session.Pending.Kind == PendingInputAdminCustomerPhotoReply
+}

@@ -157,3 +157,116 @@ func TestHandleTextAdminCustomerReplyRejectsEmptyText(t *testing.T) {
 
 	assert.Equal(t, PendingInputAdminCustomerReply, session.Pending.Kind)
 }
+
+func TestAdminCustomerPhotoReplyStartAction(t *testing.T) {
+	t.Parallel()
+
+	actionID := AdminCustomerPhotoReplyStartAction(456, 123)
+
+	chatID, userID, ok := parseAdminCustomerPhotoReplyStartAction(actionID)
+
+	require.True(t, ok)
+	assert.Equal(t, int64(456), chatID)
+	assert.Equal(t, int64(123), userID)
+}
+
+func TestHandleActionAdminCustomerPhotoReplyStartSetsPendingInput(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	store := NewMemoryStore()
+	svc := NewServiceWithCatalogProvider(store, NewStaticCatalogProvider(DemoCatalog()))
+
+	key := SessionKey{
+		BotID:  "bot-1",
+		ChatID: 1000,
+		UserID: 2000,
+	}
+
+	_, err := svc.Start(ctx, StartRequest{
+		BotID:         "bot-1",
+		BotName:       "shop-main",
+		StartScenario: string(StartScenarioInlineCatalog),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	vm, err := svc.HandleAction(ctx, ActionRequest{
+		BotID:         "bot-1",
+		BotName:       "shop-main",
+		StartScenario: string(StartScenarioInlineCatalog),
+		ActionID:      AdminCustomerPhotoReplyStartAction(456, 123),
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, vm.Text, "Фото пользователю")
+	assert.Contains(t, vm.Text, "Отправьте фото")
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+
+	assert.Equal(t, ScreenAdminCustomerPhotoReply, session.Current)
+	assert.Equal(t, PendingInputAdminCustomerPhotoReply, session.Pending.Kind)
+	assert.Equal(t, "456", session.Pending.Value(PendingValueCustomerChatID))
+	assert.Equal(t, "123", session.Pending.Value(PendingValueCustomerUserID))
+	assert.True(t, svc.ExpectsPhotoInput(key))
+}
+
+func TestHandlePhotoAdminCustomerReplyReturnsSendPhotoEffect(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	store := NewMemoryStore()
+	svc := NewServiceWithCatalogProvider(store, NewStaticCatalogProvider(DemoCatalog()))
+
+	key := SessionKey{
+		BotID:  "bot-1",
+		ChatID: 1000,
+		UserID: 2000,
+	}
+
+	store.Put(key, Session{
+		Current: ScreenAdminCustomerPhotoReply,
+		Pending: PendingInput{
+			Kind: PendingInputAdminCustomerPhotoReply,
+			Payload: PendingInputPayload{
+				PendingValueCustomerChatID: "456",
+				PendingValueCustomerUserID: "123",
+			},
+		},
+		CanAdmin: true,
+	})
+
+	vm, err := svc.HandlePhoto(ctx, PhotoRequest{
+		BotID:         "bot-1",
+		BotName:       "shop-main",
+		StartScenario: string(StartScenarioInlineCatalog),
+		FileToken:     "telegram-file-id",
+		Caption:       "Вот фото товара",
+		SessionKey:    key,
+		CanAdmin:      true,
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, vm.Text, "Ответ отправлен")
+	require.Len(t, vm.Effects, 1)
+
+	effect := vm.Effects[0]
+	assert.Equal(t, EffectSendPhoto, effect.Kind)
+	assert.Equal(t, int64(456), effect.Target.ChatID)
+	assert.Equal(t, int64(123), effect.Target.UserID)
+	assert.Equal(t, "Вот фото товара", effect.Text)
+
+	require.NotNil(t, effect.Media)
+	assert.Equal(t, EffectMediaPhoto, effect.Media.Kind)
+	assert.Equal(t, "telegram-file-id", effect.Media.FileToken)
+
+	session, ok := store.Get(key)
+	require.True(t, ok)
+
+	assert.Equal(t, ScreenAdminCustomerReplyDone, session.Current)
+	assert.False(t, session.Pending.Active())
+}

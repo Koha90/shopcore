@@ -143,12 +143,39 @@ type TextRequest struct {
 	CanAdmin      bool
 }
 
+// PhotoRequest contains data required to resolve a photo message in current flow.
+type PhotoRequest struct {
+	BotID         string
+	BotName       string
+	StartScenario string
+
+	// FileToken is an opaque transport-owned photo identifier.
+	FileToken string
+
+	// Caption stores optional user-provided photo caption.
+	Caption string
+
+	SessionKey SessionKey
+	CanAdmin   bool
+}
+
 // EffectKind identifies a transport-agnostic side effect by flow.
 type EffectKind string
+
+// EffectMediaKind identifies a media kind attached to a flow effect.
+type EffectMediaKind string
 
 const (
 	// EffectSendText asks transport to send a plain text message to target.
 	EffectSendText EffectKind = "send_text"
+
+	// EffectSendPhoto asks transport to send one photo to target.
+	EffectSendPhoto EffectKind = "send_photo"
+)
+
+const (
+	// EffectMediaPhoto identifies one photo attachment.
+	EffectMediaPhoto EffectMediaKind = "photo"
 )
 
 // EffectTarget describes a recipient for a flow effect.
@@ -162,4 +189,14 @@ type Effect struct {
 	Kind   EffectKind
 	Target EffectTarget
 	Text   string
+	Media  *EffectMedia
+}
+
+// EffectMedia describes one opaque media attachment requested by flow.
+//
+// FileToken is transport-owned. Flow stores and forwards it without trying to
+// uderstand whether it is a Telegram file_id, local path or future storage key.
+type EffectMedia struct {
+	Kind      EffectMediaKind
+	FileToken string
 }

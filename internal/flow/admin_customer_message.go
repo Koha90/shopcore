@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-const adminCustomerReplyStartPrefix = "admin:message:reply:start:"
+const (
+	adminCustomerReplyStartPrefix      = "admin:message:reply:start:"
+	adminCustomerPhotoReplyStartPrefix = "admin:message:reply_photo:start:"
+)
 
 // AdminCustomerReplyStartAction builds action that starts admin reply input.
 //
@@ -23,13 +26,34 @@ func AdminCustomerReplyStartTarget(actionID ActionID) (int64, int64, bool) {
 	return parseAdminCustomerReplyStartAction(actionID)
 }
 
+// AdminCustomerPhotoReplyStartAction builds action that starts admin photo reply input.
+func AdminCustomerPhotoReplyStartAction(chatID, userID int64) ActionID {
+	return ActionID(adminCustomerPhotoReplyStartPrefix +
+		strconv.FormatInt(chatID, 10) +
+		":" +
+		strconv.FormatInt(userID, 10))
+}
+
+// AdminCustomerPhotoReplyStartTarget parses customer target from admin photo reply action.
+func AdminCustomerPhotoReplyStartTarget(actionID ActionID) (int64, int64, bool) {
+	return parseAdminCustomerPhotoReplyStartAction(actionID)
+}
+
 func parseAdminCustomerReplyStartAction(actionID ActionID) (int64, int64, bool) {
+	return parseAdminReplyStartAction(actionID, adminCustomerReplyStartPrefix)
+}
+
+func parseAdminCustomerPhotoReplyStartAction(actionID ActionID) (int64, int64, bool) {
+	return parseAdminReplyStartAction(actionID, adminCustomerPhotoReplyStartPrefix)
+}
+
+func parseAdminReplyStartAction(actionID ActionID, prefix string) (int64, int64, bool) {
 	raw := string(actionID)
-	if !strings.HasPrefix(raw, adminCustomerReplyStartPrefix) {
+	if !strings.HasPrefix(raw, prefix) {
 		return 0, 0, false
 	}
 
-	rest := strings.TrimPrefix(raw, adminCustomerReplyStartPrefix)
+	rest := strings.TrimPrefix(raw, prefix)
 	parts := strings.Split(rest, ":")
 	if len(parts) != 2 {
 		return 0, 0, false
@@ -71,6 +95,33 @@ func buildAdminCustomerReplyInputView(validation string, chatID, userID int64) V
 				},
 			},
 		},
+	}
+}
+
+func buildAdminCustomerPhotoReplyInputView(validation string, chatID, userID int64) ViewModel {
+	text := buildAdminTextWithValidation(
+		"Фото пользователю",
+		[]string{
+			formatAdminFieldLine("User ID", strconv.FormatInt(userID, 10)),
+			formatAdminFieldLine("Chat ID", strconv.FormatInt(chatID, 10)),
+		},
+		validation,
+		"Отправьте фото. Подпись к фотом можно добавить caption-ом.",
+	)
+
+	return ViewModel{
+		Text: text,
+		Inline: &InlineKeyboardView{
+			Sections: []ActionSection{
+				{
+					Columns: 1,
+					Actions: []ActionButton{
+						{ID: ActionBack, Label: "Назад"},
+					},
+				},
+			},
+		},
+		RemoveReply: true,
 	}
 }
 
@@ -117,24 +168,42 @@ func (s *Service) handleAdminCustomerMessageAction(
 	session Session,
 	req ActionRequest,
 ) (ViewModel, Session, bool) {
-	chatID, userID, ok := parseAdminCustomerReplyStartAction(req.ActionID)
-	if !ok {
-		return ViewModel{}, session, false
+	if chatID, userID, ok := parseAdminCustomerReplyStartAction(req.ActionID); ok {
+		next := ScreenAdminCustomerReply
+
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+			session.Current = next
+		}
+
+		session.Pending = PendingInput{
+			Kind: PendingInputAdminCustomerReply,
+			Payload: PendingInputPayload{
+				PendingValueCustomerChatID: strconv.FormatInt(chatID, 10),
+				PendingValueCustomerUserID: strconv.FormatInt(userID, 10),
+			},
+		}
+
+		return buildAdminCustomerReplyInputView("", chatID, userID), session, true
 	}
 
-	next := ScreenAdminCustomerReply
-	if next != session.Current {
-		session.History = append(session.History, session.Current)
-		session.Current = next
+	if chatID, userID, ok := parseAdminCustomerPhotoReplyStartAction(req.ActionID); ok {
+		next := ScreenAdminCustomerPhotoReply
+		if next != session.Current {
+			session.History = append(session.History, session.Current)
+			session.Current = next
+		}
+
+		session.Pending = PendingInput{
+			Kind: PendingInputAdminCustomerPhotoReply,
+			Payload: PendingInputPayload{
+				PendingValueCustomerChatID: strconv.FormatInt(chatID, 10),
+				PendingValueCustomerUserID: strconv.FormatInt(userID, 10),
+			},
+		}
+
+		return buildAdminCustomerPhotoReplyInputView("", chatID, userID), session, true
 	}
 
-	session.Pending = PendingInput{
-		Kind: PendingInputAdminCustomerReply,
-		Payload: PendingInputPayload{
-			PendingValueCustomerChatID: strconv.FormatInt(chatID, 10),
-			PendingValueCustomerUserID: strconv.FormatInt(userID, 10),
-		},
-	}
-
-	return buildAdminCustomerReplyInputView("", chatID, userID), session, true
+	return ViewModel{}, session, false
 }

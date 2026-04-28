@@ -69,6 +69,12 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 
 		return buildAdminCustomerReplyInputView("", chatID, userID)
 
+	case ScreenAdminCustomerPhotoReply:
+		chatID, _ := pendingCustomerChatID(session.Pending)
+		userID, _ := pendingCustomerUserID(session.Pending)
+
+		return buildAdminCustomerPhotoReplyInputView("", chatID, userID)
+
 	case ScreenAdminCustomerReplyDone:
 		return buildAdminCustomerReplyDoneView()
 	}
