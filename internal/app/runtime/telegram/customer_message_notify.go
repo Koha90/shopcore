@@ -1,0 +1,101 @@
+package telegram
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	tgbot "github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+
+	"github.com/koha90/shopcore/internal/flow"
+	"github.com/koha90/shopcore/internal/manager"
+)
+
+// CustomerMessageNotification carries one plain customer text message to the
+// operator-facing notification builder.
+type CustomerMessageNotification struct {
+	UserID       int64
+	ChatID       int64
+	UserName     string
+	UserUsername string
+	Text         string
+}
+
+// notifyCustomerTextMessage sends a plain customer text message to the
+// configured admin chat.
+//
+// Admin users are intentionally ignored here. Their text messages are either
+// handled as pending admin input or left untouched, so the admin chat does not
+// echo operator messages back to itself.
+func (r *Runner) notifyCustomerTextMessage(
+	ctx context.Context,
+	b *tgbot.Bot,
+	spec manager.BotSpec,
+	msg *models.Message,
+) error {
+	if spec.AdminOrdersChatID == 0 || msg == nil || msg.From == nil {
+		return nil
+	}
+	if r.canAdminTelegram(spec, msg.From.ID) {
+		return nil
+	}
+
+	text := strings.TrimSpace(msg.Text)
+	if text == "" {
+		return nil
+	}
+
+	vm := buildAdminCustomerMessageNotificationView(
+		spec,
+		CustomerMessageNotification{
+			UserID:       msg.From.ID,
+			ChatID:       msg.Chat.ID,
+			UserName:     buildTelegramDisplayName(msg.From),
+			UserUsername: msg.From.Username,
+			Text:         text,
+		},
+	)
+
+	if _, err := r.sendTextMessage(ctx, b, spec.AdminOrdersChatID, vm); err != nil {
+		return fmt.Errorf("send admin customer message notification: %w", err)
+	}
+
+	return nil
+}
+
+// buildAdminCustomerMessageNotificationView builds one admin-facing customer
+// message card.
+func buildAdminCustomerMessageNotificationView(
+	spec manager.BotSpec,
+	message CustomerMessageNotification,
+) flow.ViewModel {
+	var text strings.Builder
+
+	text.WriteString("💬 Новое сообщение\n\n")
+	text.WriteString("Бот: ")
+	text.WriteString(formatBotLabel(spec))
+	text.WriteString("\n\n")
+
+	if message.UserName != "" {
+		text.WriteString("Пользователь: ")
+		text.WriteString(message.UserName)
+		text.WriteString("\n")
+	}
+
+	if message.UserUsername != "" {
+		text.WriteString("Логин: @")
+		text.WriteString(strings.TrimPrefix(message.UserUsername, "@"))
+		text.WriteString("\n")
+	}
+
+	text.WriteString(fmt.Sprintf("User ID: %d\n", message.UserID))
+	text.WriteString(fmt.Sprintf("Chat ID: %d\n\n", message.ChatID))
+
+	text.WriteString("Сообщение:\n")
+	text.WriteString(message.Text)
+
+	return flow.ViewModel{
+		Text: text.String(),
+	}
+}
