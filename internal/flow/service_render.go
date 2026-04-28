@@ -62,6 +62,15 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 
 	case ScreenAdminCatalog:
 		return buildAdminCatalogView()
+
+	case ScreenAdminCustomerReply:
+		chatID, _ := pendingCustomerChatID(session.Pending)
+		userID, _ := pendingCustomerUserID(session.Pending)
+
+		return buildAdminCustomerReplyInputView("", chatID, userID)
+
+	case ScreenAdminCustomerReplyDone:
+		return buildAdminCustomerReplyDoneView()
 	}
 	if vm, handled := s.renderAdminCatalogCreateScreen(session); handled {
 		return vm

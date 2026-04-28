@@ -649,6 +649,44 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return s.renderScreen(catalog, session, req.CanAdmin), nil
 
+	case PendingInputAdminCustomerReply:
+		text := strings.TrimSpace(req.Text)
+		chatID, ok := pendingCustomerChatID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending customer chat id is invalid")
+		}
+
+		userID, ok := pendingCustomerUserID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending customer user id is invalid")
+		}
+
+		if text == "" {
+			return buildAdminCustomerReplyInputView(
+				"Ответ не может быть пустым.",
+				chatID,
+				userID,
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminCustomerReplyDone
+		s.store.Put(req.SessionKey, session)
+
+		vm := buildAdminCustomerReplyDoneView()
+		vm.Effects = []Effect{
+			{
+				Kind: EffectSendText,
+				Target: EffectTarget{
+					ChatID: chatID,
+					UserID: userID,
+				},
+				Text: text,
+			},
+		}
+
+		return vm, nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

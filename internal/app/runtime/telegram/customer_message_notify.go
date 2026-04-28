@@ -96,5 +96,21 @@ func buildAdminCustomerMessageNotificationView(
 
 	return flow.ViewModel{
 		Text: text.String(),
+		Inline: &flow.InlineKeyboardView{
+			Sections: []flow.ActionSection{
+				{
+					Columns: 1,
+					Actions: []flow.ActionButton{
+						{
+							ID: flow.AdminCustomerReplyStartAction(
+								message.ChatID,
+								message.UserID,
+							),
+							Label: "Ответить",
+						},
+					},
+				},
+			},
+		},
 	}
 }

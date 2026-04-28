@@ -75,6 +75,12 @@ type ViewModel struct {
 
 	// RemoveReply tells transport to hide reply keyboard.
 	RemoveReply bool
+
+	// Effects contains transport-agnostic side effects requested by flow.
+	//
+	// Transport may execute supported effects after resolving a view.
+	// The field intentionally contains no Telegram-specific types.
+	Effects []Effect
 }
 
 // InlineKeyboardView describes an inline keyboard grouped into sections.
@@ -135,4 +141,25 @@ type TextRequest struct {
 	Text          string
 	SessionKey    SessionKey
 	CanAdmin      bool
+}
+
+// EffectKind identifies a transport-agnostic side effect by flow.
+type EffectKind string
+
+const (
+	// EffectSendText asks transport to send a plain text message to target.
+	EffectSendText EffectKind = "send_text"
+)
+
+// EffectTarget describes a recipient for a flow effect.
+type EffectTarget struct {
+	ChatID int64
+	UserID int64
+}
+
+// Effect describes one transport-agnostic side effect.
+type Effect struct {
+	Kind   EffectKind
+	Target EffectTarget
+	Text   string
 }

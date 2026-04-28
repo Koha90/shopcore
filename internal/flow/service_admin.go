@@ -1217,6 +1217,9 @@ func isAdminAction(actionID ActionID) bool {
 	if _, ok := parseAdminDistrictVariantSelectProductAction(actionID); ok {
 		return true
 	}
+	if _, _, ok := parseAdminCustomerReplyStartAction(actionID); ok {
+		return true
+	}
 
 	switch actionID {
 	case ActionAdminOpen,
@@ -1268,7 +1271,9 @@ func isAdminScreen(screen ScreenID) bool {
 		ScreenAdminDistrictVariantPriceUpdateProductSelect,
 		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
 		ScreenAdminDistrictVariantPriceUpdatePrice,
-		ScreenAdminDistrictVariantPriceUpdateDone:
+		ScreenAdminDistrictVariantPriceUpdateDone,
+		ScreenAdminCustomerReply,
+		ScreenAdminCustomerReplyDone:
 		return true
 	default:
 		return false
@@ -1288,7 +1293,8 @@ func isAdminPending(kind PendingInputKind) bool {
 		PendingInputVariantName,
 		PendingInputVariantCode,
 		PendingInputDistrictVariantPrice,
-		PendingInputDistrictVariantPriceUpdate:
+		PendingInputDistrictVariantPriceUpdate,
+		PendingInputAdminCustomerReply:
 		return true
 	default:
 		return false

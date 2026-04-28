@@ -23,8 +23,12 @@ const (
 	// ScreenOrderDone renders terminal success screen for order request floe.
 	ScreenOrderDone ScreenID = "order_done"
 
-	ScreenAdminRoot               ScreenID = "admin_root"
-	ScreenAdminCatalog            ScreenID = "admin_catalog"
+	ScreenAdminRoot    ScreenID = "admin_root"
+	ScreenAdminCatalog ScreenID = "admin_catalog"
+
+	ScreenAdminCustomerReply     ScreenID = "admin_customer_reply"
+	ScreenAdminCustomerReplyDone ScreenID = "admin_customer_reply_done"
+
 	ScreenAdminCategoryCreate     ScreenID = "admin_category_create"
 	ScreenAdminCategoryCode       ScreenID = "admin_category_code"
 	ScreenAdminCategoryCreateDone ScreenID = "admin_category_create_done"
@@ -88,6 +92,8 @@ const (
 	PendingInputDistrictVariantPrice PendingInputKind = "district_variant_price"
 
 	PendingInputDistrictVariantPriceUpdate PendingInputKind = "district_variant_price_update"
+
+	PendingInputAdminCustomerReply PendingInputKind = "admin_customer_reply"
 )
 
 const (
@@ -129,4 +135,10 @@ const (
 
 	// PendingValueCurrentPrice stores current placement price inside pending input payload.
 	PendingValueCurrentPrice = "current_price"
+
+	// PendingValueCustomerChatID stores target customer chat id for admin reply.
+	PendingValueCustomerChatID = "customer_chat_id"
+
+	// PendingValueCustomerUserID stores target customer user id for admin reply.
+	PendingValueCustomerUserID = "customer_user_id"
 )

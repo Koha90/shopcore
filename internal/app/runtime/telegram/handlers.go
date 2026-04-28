@@ -31,6 +31,20 @@ func (r *Runner) startHandler(
 			return
 		}
 
+		if err := r.applyViewEffects(ctx, b, vm); err != nil {
+			r.log.Error(
+				"apply flow effects failed",
+				"bot_id", spec.ID,
+				"user_id", update.Message.From.ID,
+				"chat_id", update.Message.Chat.ID,
+				"err", err,
+			)
+
+			vm = flow.ViewModel{
+				Text: "Не удалось отправить ответ пользователю. Проверте лог и попробуйте ещё раз.",
+			}
+		}
+
 		activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
 		if err != nil {
 			r.log.Error(
