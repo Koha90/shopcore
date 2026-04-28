@@ -142,7 +142,7 @@ func (r *Repository) UpdateStatus(ctx context.Context, id int64, status ordersvc
 			where id = $1
 	`
 
-	tag, err := r.pool.Exec(ctx, q, string(status))
+	tag, err := r.pool.Exec(ctx, q, id, string(status))
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

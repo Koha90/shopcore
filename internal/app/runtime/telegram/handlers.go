@@ -60,6 +60,14 @@ func (r *Runner) callbackHandler(
 			return
 		}
 
+		actionID, ok := decodeCallbackActionID(update.CallbackQuery.Data)
+		if ok {
+			if orderID, targetStatus, ok := parseAdminOrderAction(actionID); ok {
+				r.handleAdminOrderCallback(ctx, b, spec, update, orderID, targetStatus)
+				return
+			}
+		}
+
 		vm, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, update.CallbackQuery)
 		if !ok {
 			r.answerCallback(ctx, b, update.CallbackQuery.ID, "unknown action")
