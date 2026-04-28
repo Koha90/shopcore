@@ -31,20 +31,6 @@ func (r *Runner) startHandler(
 			return
 		}
 
-		if err := r.applyViewEffects(ctx, b, vm); err != nil {
-			r.log.Error(
-				"apply flow effects failed",
-				"bot_id", spec.ID,
-				"user_id", update.Message.From.ID,
-				"chat_id", update.Message.Chat.ID,
-				"err", err,
-			)
-
-			vm = flow.ViewModel{
-				Text: "Не удалось отправить ответ пользователю. Проверте лог и попробуйте ещё раз.",
-			}
-		}
-
 		activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
 		if err != nil {
 			r.log.Error(
@@ -78,6 +64,10 @@ func (r *Runner) callbackHandler(
 		if ok {
 			if orderID, targetStatus, ok := parseAdminOrderAction(actionID); ok {
 				r.handleAdminOrderCallback(ctx, b, spec, update, orderID, targetStatus)
+				return
+			}
+			if _, _, ok := flow.AdminCustomerReplyStartTarget(actionID); ok {
+				r.handleAdminCustomerReplyStartCallback(ctx, b, spec, svc, update, actionID)
 				return
 			}
 		}
@@ -270,6 +260,20 @@ func (r *Runner) defaultHandler(
 				"err", err,
 			)
 			return
+		}
+
+		if err := r.applyViewEffects(ctx, b, vm); err != nil {
+			r.log.Error(
+				"apply flow effects failed",
+				"bot_id", spec.ID,
+				"user_id", update.Message.From.ID,
+				"chat_id", update.Message.Chat.ID,
+				"err", err,
+			)
+
+			vm = flow.ViewModel{
+				Text: "Не удалось отправить ответ пользователю. Проверте лог и попробуйте ещё раз.",
+			}
 		}
 
 		activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)

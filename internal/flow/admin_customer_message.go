@@ -18,6 +18,11 @@ func AdminCustomerReplyStartAction(chatID, userID int64) ActionID {
 		strconv.FormatInt(userID, 10))
 }
 
+// AdminCustomerReplyStartTarget parses customer target from admin reply action.
+func AdminCustomerReplyStartTarget(actionID ActionID) (int64, int64, bool) {
+	return parseAdminCustomerReplyStartAction(actionID)
+}
+
 func parseAdminCustomerReplyStartAction(actionID ActionID) (int64, int64, bool) {
 	raw := string(actionID)
 	if !strings.HasPrefix(raw, adminCustomerReplyStartPrefix) {
