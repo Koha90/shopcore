@@ -34,6 +34,7 @@ It is a sales platform where different interfaces use the same domain and flow i
 - customer-facing catalog flow
 - reply and inline navigation
 - scenario-based start behavior
+- customer plain text notifications to the configured admin chat
 
 ### TUI
 - bot operator panel
@@ -160,6 +161,15 @@ This keeps flow transport-agnostic and allows different bots to use different da
 Current catalog drill-down path:
 
 `city -> category -> district -> product -> variant`
+
+## Telegram customer messages
+
+Telegram runtime treats plain text in two steps:
+
+1. If the current flow session has pending input, text is passed to `flow.HandleText`.
+2. If there is no pending input and the sender is a customer, text is sent to `AdminOrdersChatID` as an operator notification.
+
+Admin users are skipped by customer-text notifications. Their text remains reserved for admin pending input and future admin commands.
 
 ---
 

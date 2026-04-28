@@ -227,6 +227,17 @@ func (r *Runner) defaultHandler(
 		}
 
 		if !svc.HasPendingInput(key) {
+			if err := r.notifyCustomerTextMessage(ctx, b, spec, update.Message); err != nil {
+				r.log.Error(
+					"send admin customer message notification",
+					"bot_id", spec.ID,
+					"admin_orders_chat_id", spec.AdminOrdersChatID,
+					"user_id", update.Message.From.ID,
+					"chat_id", update.Message.Chat.ID,
+					"err", err,
+				)
+			}
+
 			r.log.Info(
 				"telegram update received",
 				"bot_id", spec.ID,
