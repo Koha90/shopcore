@@ -109,6 +109,11 @@ func buildAdminOrderNotificationView(
 
 // buildAdminOrderActions returns operator actions allowed for current order status.
 func buildAdminOrderActions(order ordersvc.Order) []flow.ActionButton {
+	replyAction := flow.ActionButton{
+		ID:    flow.AdminCustomerReplyStartAction(order.ChatID, order.UserID),
+		Label: "Ответить клиенту",
+	}
+
 	switch order.Status {
 	case ordersvc.OrderStatusNew:
 		return []flow.ActionButton{
@@ -120,6 +125,7 @@ func buildAdminOrderActions(order ordersvc.Order) []flow.ActionButton {
 				ID:    buildAdminOrderActionClose(order.ID),
 				Label: "Закрыть",
 			},
+			replyAction,
 		}
 
 	case ordersvc.OrderStatusInProgress:
@@ -128,10 +134,18 @@ func buildAdminOrderActions(order ordersvc.Order) []flow.ActionButton {
 				ID:    buildAdminOrderActionClose(order.ID),
 				Label: "Закрыть",
 			},
+			replyAction,
+		}
+
+	case ordersvc.OrderStatusClosed:
+		return []flow.ActionButton{
+			replyAction,
 		}
 
 	default:
-		return nil
+		return []flow.ActionButton{
+			replyAction,
+		}
 	}
 }
 

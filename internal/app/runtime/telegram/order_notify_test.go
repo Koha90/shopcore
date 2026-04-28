@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/koha90/shopcore/internal/flow"
 	"github.com/koha90/shopcore/internal/manager"
 	ordersvc "github.com/koha90/shopcore/internal/order/service"
 )
@@ -48,9 +49,15 @@ func TestBuildAdminOrderNotificationView(t *testing.T) {
 
 	if assert.NotNil(t, vm.Inline) {
 		assert.Len(t, vm.Inline.Sections, 1)
-		assert.Len(t, vm.Inline.Sections[0].Actions, 2)
+		assert.Len(t, vm.Inline.Sections[0].Actions, 3)
 		assert.Equal(t, "Взять в работу", vm.Inline.Sections[0].Actions[0].Label)
 		assert.Equal(t, "Закрыть", vm.Inline.Sections[0].Actions[1].Label)
+		assert.Equal(t, "Ответить клиенту", vm.Inline.Sections[0].Actions[2].Label)
+		assert.Equal(
+			t,
+			flow.AdminCustomerReplyStartAction(456, 123),
+			vm.Inline.Sections[0].Actions[2].ID,
+		)
 	}
 }
 
@@ -112,8 +119,9 @@ func TestBuildAdminOrderNotificationView_InProgress(t *testing.T) {
 
 	require.NotNil(t, vm.Inline)
 	require.Len(t, vm.Inline.Sections, 1)
-	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 2)
 	require.Equal(t, "Закрыть", vm.Inline.Sections[0].Actions[0].Label)
+	require.Equal(t, "Ответить клиенту", vm.Inline.Sections[0].Actions[1].Label)
 }
 
 func TestBuildAdminOrderNotificationView_Closed(t *testing.T) {
@@ -135,6 +143,9 @@ func TestBuildAdminOrderNotificationView_Closed(t *testing.T) {
 		},
 	)
 
-	require.Nil(t, vm.Inline)
+	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Equal(t, "Ответить клиенту", vm.Inline.Sections[0].Actions[0].Label)
 	require.Contains(t, vm.Text, "Статус: closed")
 }

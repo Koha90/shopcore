@@ -35,6 +35,7 @@ It is a sales platform where different interfaces use the same domain and flow i
 - reply and inline navigation
 - scenario-based start behavior
 - customer plain text notifications to the configured admin chat
+- admins can reply to customers from message and order notifications
 
 ### TUI
 - bot operator panel
@@ -170,6 +171,8 @@ Telegram runtime treats plain text in two steps:
 2. If there is no pending input and the sender is a customer, text is sent to `AdminOrdersChatID` as an operator notification.
 
 Admin users are skipped by customer-text notifications. Their text remains reserved for admin pending input and future admin commands.
+Order notifications use the same admin reply action as customer message notifications.
+This keeps customer contact flow in one place while allowing stores to resolve order issues from the admin chat.
 
 ---
 
