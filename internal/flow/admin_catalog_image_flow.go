@@ -232,8 +232,11 @@ func (s *Service) handleAdminImageAction(
 
 	if productID, ok := parseAdminProductImageSelectProductAction(req.ActionID); ok {
 		productName := "товар #" + strconv.Itoa(productID)
-		if name, found := findProductLabel(ctx, s.productLister, productID); found {
-			productName = name
+		productCode := ""
+
+		if product, found := findProductListItem(ctx, s.productLister, productID); found {
+			productName = product.Label
+			productCode = product.Code
 		}
 
 		session.History = append(session.History, session.Current)
@@ -243,6 +246,7 @@ func (s *Service) handleAdminImageAction(
 			Payload: PendingInputPayload{
 				PendingValueProductID:   strconv.Itoa(productID),
 				PendingValueProductName: productName,
+				PendingValueCode:        productCode,
 			},
 		}
 
@@ -251,8 +255,14 @@ func (s *Service) handleAdminImageAction(
 
 	if variantID, ok := parseAdminVariantImageSelectVariantAction(req.ActionID); ok {
 		variantName := "вариант #" + strconv.Itoa(variantID)
-		if name, found := findVariantLabel(ctx, s.variantLister, variantID); found {
-			variantName = name
+		variantCode := ""
+
+		if variant, found := findVariantListItem(ctx, s.variantLister, variantID); found {
+			variantName = variant.Label
+			if variant.ProductLabel != "" {
+				variantName = variant.ProductLabel + " - " + variant.Label
+			}
+			variantCode = variant.Code
 		}
 
 		session.History = append(session.History, session.Current)
@@ -262,6 +272,7 @@ func (s *Service) handleAdminImageAction(
 			Payload: PendingInputPayload{
 				PendingValueVariantID:   strconv.Itoa(variantID),
 				PendingValueVariantName: variantName,
+				PendingValueCode:        variantCode,
 			},
 		}
 
@@ -301,44 +312,40 @@ func parsePositiveIDAction(actionID ActionID, prefix string) (int, bool) {
 	return id, true
 }
 
-func findProductLabel(ctx context.Context, lister ProductLister, productID int) (string, bool) {
+func findProductListItem(ctx context.Context, lister ProductLister, productID int) (ProductListItem, bool) {
 	if lister == nil {
-		return "", false
+		return ProductListItem{}, false
 	}
 
 	products, err := lister.ListProducts(ctx)
 	if err != nil {
-		return "", false
+		return ProductListItem{}, false
 	}
 
 	for _, product := range products {
 		if product.ID == productID {
-			return product.Label, true
+			return product, true
 		}
 	}
 
-	return "", false
+	return ProductListItem{}, false
 }
 
-func findVariantLabel(ctx context.Context, lister VariantLister, variantID int) (string, bool) {
+func findVariantListItem(ctx context.Context, lister VariantLister, variantID int) (VariantListItem, bool) {
 	if lister == nil {
-		return "", false
+		return VariantListItem{}, false
 	}
 
 	variants, err := lister.ListVariants(ctx)
 	if err != nil {
-		return "", false
+		return VariantListItem{}, false
 	}
 
 	for _, variant := range variants {
 		if variant.ID == variantID {
-			if variant.ProductLabel != "" {
-				return variant.ProductLabel + " · " + variant.Label, true
-			}
-
-			return variant.Label, true
+			return variant, true
 		}
 	}
 
-	return "", false
+	return VariantListItem{}, false
 }

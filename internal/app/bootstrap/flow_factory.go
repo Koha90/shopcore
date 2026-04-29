@@ -42,7 +42,17 @@ func NewTelegramFlowFactory(resolver PoolResolver) func(spec manager.BotSpec) (*
 		provider := catalogpg.NewCatalogProvider(loader)
 
 		repo := catalogpg.NewRepository(pool)
-		catalog := catalogservice.New(repo, repo, repo, repo, repo, repo, repo)
+		catalog := catalogservice.New(
+			repo, // categories
+			repo, // cities
+			repo, // districts
+			repo, // products
+			repo, // variants
+			repo, // district variants
+			repo, // district variant price updater
+			repo, // product image updater
+			repo, // variant image update
+		)
 
 		var categoryCreator flow.CategoryCreator
 		var cityCreator flow.CityCreator

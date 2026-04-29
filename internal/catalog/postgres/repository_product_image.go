@@ -7,8 +7,8 @@ import (
 	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 )
 
-// UpdatePrdoductImage updates image_url for one product.
-func (r *Repository) UpdatePrdoductImage(
+// UpdateProductImage updates image_url for one active catalog product.
+func (r *Repository) UpdateProductImage(
 	ctx context.Context,
 	params catalogservice.UpdateProductImageParams,
 ) error {

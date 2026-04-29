@@ -24,7 +24,7 @@ func (s *districtVariantPriceUpdaterStub) UpdateDistrictVariantPrice(
 
 func TestUpdateDistrictVariantPrice_Valid(t *testing.T) {
 	updater := &districtVariantPriceUpdaterStub{}
-	svc := New(nil, nil, nil, nil, nil, nil, updater)
+	svc := New(nil, nil, nil, nil, nil, nil, updater, nil, nil)
 
 	err := svc.UpdateDistrictVariantPrice(context.Background(), UpdateDistrictVariantPriceParams{
 		DistrictID: 7,
@@ -41,7 +41,7 @@ func TestUpdateDistrictVariantPrice_Valid(t *testing.T) {
 
 func TestUpdateDistrictVariantPrice_DistrictIDInvalid(t *testing.T) {
 	updater := &districtVariantPriceUpdaterStub{}
-	svc := New(nil, nil, nil, nil, nil, nil, updater)
+	svc := New(nil, nil, nil, nil, nil, nil, updater, nil, nil)
 
 	err := svc.UpdateDistrictVariantPrice(context.Background(), UpdateDistrictVariantPriceParams{
 		DistrictID: 0,
@@ -54,7 +54,7 @@ func TestUpdateDistrictVariantPrice_DistrictIDInvalid(t *testing.T) {
 
 func TestUpdateDistrictVariantPrice_VariantIDInvalid(t *testing.T) {
 	updater := &districtVariantPriceUpdaterStub{}
-	svc := New(nil, nil, nil, nil, nil, nil, updater)
+	svc := New(nil, nil, nil, nil, nil, nil, updater, nil, nil)
 
 	err := svc.UpdateDistrictVariantPrice(context.Background(), UpdateDistrictVariantPriceParams{
 		DistrictID: 7,
@@ -67,7 +67,7 @@ func TestUpdateDistrictVariantPrice_VariantIDInvalid(t *testing.T) {
 
 func TestUpdateDistrictVariantPrice_PriceInvalid(t *testing.T) {
 	updater := &districtVariantPriceUpdaterStub{}
-	svc := New(nil, nil, nil, nil, nil, nil, updater)
+	svc := New(nil, nil, nil, nil, nil, nil, updater, nil, nil)
 
 	err := svc.UpdateDistrictVariantPrice(context.Background(), UpdateDistrictVariantPriceParams{
 		DistrictID: 7,
@@ -79,7 +79,7 @@ func TestUpdateDistrictVariantPrice_PriceInvalid(t *testing.T) {
 }
 
 func TestUpdateDistrictVariantPrice_NilUpdater(t *testing.T) {
-	svc := New(nil, nil, nil, nil, nil, nil, nil)
+	svc := New(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	err := svc.UpdateDistrictVariantPrice(context.Background(), UpdateDistrictVariantPriceParams{
 		DistrictID: 7,

@@ -7,7 +7,7 @@ import (
 	catalogservice "github.com/koha90/shopcore/internal/catalog/service"
 )
 
-// UpdateVariantImage updates image_url for one variant.
+// UpdateVariantImage updates image_url for one active catalog variant.
 func (r *Repository) UpdateVariantImage(
 	ctx context.Context,
 	params catalogservice.UpdateVariantImageParams,

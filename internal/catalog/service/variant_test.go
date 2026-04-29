@@ -21,7 +21,7 @@ func (s *variantWriterStub) CreateVariant(ctx context.Context, params CreateVari
 
 func TestCreateVariant_Valid(t *testing.T) {
 	writer := &variantWriterStub{}
-	svc := New(nil, nil, nil, nil, writer, nil, nil)
+	svc := New(nil, nil, nil, nil, writer, nil, nil, nil, nil)
 
 	err := svc.CreateVariant(context.Background(), CreateVariantParams{
 		ProductID:   7,
@@ -44,7 +44,7 @@ func TestCreateVariant_Valid(t *testing.T) {
 
 func TestCreateVariant_ProductIDInvalid(t *testing.T) {
 	writer := &variantWriterStub{}
-	svc := New(nil, nil, nil, nil, writer, nil, nil)
+	svc := New(nil, nil, nil, nil, writer, nil, nil, nil, nil)
 
 	err := svc.CreateVariant(context.Background(), CreateVariantParams{
 		ProductID: 0,
@@ -57,7 +57,7 @@ func TestCreateVariant_ProductIDInvalid(t *testing.T) {
 
 func TestCreateVariant_CodeEmpty(t *testing.T) {
 	writer := &variantWriterStub{}
-	svc := New(nil, nil, nil, nil, writer, nil, nil)
+	svc := New(nil, nil, nil, nil, writer, nil, nil, nil, nil)
 
 	err := svc.CreateVariant(context.Background(), CreateVariantParams{
 		ProductID: 1,
@@ -70,7 +70,7 @@ func TestCreateVariant_CodeEmpty(t *testing.T) {
 
 func TestCreateVariant_NameEmpty(t *testing.T) {
 	writer := &variantWriterStub{}
-	svc := New(nil, nil, nil, nil, writer, nil, nil)
+	svc := New(nil, nil, nil, nil, writer, nil, nil, nil, nil)
 
 	err := svc.CreateVariant(context.Background(), CreateVariantParams{
 		ProductID: 1,
@@ -82,7 +82,7 @@ func TestCreateVariant_NameEmpty(t *testing.T) {
 }
 
 func TestCreateVariant_NilWriter(t *testing.T) {
-	svc := New(nil, nil, nil, nil, nil, nil, nil)
+	svc := New(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	err := svc.CreateVariant(context.Background(), CreateVariantParams{
 		ProductID: 1,
