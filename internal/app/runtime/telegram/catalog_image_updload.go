@@ -1,12 +1,81 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	tgbot "github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+
 	"github.com/koha90/shopcore/internal/flow"
 )
+
+// saveCatalogImagePhoto downloads the largest Telegram photo and stores it as a
+// catalog image filw.
+//
+// It returns a relative path that can be stored in catalog image_url.
+func (r *Runner) saveCatalogImagePhoto(
+	ctx context.Context,
+	b *tgbot.Bot,
+	target flow.CatalogImageInputTarget,
+	msg *models.Message,
+) (string, error) {
+	fileID := telegramPhotoFileToken(msg)
+	if fileID == "" {
+		return "", fmt.Errorf("telegram photo file id is empty")
+	}
+
+	path, err := catalogImageUploadPath(target, time.Now())
+	if err != nil {
+		return "", err
+	}
+
+	file, err := b.GetFile(ctx, &tgbot.GetFileParams{
+		FileID: fileID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("get telegram file: %w", err)
+	}
+
+	url := b.FileDownloadLink(file)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("build telegram file request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("download telegram file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("download telegram file: unexpected status %d", resp.StatusCode)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return "", fmt.Errorf("create catalog image dir: %w", err)
+	}
+
+	dst, err := os.Create(path)
+	if err != nil {
+		return "", fmt.Errorf("create catalog image file: %w", err)
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, resp.Body); err != nil {
+		return "", fmt.Errorf("write catalog image file: %w", err)
+	}
+
+	return path, nil
+}
 
 // catalogImageUploadPath builds a relative catalog image path for uploaded admin photos.
 //

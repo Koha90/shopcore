@@ -234,6 +234,67 @@ func (r *Runner) defaultHandler(
 			UserID: update.Message.From.ID,
 		}
 
+		if target, ok := svc.CatalogImageInputTarget(key); ok && len(update.Message.Photo) > 0 {
+			imagePath, err := r.saveCatalogImagePhoto(ctx, b, target, update.Message)
+			if err != nil {
+				r.log.Error(
+					"save catalog image photo failed",
+					"bot_id", spec.ID,
+					"user_id", update.Message.From.ID,
+					"chat_id", update.Message.Chat.ID,
+					"err", err,
+				)
+
+				vm := flow.ViewModel{
+					Text: "Не удалось сохранить изображение. Попробуйте другое фото.",
+				}
+
+				activeID, sendErr := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+				if sendErr != nil {
+					r.log.Error(
+						"telegram send catalog image error view failed",
+						"bot_id", spec.ID,
+						"err", sendErr,
+					)
+					return
+				}
+
+				r.rememberActiveMessage(key, activeID)
+				return
+			}
+
+			vm, err := svc.HandleText(ctx, flow.TextRequest{
+				BotID:         spec.ID,
+				BotName:       spec.Name,
+				StartScenario: spec.StartScenario,
+				Text:          imagePath,
+				SessionKey:    key,
+				CanAdmin:      r.canAdminTelegram(spec, update.Message.From.ID),
+			})
+			if err != nil {
+				r.log.Error(
+					"flow catalog image upload failed",
+					"bot_id", spec.ID,
+					"image_path", imagePath,
+					"err", err,
+				)
+				return
+			}
+
+			activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+			if err != nil {
+				r.log.Error(
+					"telegram send catalog image upload view failed",
+					"bot_id", spec.ID,
+					"err", err,
+				)
+				return
+			}
+
+			r.rememberActiveMessage(key, activeID)
+			return
+		}
+
 		if svc.ExpectsPhotoInput(key) {
 			vm, err := r.resolvePhotoView(ctx, svc, spec, update.Message)
 			if err != nil {

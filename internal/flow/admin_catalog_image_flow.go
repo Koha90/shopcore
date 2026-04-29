@@ -86,7 +86,7 @@ func buildAdminProductImageInputView(productName, validation string) ViewModel {
 			formatAdminFieldLine("Товар", productName),
 		},
 		validation,
-		"Введите путь или URL изображения сообщением.\nНапример: assets/catalog/products/rose-box.jpg",
+		"Отправьте фото сообщением или введите путь/URL изображения.\nНапример: assets/catalog/products/rose-box.jpg",
 	)
 
 	return ViewModel{
@@ -114,7 +114,7 @@ func buildAdminVariantImageInputView(variantName, validation string) ViewModel {
 			formatAdminFieldLine("Вариант", variantName),
 		},
 		validation,
-		"Введите путь или URL изображения сообщением.\nНапример: assets/catalog/variants/rose-box-large.jpg",
+		"Отправьте фото сообщением или введите путь/URL изображения.\nНапример: assets/catalog/variants/rose-box-large.jpg",
 	)
 
 	return ViewModel{

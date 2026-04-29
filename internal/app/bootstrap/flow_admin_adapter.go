@@ -192,3 +192,37 @@ func (a *flowCatalogAdminAdapter) UpdateDistrictVariantPrice(
 		Price:      params.Price,
 	})
 }
+
+func (a *flowCatalogAdminAdapter) UpdateProductImage(
+	ctx context.Context,
+	params flow.UpdateProductImageParams,
+) error {
+	if a == nil {
+		return errors.New("flow catalog admin adapter is nil")
+	}
+	if a.svc == nil {
+		return errors.New("catalog service is nil inside admin adapter")
+	}
+
+	return a.svc.UpdateProductImage(ctx, catalogservice.UpdateProductImageParams{
+		ProductID: params.ProductID,
+		ImageURL:  params.ImageURL,
+	})
+}
+
+func (a *flowCatalogAdminAdapter) UpdateVariantImage(
+	ctx context.Context,
+	params flow.UpdateVariantImageParams,
+) error {
+	if a == nil {
+		return errors.New("flow catalog admin adapter is nil")
+	}
+	if a.svc == nil {
+		return errors.New("catalog service is nil inside admin adapter")
+	}
+
+	return a.svc.UpdateVariantImage(ctx, catalogservice.UpdateVariantImageParams{
+		VariantID: params.VariantID,
+		ImageURL:  params.ImageURL,
+	})
+}
