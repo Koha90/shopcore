@@ -48,4 +48,5 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.9.0
+          varify: false
           args: --timeout=5m
