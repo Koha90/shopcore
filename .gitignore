@@ -15,4 +15,9 @@ bin
 logs
 
 # assets media
-assets
+assets/catalog/products/*
+assets/catalog/variants/*
+
+
+!assets/catalog/products/.gitkeep
+!assets/catalog/variants/.gitkeep
