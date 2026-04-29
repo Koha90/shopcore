@@ -101,8 +101,8 @@ func buildAdminCustomerMessageNotificationView(
 		text.WriteString("\n")
 	}
 
-	text.WriteString(fmt.Sprintf("User ID: %d\n", message.UserID))
-	text.WriteString(fmt.Sprintf("Chat ID: %d\n", message.ChatID))
+	fmt.Fprintf(&text, "User ID: %d\n", message.UserID)
+	fmt.Fprintf(&text, "Chat ID: %d\n\n", message.ChatID)
 
 	text.WriteString("Сообщение:\n")
 	text.WriteString(message.Text)

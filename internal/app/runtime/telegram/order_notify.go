@@ -40,7 +40,7 @@ func buildAdminOrderNotificationView(
 	var text strings.Builder
 
 	text.WriteString("🛒 Новый заказ\n\n")
-	text.WriteString(fmt.Sprintf("Заказ: #%d\n", order.ID))
+	fmt.Fprintf(&text, "Заказ: #%d\n", order.ID)
 	text.WriteString("Статус: ")
 	text.WriteString(formatOrderStatusLabel(order.Status))
 	text.WriteString("\n")
@@ -61,8 +61,8 @@ func buildAdminOrderNotificationView(
 		text.WriteString("\n")
 	}
 
-	text.WriteString(fmt.Sprintf("User ID: %d\n", order.UserID))
-	text.WriteString(fmt.Sprintf("Chat ID: %d\n\n", order.ChatID))
+	fmt.Fprintf(&text, "User ID: %d\n", order.UserID)
+	fmt.Fprintf(&text, "Chat ID: %d\n\n", order.ChatID)
 
 	text.WriteString("Город: ")
 	text.WriteString(order.CityName)
