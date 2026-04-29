@@ -94,7 +94,7 @@ type CatalogNode struct {
 }
 
 func buildCatalogNodeMediaView(node CatalogNode) *MediaView {
-	if node.Media == nil {
+	if node.Media == nil || node.Media.ImageSource == "" {
 		return nil
 	}
 
@@ -144,6 +144,7 @@ func buildCatalogLeafView(node CatalogNode) ViewModel {
 			},
 		},
 		RemoveReply: true,
+		Media:       buildCatalogNodeMediaView(node),
 	}
 }
 

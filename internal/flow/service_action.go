@@ -40,6 +40,11 @@ func (s *Service) HandleAction(ctx context.Context, req ActionRequest) (ViewMode
 		return vm, nil
 	}
 
+	if vm, nextSession, handled := s.handleAdminImageAction(ctx, session, req); handled {
+		s.store.Put(req.SessionKey, nextSession)
+		return vm, nil
+	}
+
 	switch req.ActionID {
 	case ActionBack:
 		if len(session.History) == 0 {

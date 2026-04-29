@@ -49,6 +49,9 @@ const (
 
 	ActionAdminDistrictVariantPriceUpdateStart ActionID = "admin:district_variant:price:update:start"
 
+	ActionAdminProductImageUpdateStart ActionID = "admin:catalog:product_image:start"
+	ActionAdminVariantImageUpdateStart ActionID = "admin:catalog:variant_image:start"
+
 	ActionRootCompact  ActionID = "root:compact"
 	ActionRootExtended ActionID = "root:extended"
 

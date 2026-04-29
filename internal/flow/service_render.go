@@ -1,5 +1,7 @@
 package flow
 
+import "context"
+
 // renderScreen converts logical screen identifiers into transport-agnostic view models.
 //
 // Stable root/detail screens are handled directly.
@@ -77,7 +79,28 @@ func (s *Service) renderScreen(catalog Catalog, session Session, canAdmin bool) 
 
 	case ScreenAdminCustomerReplyDone:
 		return buildAdminCustomerReplyDoneView()
+
+	case ScreenAdminProductImageProductSelect:
+		return s.buildAdminProductImageProductSelectScreen(context.Background())
+
+	case ScreenAdminProductImageInput:
+		productName := session.Pending.Value(PendingValueProductName)
+		return buildAdminProductImageInputView(productName, "")
+
+	case ScreenAdminProductImageDone:
+		return buildAdminProductImageDoneView()
+
+	case ScreenAdminVariantImageVariantSelect:
+		return s.buildAdminVariantImageVariantSelectScreen(context.Background())
+
+	case ScreenAdminVariantImageInput:
+		variantName := session.Pending.Value(PendingValueVariantName)
+		return buildAdminVariantImageInputView(variantName, "")
+
+	case ScreenAdminVariantImageDone:
+		return buildAdminVariantImageDoneView()
 	}
+
 	if vm, handled := s.renderAdminCatalogCreateScreen(session); handled {
 		return vm
 	}

@@ -9,6 +9,8 @@ type Service struct {
 	variants                    VariantWriter
 	districtVariants            DistrictVariantWriter
 	districtVariantPriceUpdater DistrictVariantPriceUpdater
+	productImageUpdater         ProductImageUpdater
+	variantImageUpdater         VariantImageUpdater
 }
 
 // New constructs catalog application service.
@@ -20,6 +22,8 @@ func New(
 	variants VariantWriter,
 	districtVariants DistrictVariantWriter,
 	districtVariantPriceUpdater DistrictVariantPriceUpdater,
+	productImageUpdater ProductImageUpdater,
+	variantImageUpdater VariantImageUpdater,
 ) *Service {
 	return &Service{
 		categories:                  categories,
@@ -29,5 +33,7 @@ func New(
 		variants:                    variants,
 		districtVariants:            districtVariants,
 		districtVariantPriceUpdater: districtVariantPriceUpdater,
+		productImageUpdater:         productImageUpdater,
+		variantImageUpdater:         variantImageUpdater,
 	}
 }

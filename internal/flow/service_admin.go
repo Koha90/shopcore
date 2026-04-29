@@ -2,50 +2,7 @@ package flow
 
 import (
 	"context"
-	"strconv"
 )
-
-func buildAdminRootView() ViewModel {
-	return ViewModel{
-		Text: "Админка\n\nВыберите раздел:",
-		Inline: &InlineKeyboardView{
-			Sections: []ActionSection{
-				{
-					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionAdminCatalogOpen, Label: "Каталог"},
-						{ID: ActionBack, Label: "Назад"},
-					},
-				},
-			},
-		},
-		RemoveReply: true,
-	}
-}
-
-func buildAdminCatalogView() ViewModel {
-	return ViewModel{
-		Text: "Админка · Каталог\n\nВыберите действие:",
-		Inline: &InlineKeyboardView{
-			Sections: []ActionSection{
-				{
-					Columns: 1,
-					Actions: []ActionButton{
-						{ID: ActionAdminDistrictCreateStart, Label: "Создать район"},
-						{ID: ActionAdminCityCreateStart, Label: "Создать город"},
-						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
-						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
-						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант"},
-						{ID: ActionAdminDistrictVariantCreateStart, Label: "Разместить вариант"},
-						{ID: ActionAdminDistrictVariantPriceUpdateStart, Label: "Изменить цену варианта"},
-						{ID: ActionBack, Label: "Назад"},
-					},
-				},
-			},
-		},
-		RemoveReply: true,
-	}
-}
 
 func buildAdminCategoryCreateInputView(validation string) ViewModel {
 	text := buildAdminTextWithValidation(
@@ -440,20 +397,6 @@ func (s *Service) buildAdminDistrictCitySelectScreen() ViewModel {
 	return buildAdminDistrictCitySelectView(cities, "")
 }
 
-func pendingCityID(p PendingInput) (int, bool) {
-	raw := p.Value(PendingValueCityID)
-	if raw == "" {
-		return 0, false
-	}
-
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, false
-	}
-
-	return id, true
-}
-
 func buildAdminProductCategorySelectView(categories []CategoryListItem, validation string) ViewModel {
 	text := buildAdminSelectText(
 		"Новый товар",
@@ -620,20 +563,6 @@ func (s *Service) buildAdminProductCategorySelectScreen() ViewModel {
 	}
 
 	return buildAdminProductCategorySelectView(categories, "")
-}
-
-func pendingCategoryID(p PendingInput) (int, bool) {
-	raw := p.Value(PendingValueCategoryID)
-	if raw == "" {
-		return 0, false
-	}
-
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, false
-	}
-
-	return id, true
 }
 
 func buildAdminVariantProductSelectView(products []ProductListItem, validation string) ViewModel {
@@ -804,48 +733,6 @@ func (s *Service) buildAdminVariantProductSelectScreen() ViewModel {
 	return buildAdminVariantProductSelectView(products, "")
 }
 
-func pendingProductID(p PendingInput) (int, bool) {
-	raw := p.Value(PendingValueProductID)
-	if raw == "" {
-		return 0, false
-	}
-
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, false
-	}
-
-	return id, true
-}
-
-func pendingDistrictID(p PendingInput) (int, bool) {
-	raw := p.Value(PendingValueDistrictID)
-	if raw == "" {
-		return 0, false
-	}
-
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, false
-	}
-
-	return id, true
-}
-
-func pendingVariantID(p PendingInput) (int, bool) {
-	raw := p.Value(PendingValueVariantID)
-	if raw == "" {
-		return 0, false
-	}
-
-	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
-		return 0, false
-	}
-
-	return id, true
-}
-
 func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []DistrictListItem, validation string) ViewModel {
 	text := buildAdminSelectText(
 		"Изменение цены варианта",
@@ -955,20 +842,6 @@ func buildAdminDistrictVariantPriceUpdateInputView(
 		},
 		RemoveReply: true,
 	}
-}
-
-func currentPlacementPriceTextFromPending(p PendingInput) string {
-	raw := p.Value(PendingValueCurrentPrice)
-	if raw == "" {
-		return ""
-	}
-
-	v, err := strconv.Atoi(raw)
-	if err != nil || v <= 0 {
-		return ""
-	}
-
-	return strconv.Itoa(v) + " ₽"
 }
 
 func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
@@ -1184,123 +1057,4 @@ func (s *Service) buildAdminDistrictVariantPriceUpdateVariantSelectScreen(
 	}
 
 	return buildAdminDistrictVariantPriceUpdateVariantSelectView(districtName, productName, variants, "")
-}
-
-func isAdminAction(actionID ActionID) bool {
-	if _, ok := parseAdminDistrictSelectCityAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminProductSelectCategoryAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminVariantSelectProductAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantSelectDistrictAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantPriceUpdateSelectCategoryAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantPriceUpdateSelectProductAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantSelectVariantAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantSelectCityAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantSelectCategoryAction(actionID); ok {
-		return true
-	}
-	if _, ok := parseAdminDistrictVariantSelectProductAction(actionID); ok {
-		return true
-	}
-	if _, _, ok := parseAdminCustomerReplyStartAction(actionID); ok {
-		return true
-	}
-	if _, _, ok := parseAdminCustomerPhotoReplyStartAction(actionID); ok {
-		return true
-	}
-
-	switch actionID {
-	case ActionAdminOpen,
-		ActionAdminCatalogOpen,
-		ActionAdminCategoryCreateStart,
-		ActionAdminCityCreateStart,
-		ActionAdminDistrictCreateStart,
-		ActionAdminProductCreateStart,
-		ActionAdminVariantCreateStart,
-		ActionAdminDistrictVariantCreateStart,
-		ActionAdminDistrictVariantPriceUpdateStart:
-		return true
-	default:
-		return false
-	}
-}
-
-func isAdminScreen(screen ScreenID) bool {
-	switch screen {
-	case ScreenAdminRoot,
-		ScreenAdminCatalog,
-		ScreenAdminCategoryCreate,
-		ScreenAdminCategoryCode,
-		ScreenAdminCategoryCreateDone,
-		ScreenAdminCityCreate,
-		ScreenAdminCityCode,
-		ScreenAdminCityCreateDone,
-		ScreenAdminDistrictCitySelect,
-		ScreenAdminDistrictCreate,
-		ScreenAdminDistrictCode,
-		ScreenAdminDistrictCreateDone,
-		ScreenAdminProductCategorySelect,
-		ScreenAdminProductCreate,
-		ScreenAdminProductCode,
-		ScreenAdminProductCreateDone,
-		ScreenAdminVariantProductSelect,
-		ScreenAdminVariantCreate,
-		ScreenAdminVariantCode,
-		ScreenAdminVariantCreateDone,
-		ScreenAdminDistrictVariantCitySelect,
-		ScreenAdminDistrictVariantDistrictSelect,
-		ScreenAdminDistrictVariantCategorySelect,
-		ScreenAdminDistrictVariantProductSelect,
-		ScreenAdminDistrictVariantVariantSelect,
-		ScreenAdminDistrictVariantPrice,
-		ScreenAdminDistrictVariantCreateDone,
-		ScreenAdminDistrictVariantPriceUpdateDistrictSelect,
-		ScreenAdminDistrictVariantPriceUpdateCategorySelect,
-		ScreenAdminDistrictVariantPriceUpdateProductSelect,
-		ScreenAdminDistrictVariantPriceUpdateVariantSelect,
-		ScreenAdminDistrictVariantPriceUpdatePrice,
-		ScreenAdminDistrictVariantPriceUpdateDone,
-		ScreenAdminCustomerReply,
-		ScreenAdminCustomerPhotoReply,
-		ScreenAdminCustomerReplyDone:
-		return true
-	default:
-		return false
-	}
-}
-
-func isAdminPending(kind PendingInputKind) bool {
-	switch kind {
-	case PendingInputCategoryName,
-		PendingInputCategoryCode,
-		PendingInputCityName,
-		PendingInputCityCode,
-		PendingInputDistrictName,
-		PendingInputDistrictCode,
-		PendingInputProductName,
-		PendingInputProductCode,
-		PendingInputVariantName,
-		PendingInputVariantCode,
-		PendingInputDistrictVariantPrice,
-		PendingInputDistrictVariantPriceUpdate,
-		PendingInputAdminCustomerReply:
-		return true
-	default:
-		return false
-	}
 }

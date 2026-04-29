@@ -48,10 +48,18 @@ const (
 	ScreenAdminProductCode           ScreenID = "admin_product_code"
 	ScreenAdminProductCreateDone     ScreenID = "admin_product_create_done"
 
+	ScreenAdminProductImageProductSelect ScreenID = "admin_product_image_product_select"
+	ScreenAdminProductImageInput         ScreenID = "admin_product_image_input"
+	ScreenAdminProductImageDone          ScreenID = "admin_product_image_done"
+
 	ScreenAdminVariantProductSelect ScreenID = "admin_variant_product_select"
 	ScreenAdminVariantCreate        ScreenID = "admin_variant_create"
 	ScreenAdminVariantCode          ScreenID = "admin_variant_code"
 	ScreenAdminVariantCreateDone    ScreenID = "admin_variant_create_done"
+
+	ScreenAdminVariantImageVariantSelect ScreenID = "admin_variant_image_variant_select"
+	ScreenAdminVariantImageInput         ScreenID = "admin_variant_image_input"
+	ScreenAdminVariantImageDone          ScreenID = "admin_variant_image_done"
 
 	ScreenAdminDistrictVariantCitySelect     ScreenID = "admin_district_variant_city_select"
 	ScreenAdminDistrictVariantDistrictSelect ScreenID = "admin_district_variant_district_select"
@@ -84,11 +92,13 @@ const (
 	PendingInputDistrictName PendingInputKind = "district_name"
 	PendingInputDistrictCode PendingInputKind = "district_code"
 
-	PendingInputProductName PendingInputKind = "product_name"
-	PendingInputProductCode PendingInputKind = "product_code"
+	PendingInputProductName     PendingInputKind = "product_name"
+	PendingInputProductCode     PendingInputKind = "product_code"
+	PendingInputProductImageURL PendingInputKind = "product_image_url"
 
-	PendingInputVariantName PendingInputKind = "variant_name"
-	PendingInputVariantCode PendingInputKind = "variant_code"
+	PendingInputVariantName     PendingInputKind = "variant_name"
+	PendingInputVariantCode     PendingInputKind = "variant_code"
+	PendingInputVariantImageURL PendingInputKind = "variant_image_url"
 
 	PendingInputDistrictVariantPrice PendingInputKind = "district_variant_price"
 

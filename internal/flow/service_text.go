@@ -687,6 +687,86 @@ func (s *Service) HandleText(ctx context.Context, req TextRequest) (ViewModel, e
 
 		return vm, nil
 
+	case PendingInputProductImageURL:
+		imageURL := strings.TrimSpace(req.Text)
+
+		productID, ok := pendingProductID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending product id is invalid")
+		}
+
+		productName := session.Pending.Value(PendingValueProductName)
+
+		if imageURL == "" {
+			return buildAdminProductImageInputView(
+				productName,
+				"Путь изображения не может быть пустым.",
+			), nil
+		}
+
+		if s.productImages == nil {
+			return buildAdminProductImageInputView(
+				productName,
+				"Сервис обновления изображения товара недоступен.",
+			), nil
+		}
+
+		if err := s.productImages.UpdateProductImage(ctx, UpdateProductImageParams{
+			ProductID: productID,
+			ImageURL:  imageURL,
+		}); err != nil {
+			return buildAdminProductImageInputView(
+				productName,
+				"Не удалось сохранить изображение.",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminProductImageDone
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminProductImageDoneView(), nil
+
+	case PendingInputVariantImageURL:
+		imageURL := strings.TrimSpace(req.Text)
+
+		variantID, ok := pendingVariantID(session.Pending)
+		if !ok {
+			return ViewModel{}, errors.New("pending variant id is invalid")
+		}
+
+		variantName := session.Pending.Value(PendingValueVariantName)
+
+		if imageURL == "" {
+			return buildAdminVariantImageInputView(
+				variantName,
+				"Путь изображения не может быть пустым.",
+			), nil
+		}
+
+		if s.variantImages == nil {
+			return buildAdminVariantImageInputView(
+				variantName,
+				"Сервис обновления изображения варианта недоступен.",
+			), nil
+		}
+
+		if err := s.variantImages.UpdateVariantImage(ctx, UpdateVariantImageParams{
+			VariantID: variantID,
+			ImageURL:  imageURL,
+		}); err != nil {
+			return buildAdminVariantImageInputView(
+				variantName,
+				"Не удалось сохранить изображение.",
+			), nil
+		}
+
+		session.Pending = PendingInput{}
+		session.Current = ScreenAdminVariantImageDone
+		s.store.Put(req.SessionKey, session)
+
+		return buildAdminVariantImageDoneView(), nil
+
 	default:
 		return ViewModel{}, ErrUnknownPendingInput
 	}

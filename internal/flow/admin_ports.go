@@ -178,3 +178,25 @@ type DistrictPlacementReader interface {
 
 	ListAvailableVariantsForDistrictProduct(ctx context.Context, districtID, productID int) ([]VariantListItem, error)
 }
+
+// ProductImageUpdater defines the admin write use case required by flow.
+type ProductImageUpdater interface {
+	UpdateProductImage(ctx context.Context, params UpdateProductImageParams) error
+}
+
+// UpdateProductImageParams contains input for product image update.
+type UpdateProductImageParams struct {
+	ProductID int
+	ImageURL  string
+}
+
+// VariantImageUpdater defines the admin write use case required by flow.
+type VariantImageUpdater interface {
+	UpdateVariantImage(ctx context.Context, params UpdateVariantImageParams) error
+}
+
+// UpdateVariantImageParams contains input for variant image update.
+type UpdateVariantImageParams struct {
+	VariantID int
+	ImageURL  string
+}

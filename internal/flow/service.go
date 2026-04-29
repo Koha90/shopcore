@@ -56,6 +56,8 @@ type Service struct {
 	districtVariants      DistrictVariantCreator
 	districtVariantPrices DistrictVariantPriceUpdater
 	districtPlacements    DistrictPlacementReader
+	productImages         ProductImageUpdater
+	variantImages         VariantImageUpdater
 }
 
 // ServiceDeps contains optional flow dependencies used by admin/catalog actions.
@@ -73,6 +75,8 @@ type ServiceDeps struct {
 	DistrictVariants      DistrictVariantCreator
 	DistrictVariantPrices DistrictVariantPriceUpdater
 	DistrictPlacements    DistrictPlacementReader
+	ProductImages         ProductImageUpdater
+	VariantImages         VariantImageUpdater
 }
 
 // NewService constructs transport-agnostic flow service.
@@ -130,6 +134,8 @@ func NewServiceWithDeps(store Store, provider CatalogProvider, deps ServiceDeps)
 		districtVariants:      deps.DistrictVariants,
 		districtVariantPrices: deps.DistrictVariantPrices,
 		districtPlacements:    deps.DistrictPlacements,
+		productImages:         deps.ProductImages,
+		variantImages:         deps.VariantImages,
 	}
 }
 
