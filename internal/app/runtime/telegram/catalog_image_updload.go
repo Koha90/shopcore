@@ -54,7 +54,11 @@ func (r *Runner) saveCatalogImagePhoto(
 	if err != nil {
 		return "", fmt.Errorf("download telegram file: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			r.log.Error("close telegram file response body failed", "err", err)
+		}
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("download telegram file: unexpected status %d", resp.StatusCode)
@@ -68,7 +72,11 @@ func (r *Runner) saveCatalogImagePhoto(
 	if err != nil {
 		return "", fmt.Errorf("create catalog image file: %w", err)
 	}
-	defer dst.Close()
+	defer func() {
+		if err := dst.Close(); err != nil {
+			r.log.Error("close catalog image file failed", "err", err)
+		}
+	}()
 
 	if _, err := io.Copy(dst, resp.Body); err != nil {
 		return "", fmt.Errorf("write catalog image file: %w", err)
