@@ -70,6 +70,10 @@ func (r *Runner) callbackHandler(
 				r.handleAdminCustomerReplyStartCallback(ctx, b, spec, svc, update, actionID)
 				return
 			}
+			if _, _, ok := flow.AdminCustomerPhotoReplyStartTarget(actionID); ok {
+				r.handleAdminCustomerReplyStartCallback(ctx, b, spec, svc, update, actionID)
+				return
+			}
 		}
 
 		vm, actionID, ok, err := r.resolveCallbackView(ctx, svc, spec, update.CallbackQuery)
@@ -230,6 +234,45 @@ func (r *Runner) defaultHandler(
 			UserID: update.Message.From.ID,
 		}
 
+		if svc.ExpectsPhotoInput(key) {
+			vm, err := r.resolvePhotoView(ctx, svc, spec, update.Message)
+			if err != nil {
+				r.log.Error(
+					"flow photo input failed",
+					"bot_id", spec.ID,
+					"err", err,
+				)
+				return
+			}
+
+			if err := r.applyViewEffects(ctx, b, vm); err != nil {
+				r.log.Error(
+					"apply flow effects failed",
+					"bot_id", spec.ID,
+					"user_id", update.Message.From.ID,
+					"chat_id", update.Message.Chat.ID,
+					"err", err,
+				)
+
+				vm = flow.ViewModel{
+					Text: "Не удалось отправить фото пользователю. Проверьте лог и попробуйте ещё раз.",
+				}
+			}
+
+			activeID, err := r.sendView(ctx, b, update.Message.Chat.ID, vm)
+			if err != nil {
+				r.log.Error(
+					"telegram send photo input view failed",
+					"bot_id", spec.ID,
+					"err", err,
+				)
+				return
+			}
+
+			r.rememberActiveMessage(key, activeID)
+			return
+		}
+
 		if !svc.HasPendingInput(key) {
 			if err := r.notifyCustomerTextMessage(ctx, b, spec, update.Message); err != nil {
 				r.log.Error(
@@ -336,6 +379,48 @@ func (r *Runner) resolveTextView(
 		},
 		CanAdmin: r.canAdminTelegram(spec, msg.From.ID),
 	})
+}
+
+func (r *Runner) resolvePhotoView(
+	ctx context.Context,
+	svc *flow.Service,
+	spec manager.BotSpec,
+	msg *models.Message,
+) (flow.ViewModel, error) {
+	if msg == nil {
+		return flow.ViewModel{}, errors.New("telegram message is nil")
+	}
+	if msg.From == nil {
+		return flow.ViewModel{}, errors.New("telegram message sender is nil")
+	}
+
+	return svc.HandlePhoto(ctx, flow.PhotoRequest{
+		BotID:         spec.ID,
+		BotName:       spec.Name,
+		StartScenario: spec.StartScenario,
+		FileToken:     telegramPhotoFileToken(msg),
+		Caption:       msg.Caption,
+		SessionKey: flow.SessionKey{
+			BotID:  spec.ID,
+			ChatID: msg.Chat.ID,
+			UserID: msg.From.ID,
+		},
+		CanAdmin: r.canAdminTelegram(spec, msg.From.ID),
+	})
+}
+
+func telegramPhotoFileToken(msg *models.Message) string {
+	if msg == nil {
+		return ""
+	}
+
+	for i := len(msg.Photo) - 1; i >= 0; i-- {
+		if msg.Photo[i].FileID != "" {
+			return msg.Photo[i].FileID
+		}
+	}
+
+	return ""
 }
 
 // callbackMessageContext extracts editable message coordinates from callback query.

@@ -63,6 +63,19 @@ func (r *Runner) notifyCustomerTextMessage(
 	return nil
 }
 
+func buildAdminCustomerReplyActions(chatID, userID int64) []flow.ActionButton {
+	return []flow.ActionButton{
+		{
+			ID:    flow.AdminCustomerReplyStartAction(chatID, userID),
+			Label: "Ответить текстом",
+		},
+		{
+			ID:    flow.AdminCustomerPhotoReplyStartAction(chatID, userID),
+			Label: "Ответить с фото",
+		},
+	}
+}
+
 // buildAdminCustomerMessageNotificationView builds one admin-facing customer
 // message card.
 func buildAdminCustomerMessageNotificationView(
@@ -100,15 +113,10 @@ func buildAdminCustomerMessageNotificationView(
 			Sections: []flow.ActionSection{
 				{
 					Columns: 1,
-					Actions: []flow.ActionButton{
-						{
-							ID: flow.AdminCustomerReplyStartAction(
-								message.ChatID,
-								message.UserID,
-							),
-							Label: "Ответить",
-						},
-					},
+					Actions: buildAdminCustomerReplyActions(
+						message.ChatID,
+						message.UserID,
+					),
 				},
 			},
 		},

@@ -2,73 +2,116 @@
 
 # shopcore
 
-**shopcore** is an e-commerce platform with multiple interfaces and a shared sales/navigation core.
+[English](README.md) · [Русский](README.ru.md)
 
-Primary direction right now:
+**shopcore** is an e-commerce platform with multiple interfaces and a shared sales, catalog and bot runtime core.
 
-- **Telegram** as the main sales channel
-- **TUI** as operator/admin workspace
-- **Web** as the next admin surface
-- later possible: online catalog views built on the same flow core
+It is not just a bot manager. The project is moving toward a multi-interface commerce platform where Telegram, TUI and future Web admin surfaces use the same domain logic and application services.
 
 ---
 
-## What it is
+## Current focus
 
-shopcore is **not just a bot manager**.
-
-It is a sales platform where different interfaces use the same domain and flow ideas:
-
-- catalog navigation
-- сценарии входа
-- заявки и действия пользователя
-- bot runtime lifecycle
-- configuration editing
-- future admin and storefront surfaces
+- Telegram as the main customer sales channel
+- TUI as the current operator/admin workspace
+- Web as a future admin and storefront surface
+- Shared catalog, order and flow logic across interfaces
+- Per-bot runtime configuration and database wiring
 
 ---
 
-## Current interfaces
+## Interfaces
 
 ### Telegram
-- customer-facing catalog flow
-- reply and inline navigation
-- scenario-based start behavior
-- customer plain text notifications to the configured admin chat
-- admins can reply to customers from message and order notifications
+
+Telegram is currently the main runtime adapter.
+
+Implemented:
+
+- customer-facing catalog navigation
+- reply and inline keyboards
+- scenario-based `/start`
+- schema-driven catalog drill-down
+- order confirmation flow
+- persisted order creation
+- admin order notifications
+- admin order status actions
+- customer plain-text notifications to the admin chat
+- admin replies to customers from message notifications
+- admin replies to customers from order notifications
+- admin text replies
+- admin photo replies with optional captions
+- per-bot flow service
+- per-bot catalog provider through `database_id`
 
 ### TUI
-- bot operator panel
+
+TUI is the current operator/admin panel.
+
+Implemented:
+
+- bot list
 - runtime status
-- config editing
+- start/stop/restart actions
 - token editing
-- start/stop/restart flows
-- StartScenario switching
+- configuration editing
+- `StartScenario` display and editing
+- runtime spec synchronization through `manager.UpdateSpec(...)`
 
 ### Web
-- planned admin and store-facing surface
+
+Planned.
+
+Expected direction:
+
+- admin catalog editing
+- order management
+- customer support tools
+- storefront/admin views backed by shared services
 
 ---
 
 ## Architecture
 
-shopcore follows a **clean-ish ports/adapters approach**.
+shopcore follows a clean-ish ports/adapters style.
 
-Core ideas:
+Core principles:
 
 - transport-agnostic flow
-- separated bot runtime lifecycle
-- isolated bot configuration service
-- step-by-step evolution instead of large rewrites
-- platform-first thinking, not one-off bot scripting
+- explicit dependencies
+- small application services
+- separated read and write paths where useful
+- no SQL in Telegram runtime
+- no Telegram-specific code in flow
+- per-bot runtime wiring
+- tests with every meaningful behavior change
+- small steps instead of large rewrites
 
-Main building blocks:
+Main packages:
 
-- `internal/flow` — transport-agnostic navigation and view models
-- `internal/manager` — bot lifecycle and runtime state
-- `internal/botconfig` — bot configuration domain/service
-- `internal/app/runtime/telegram` — Telegram runtime adapter
-- `internal/tui` — operator interface
+```text
+internal/
+  app/
+    bootstrap/        application bootstrap and runtime wiring
+    pgapp/            Postgres pool/config wiring
+    runtime/
+      telegram/       Telegram runtime adapter
+      demo/           demo runtime pieces
+    seed/             demo data seeding
+    tuiapp/           TUI application wiring
+
+  botconfig/          bot configuration domain/service
+  catalog/
+    postgres/         Postgres catalog adapter
+    service/          catalog write-side application services
+  flow/               transport-agnostic navigation and input flow
+  manager/            bot lifecycle manager
+  order/
+    postgres/         Postgres order adapter
+    service/          order application service
+  tui/                terminal UI
+  transport/          HTTP transport pieces
+```
 
 ---
 
@@ -80,181 +123,272 @@ make migrate
 make run-tui
 ```
 
----
+Run tests:
 
-## Project structure
-
-```text
-cmd/
-  migrate/     database migrations entry point
-  tui/         TUI application entry point
-
-internal/
-  app/
-    bootstrap/ bootstrap enabled bots
-    pgapp/     postgres pool/config wiring
-    runtime/
-      telegram/ telegram runtime adapter
-      demo/     demo runtime pieces
-    seed/      demo data
-    tuiapp/    app wiring for TUI mode
-
-  botconfig/   bot configuration business logic
-  flow/        transport-agnostic flow/navigation core
-  manager/     bot lifecycle manager
-  tui/         terminal UI
-  transport/   HTTP transport pieces
+```bash
+go test ./...
 ```
 
 ---
 
-## Flow navigation
+## Flow
 
-`internal/flow` is transport-agnostic and drives user navigation for Telegram and future interfaces.
+`internal/flow` is transport-agnostic.
 
-Navigation is split into two separate concerns:
+It owns:
 
-- `StartScenario` controls how the user enters catalog:
-  - `reply_welcome`
-  - `inline_catalog`
-- `CatalogSchema` controls catalog drill-down order:
-  - current demo schema: `city -> category -> district -> product -> variant`
+- start scenarios
+- screen/view models
+- reply and inline keyboard models
+- session state
+- history-based back navigation
+- pending text/photo input state
+- catalog navigation
+- transport-neutral effects
 
-State is tracked through:
+Start scenarios:
 
-- `SessionKey`
-- `Session`
-- `Session.History`
+```text
+reply_welcome
+inline_catalog
+```
 
-`ActionBack` always uses session history instead of jumping to a hardcoded root.
+Catalog drill-down uses schema-driven navigation:
 
-Catalog drill-down uses generic encoded actions and screens:
+```text
+city -> category -> district -> product -> variant
+```
 
-- action: `catalog:select:<level>:<id>`
-- screen: `catalog:screen:<path>`
+Generic catalog actions and screens:
 
-This allows catalog order to evolve without rewriting transport logic.
+```text
+catalog:select:<level>:<id>
+catalog:screen:<path>
+```
 
-## Catalog storage
-
-Catalog data is stored in Postgres and loaded into `internal/flow` through `CatalogProvider`.
-
-Current relational model:
-
-- `cities`
-- `catalog_categories`
-- `catalog_city_categories`
-- `catalog_districts`
-- `catalog_products`
-- `catalog_variants`
-
-Runtime does not query catalog tables directly.
-
-Instead:
-
-- bot config provides `database_id`
-- runtime builds a per-bot flow service
-- flow service uses a catalog provider
-- Postgres catalog provider loads rows and builds `flow.Catalog`
-
-This keeps flow transport-agnostic and allows different bots to use different databases.
-
-Current catalog drill-down path:
-
-`city -> category -> district -> product -> variant`
-
-## Telegram customer messages
-
-Telegram runtime treats plain text in two steps:
-
-1. If the current flow session has pending input, text is passed to `flow.HandleText`.
-2. If there is no pending input and the sender is a customer, text is sent to `AdminOrdersChatID` as an operator notification.
-
-Admin users are skipped by customer-text notifications. Their text remains reserved for admin pending input and future admin commands.
-Order notifications use the same admin reply action as customer message notifications.
-This keeps customer contact flow in one place while allowing stores to resolve order issues from the admin chat.
+Back navigation uses `Session.History`. It does not jump to a hardcoded root.
 
 ---
 
-## What already works
+## Catalog
 
-### Flow
-- transport-agnostic service in `internal/flow`
-- scenario-aware `/start`
-- compact and extended catalog roots
-- session/history-based back navigation
-- schema-driven catalog navigation
-- generic catalog actions and catalog screens
+Catalog data is stored in Postgres and loaded into `flow.Catalog` through a `CatalogProvider`.
 
-### Bot configuration
-- `StartScenario` stored in config
-- validation for start scenario
-- postgres and in-memory repositories updated
-- runtime list uses stored start scenario
+Current tables:
 
-### TUI
-- shows StartScenario
-- edits StartScenario
-- edits tokens
-- displays enabled/disabled bots
-- runtime summary and actions
-- syncs runtime spec after config/token changes
+```text
+cities
+catalog_categories
+catalog_city_categories
+catalog_districts
+catalog_products
+catalog_variants
+```
 
-### Runtime
-- `manager.UpdateSpec(...)` already updates runtime spec
-- token/config changes can be picked up without full system restart
-- bot restart is enough to apply updated runtime spec
+Runtime wiring:
 
-### Infra
-- Postgres
-- migrations
-- seed data
-- bootstrap startup flow
+```text
+bot config
+↓
+database_id
+↓
+database profile
+↓
+Postgres pool
+↓
+catalog provider
+↓
+per-bot flow service
+↓
+Telegram runtime
+```
+
+Important catalog rules:
+
+- products without variants are skipped
+- districts without products are skipped
+- categories without a valid branch are skipped
+- cities without children are skipped
+
+---
+
+## Orders
+
+The order flow currently supports:
+
+- selecting a catalog variant
+- confirming an order
+- persisting the order
+- notifying the configured admin chat
+- admin status actions:
+  - take into work
+  - close
+- refreshing admin cards after callback actions
+- replying to the customer from the order notification
+
+---
+
+## Customer messages and admin replies
+
+Customer plain text is handled by Telegram runtime:
+
+1. If the session has pending input, text goes to `flow.HandleText`.
+2. If there is no pending input and the sender is a customer, text is sent to the configured admin chat.
+3. Admin users are skipped by customer-message notifications.
+
+Admin reply flow:
+
+```text
+customer message or order notification
+↓
+admin presses reply action
+↓
+bot opens pending input in admin private chat
+↓
+admin sends text or photo
+↓
+flow returns a transport-neutral effect
+↓
+Telegram runtime sends the response to the customer
+```
+
+Supported admin replies:
+
+- plain text
+- photo with optional caption
+
+Photo replies use a transport-owned media token. Flow treats the token as opaque data and only forwards it through `EffectSendPhoto`.
+
+---
+
+## Runtime
+
+Runtime behavior:
+
+- each bot has its own runtime spec
+- each bot has its own `flow.Service`
+- multiple bots may share one database
+- multiple bots may use different databases
+- config updates are synchronized through `manager.UpdateSpec(...)`
+- token/config/start scenario changes do not require full system restart
+
+Telegram metadata support:
+
+- Telegram bot id
+- Telegram username
+- Telegram bot display name
+
+---
+
+## Seed data
+
+Seed creates:
+
+- a real database profile
+- a demo bot
+- demo catalog data
+
+Demo catalog includes:
+
+- Moscow
+- Saint Petersburg
+- flower and gift categories
+- districts
+- products
+- variants
+
+If the token is empty, the demo bot is created as disabled.
+
+---
+
+## What works now
+
+- Telegram bot runtime
+- `/start`
+- reply welcome scenario
+- inline catalog scenario
+- Postgres-backed catalog loading
+- schema-driven catalog traversal
+- history-based back navigation
+- per-bot catalog wiring by `database_id`
+- TUI bot management
+- runtime spec sync
+- Telegram metadata sync through `getMe`
+- persisted order flow
+- admin order workflow
+- customer message notifications
+- admin text replies
+- admin photo replies
 
 ---
 
 ## Development status
 
-Current baseline:
+Baseline:
 
-- `go test ./...` passes
-- `internal/flow` has strong coverage on stable navigation behavior
-- `internal/app/runtime/telegram` is covered on stable transport contracts
-- TUI bot management is in a solid state
-- flow is now moving from demo entities to a real sales-tree model
+```bash
+go test ./...
+```
+
+Expected result: all tests pass.
+
+Covered areas include:
+
+- `internal/flow`
+- catalog Postgres loader/build/repository
+- catalog service write use cases
+- Telegram runtime contracts
+- bot configuration
+- order service and storage
+- manager behavior
 
 ---
 
 ## Near-term roadmap
 
-### 1. Catalog evolution
-Move from demo navigation to richer commerce structure:
+### Catalog admin
 
-- cities
-- categories
-- districts
-- products
-- variants
-- later: cart and payment
+- more write use cases
+- edit category/city/district/product/variant
+- TUI catalog management
+- Telegram admin bot/catalog tools
+- later Web admin catalog editor
 
-### 2. Catalog source abstraction
-Current flow uses demo in-memory catalog data.
-Next step is to inject a catalog provider so flow can later consume real config/storage-backed data.
+### Customer communication
 
-### 3. UX improvements
-- better Telegram catalog rendering
-- richer product/variant cards
-- stronger TUI ergonomics
-- future Web admin/store integration
+- persist customer inquiries
+- persist admin replies
+- delivery status
+- retry support
+- message history
+- richer media support
+
+### Orders
+
+- richer order cards
+- order comments
+- order history
+- better admin workflow
+- customer-visible order status
+
+### Web
+
+- admin dashboard
+- catalog editing
+- order management
+- customer support view
 
 ---
 
-## Principles
+## Development principles
 
-- do not rewrite the whole house at night
 - keep working behavior intact
-- prefer testable seams
-- keep names short and explicit
-- reduce magic
-- treat shopcore as a sales platform, not a temporary bot utility
-
+- make small, testable changes
+- avoid premature overengineering
+- keep dependencies explicit
+- wrap meaningful errors
+- document important packages, types and functions
+- add tests with logic changes
+- keep flow transport-agnostic
+- keep runtime free from SQL
+- treat shopcore as a commerce platform, not a temporary bot script

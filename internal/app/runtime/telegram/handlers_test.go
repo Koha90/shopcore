@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-telegram/bot/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -83,4 +84,24 @@ func TestCallbackMessageContext(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, msg)
 	})
+}
+
+func TestTelegramPhotoFileTokenReturnsLargestPhotoID(t *testing.T) {
+	t.Parallel()
+
+	got := telegramPhotoFileToken(&models.Message{
+		Photo: []models.PhotoSize{
+			{FileID: "small"},
+			{FileID: "medium"},
+			{FileID: "large"},
+		},
+	})
+
+	assert.Equal(t, "large", got)
+}
+
+func TestTelegramPhotoFileTokenEmptyMessage(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, telegramPhotoFileToken(nil))
 }

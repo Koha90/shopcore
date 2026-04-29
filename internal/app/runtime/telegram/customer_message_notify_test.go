@@ -37,10 +37,18 @@ func TestBuildAdminCustomerMessageNotificationView(t *testing.T) {
 	assert.Contains(t, vm.Text, "Здравствуйте, есть доставка сегодня?")
 	require.NotNil(t, vm.Inline)
 	require.Len(t, vm.Inline.Sections, 1)
-	require.Len(t, vm.Inline.Sections[0].Actions, 1)
+	require.Len(t, vm.Inline.Sections[0].Actions, 2)
+
+	textAction := vm.Inline.Sections[0].Actions[0]
+	assert.Equal(t, "Ответить текстом", textAction.Label)
+	assert.Equal(t, flow.AdminCustomerReplyStartAction(456, 123), textAction.ID)
+
+	photoAction := vm.Inline.Sections[0].Actions[1]
+	assert.Equal(t, "Ответить с фото", photoAction.Label)
+	assert.Equal(t, flow.AdminCustomerPhotoReplyStartAction(456, 123), photoAction.ID)
 
 	action := vm.Inline.Sections[0].Actions[0]
-	assert.Equal(t, "Ответить", action.Label)
+	assert.Equal(t, "Ответить текстом", action.Label)
 	assert.Equal(t, flow.AdminCustomerReplyStartAction(456, 123), action.ID)
 }
 
@@ -61,4 +69,5 @@ func TestBuildAdminCustomerMessageNotificationView_WithoutOptionalUserLabels(t *
 	assert.NotContains(t, vm.Text, "Логин:")
 	assert.Contains(t, vm.Text, "Нужна помощь")
 	require.NotNil(t, vm.Inline)
+	require.Len(t, vm.Inline.Sections[0].Actions, 2)
 }
