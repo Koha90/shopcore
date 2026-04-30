@@ -261,7 +261,7 @@ func buildOrderConfirmView(ctx OrderContext) ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionOrderConfirm, Label: "Подтвердить заказ"},
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},

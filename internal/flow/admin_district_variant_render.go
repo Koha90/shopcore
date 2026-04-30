@@ -17,10 +17,7 @@ func buildAdminDistrictVariantCitySelectView(cities []CityListItem, validation s
 			Label: city.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -57,10 +54,7 @@ func buildAdminDistrictVariantDistrictSelectView(
 			Label: district.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -98,10 +92,7 @@ func buildAdminDistrictVariantCategorySelectView(
 			Label: category.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -140,10 +131,7 @@ func buildAdminDistrictVariantProductSelectView(
 			Label: product.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -186,10 +174,7 @@ func buildAdminDistrictVariantVariantSelectView(
 			Label: variantDisplayLabel,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -225,7 +210,7 @@ func buildAdminDistrictVariantPriceInputView(
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -242,7 +227,7 @@ func buildAdminDistrictVariantCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},

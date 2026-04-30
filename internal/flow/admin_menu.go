@@ -9,7 +9,7 @@ func buildAdminRootView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionAdminCatalogOpen, Label: "Каталог"},
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -35,7 +35,7 @@ func buildAdminCatalogView() ViewModel {
 						{ID: ActionAdminVariantImageUpdateStart, Label: "Изменить изображение варианта"},
 						{ID: ActionAdminDistrictVariantCreateStart, Label: "Разместить вариант"},
 						{ID: ActionAdminDistrictVariantPriceUpdateStart, Label: "Изменить цену варианта"},
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},

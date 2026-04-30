@@ -19,7 +19,7 @@ func buildAdminCategoryCreateInputView(validation string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -45,7 +45,7 @@ func buildAdminCategoryCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -67,7 +67,7 @@ func buildAdminCategoryCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -89,7 +89,7 @@ func buildAdminCategoryCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -107,7 +107,7 @@ func buildAdminCategoryCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},
@@ -132,7 +132,7 @@ func buildAdminCityCreateInputView(validation string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -158,7 +158,7 @@ func buildAdminCityCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -180,7 +180,7 @@ func buildAdminCityCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -202,7 +202,7 @@ func buildAdminCityCodeInputView(validation, suggested string) ViewModel {
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -220,7 +220,7 @@ func buildAdminCityCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -244,10 +244,7 @@ func buildAdminDistrictCitySelectView(cities []CityListItem, validation string) 
 			Label: city.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -280,7 +277,7 @@ func buildAdminDistrictCreateInputView(cityName, validation string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -310,7 +307,7 @@ func buildAdminDistrictCodeInputView(cityName, validation, suggested string) Vie
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -332,7 +329,7 @@ func buildAdminDistrictCodeInputView(cityName, validation, suggested string) Vie
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -354,7 +351,7 @@ func buildAdminDistrictCodeInputView(cityName, validation, suggested string) Vie
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -372,7 +369,7 @@ func buildAdminDistrictCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -412,10 +409,7 @@ func buildAdminProductCategorySelectView(categories []CategoryListItem, validati
 			Label: category.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -448,7 +442,7 @@ func buildAdminProductCreateInputView(categoryName, validation string) ViewModel
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -478,7 +472,7 @@ func buildAdminProductCodeInputView(categoryName, validation, suggested string) 
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -500,7 +494,7 @@ func buildAdminProductCodeInputView(categoryName, validation, suggested string) 
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -522,7 +516,7 @@ func buildAdminProductCodeInputView(categoryName, validation, suggested string) 
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -540,7 +534,7 @@ func buildAdminProductCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -580,10 +574,7 @@ func buildAdminVariantProductSelectView(products []ProductListItem, validation s
 			Label: product.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -616,7 +607,7 @@ func buildAdminVariantCreateInputView(productName, validation string) ViewModel 
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -646,7 +637,7 @@ func buildAdminVariantCodeInputView(productName, validation, suggested string) V
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -668,7 +659,7 @@ func buildAdminVariantCodeInputView(productName, validation, suggested string) V
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -690,7 +681,7 @@ func buildAdminVariantCodeInputView(productName, validation, suggested string) V
 					{
 						Columns: 1,
 						Actions: []ActionButton{
-							{ID: ActionBack, Label: "Назад"},
+							backButton(),
 						},
 					},
 				},
@@ -708,7 +699,7 @@ func buildAdminVariantCreateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -748,10 +739,7 @@ func buildAdminDistrictVariantPriceUpdateDistrictSelectView(districts []District
 			Label: district.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -795,10 +783,7 @@ func buildAdminDistrictVariantPriceUpdateVariantSelectView(
 			),
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -835,7 +820,7 @@ func buildAdminDistrictVariantPriceUpdateInputView(
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -852,7 +837,7 @@ func buildAdminDistrictVariantPriceUpdateDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
 					},
 				},
@@ -883,10 +868,7 @@ func buildAdminDistrictVariantPriceUpdateCategorySelectView(
 			Label: category.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -924,10 +906,7 @@ func buildAdminDistrictVariantPriceUpdateProductSelectView(
 			Label: product.Label,
 		})
 	}
-	actions = append(actions, ActionButton{
-		ID:    ActionBack,
-		Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,

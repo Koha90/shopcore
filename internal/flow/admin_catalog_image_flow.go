@@ -27,9 +27,7 @@ func buildAdminProductImageProductSelectView(products []ProductListItem, validat
 		})
 	}
 
-	actions = append(actions, ActionButton{
-		ID: ActionBack, Label: "Назад",
-	})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -63,7 +61,7 @@ func buildAdminVariantImageVariantSelectView(variants []VariantListItem, validat
 		})
 	}
 
-	actions = append(actions, ActionButton{ID: ActionBack, Label: "Назад"})
+	actions = append(actions, backButton())
 
 	return ViewModel{
 		Text: text,
@@ -96,9 +94,7 @@ func buildAdminProductImageInputView(productName, validation string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{
-							ID: ActionBack, Label: "Назад",
-						},
+						backButton(),
 					},
 				},
 			},
@@ -124,9 +120,7 @@ func buildAdminVariantImageInputView(variantName, validation string) ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{
-							ID: ActionBack, Label: "Назад",
-						},
+						backButton(),
 					},
 				},
 			},
@@ -144,7 +138,7 @@ func buildAdminProductImageDoneView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -162,7 +156,7 @@ func buildAdminVariantImageDoneView() ViewModel {
 					Columns: 1,
 					Actions: []ActionButton{
 						{ID: ActionAdminCatalogOpen, Label: "В главное меню"},
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},

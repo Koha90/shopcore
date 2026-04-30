@@ -90,7 +90,7 @@ func buildAdminCustomerReplyInputView(validation string, chatID, userID int64) V
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -116,7 +116,7 @@ func buildAdminCustomerPhotoReplyInputView(validation string, chatID, userID int
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
@@ -133,7 +133,7 @@ func buildAdminCustomerReplyDoneView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionBack, Label: "Назад"},
+						backButton(),
 					},
 				},
 			},
