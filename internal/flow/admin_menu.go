@@ -8,7 +8,7 @@ func buildAdminRootView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionAdminCatalogOpen, Label: "Каталог"},
+						{ID: ActionAdminCatalogOpen, Label: "📦 Каталог"},
 						backButton(),
 					},
 				},
@@ -26,15 +26,19 @@ func buildAdminCatalogView() ViewModel {
 				{
 					Columns: 1,
 					Actions: []ActionButton{
-						{ID: ActionAdminDistrictCreateStart, Label: "Создать район"},
-						{ID: ActionAdminCityCreateStart, Label: "Создать город"},
-						{ID: ActionAdminCategoryCreateStart, Label: "Создать категорию"},
-						{ID: ActionAdminProductCreateStart, Label: "Создать товар"},
-						{ID: ActionAdminProductImageUpdateStart, Label: "Изменить изображение товара"},
-						{ID: ActionAdminVariantCreateStart, Label: "Создать вариант"},
-						{ID: ActionAdminVariantImageUpdateStart, Label: "Изменить изображение варианта"},
-						{ID: ActionAdminDistrictVariantCreateStart, Label: "Разместить вариант"},
-						{ID: ActionAdminDistrictVariantPriceUpdateStart, Label: "Изменить цену варианта"},
+						{ID: ActionAdminCityCreateStart, Label: "🏙 Создать город"},
+						{ID: ActionAdminCategoryCreateStart, Label: "🏷 Создать категорию"},
+						{ID: ActionAdminDistrictCreateStart, Label: "📍 Создать район"},
+
+						{ID: ActionAdminProductCreateStart, Label: "🛍 Создать товар"},
+						{ID: ActionAdminProductImageUpdateStart, Label: "🖼 Изображение товара"},
+
+						{ID: ActionAdminVariantCreateStart, Label: "🧩 Создать вариант"},
+						{ID: ActionAdminVariantImageUpdateStart, Label: "🖼 Изображение варианта"},
+
+						{ID: ActionAdminDistrictVariantCreateStart, Label: "📌 Разместить вариант"},
+						{ID: ActionAdminDistrictVariantPriceUpdateStart, Label: "💸 Изменить цену"},
+
 						backButton(),
 					},
 				},
